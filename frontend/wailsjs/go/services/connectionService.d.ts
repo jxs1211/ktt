@@ -3,44 +3,34 @@
 import {types} from '../models';
 import {context} from '../models';
 
-export function AddHashField(arg1:string,arg2:number,arg3:string,arg4:number,arg5:Array<any>):Promise<types.JSResp>;
+export function CreateGroup(arg1:string):Promise<types.JSResp>;
 
-export function AddListItem(arg1:string,arg2:number,arg3:string,arg4:number,arg5:Array<any>):Promise<types.JSResp>;
+export function DeleteConnection(arg1:string):Promise<types.JSResp>;
 
-export function AddZSetValue(arg1:string,arg2:number,arg3:string,arg4:number,arg5:{[key: string]: number}):Promise<types.JSResp>;
+export function DeleteGroup(arg1:string,arg2:boolean):Promise<types.JSResp>;
 
-export function CloseConnection(arg1:string):Promise<types.JSResp>;
+export function ExportConnections():Promise<types.JSResp>;
 
-export function GetKeyValue(arg1:string,arg2:number,arg3:string):Promise<types.JSResp>;
+export function GetConnection(arg1:string):Promise<types.JSResp>;
+
+export function ImportConnections():Promise<types.JSResp>;
 
 export function ListConnection():Promise<types.JSResp>;
 
-export function OpenConnection(arg1:string):Promise<types.JSResp>;
+export function ListSentinelMasters(arg1:types.ConnectionConfig):Promise<types.JSResp>;
 
-export function OpenDatabase(arg1:string,arg2:number):Promise<types.JSResp>;
+export function ParseConnectURL(arg1:string):Promise<types.JSResp>;
 
-export function RemoveKey(arg1:string,arg2:number,arg3:string):Promise<types.JSResp>;
+export function RenameGroup(arg1:string,arg2:string):Promise<types.JSResp>;
 
-export function RenameKey(arg1:string,arg2:number,arg3:string,arg4:string):Promise<types.JSResp>;
+export function SaveConnection(arg1:string,arg2:types.ConnectionConfig):Promise<types.JSResp>;
 
-export function SaveConnection(arg1:types.Connection,arg2:boolean):Promise<types.JSResp>;
+export function SaveLastDB(arg1:string,arg2:number):Promise<types.JSResp>;
 
-export function SetHashValue(arg1:string,arg2:number,arg3:string,arg4:string,arg5:string,arg6:string):Promise<types.JSResp>;
+export function SaveRefreshInterval(arg1:string,arg2:number):Promise<types.JSResp>;
 
-export function SetKeyTTL(arg1:string,arg2:number,arg3:string,arg4:number):Promise<types.JSResp>;
-
-export function SetKeyValue(arg1:string,arg2:number,arg3:string,arg4:string,arg5:any,arg6:number):Promise<types.JSResp>;
-
-export function SetListItem(arg1:string,arg2:number,arg3:string,arg4:number,arg5:string):Promise<types.JSResp>;
-
-export function SetSetItem(arg1:string,arg2:number,arg3:string,arg4:boolean,arg5:Array<any>):Promise<types.JSResp>;
+export function SaveSortedConnection(arg1:types.Connections):Promise<types.JSResp>;
 
 export function Start(arg1:context.Context):Promise<void>;
 
-export function Stop(arg1:context.Context):Promise<void>;
-
-export function TestConnection(arg1:string,arg2:number,arg3:string,arg4:string):Promise<types.JSResp>;
-
-export function UpdateSetItem(arg1:string,arg2:number,arg3:string,arg4:string,arg5:string):Promise<types.JSResp>;
-
-export function UpdateZSetValue(arg1:string,arg2:number,arg3:string,arg4:string,arg5:string,arg6:number):Promise<types.JSResp>;
+export function TestConnection(arg1:types.ConnectionConfig):Promise<types.JSResp>;

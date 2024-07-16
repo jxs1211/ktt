@@ -1,74 +1,151 @@
 <script setup>
-import { get } from 'lodash'
-import { computed, nextTick, onMounted, provide, reactive, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { GetPreferences } from '../wailsjs/go/storage/PreferencesStorage.js'
-import ContentPane from './components/ContentPane.vue'
-import hljs from 'highlight.js/lib/core'
-import json from 'highlight.js/lib/languages/json'
-import plaintext from 'highlight.js/lib/languages/plaintext'
-import { useThemeVars } from 'naive-ui'
+import ConnectionDialog from "./components/dialogs/ConnectionDialog.vue";
+import ConfigDialog from "./components/dialogs/ConfigDialog.vue";
+import NewKeyDialog from "./components/dialogs/NewKeyDialog.vue";
+import PreferencesDialog from "./components/dialogs/PreferencesDialog.vue";
+import RenameKeyDialog from "./components/dialogs/RenameKeyDialog.vue";
+import SetTtlDialog from "./components/dialogs/SetTtlDialog.vue";
+import AddFieldsDialog from "./components/dialogs/AddFieldsDialog.vue";
+import AppContent from "./AppContent.vue";
+import GroupDialog from "./components/dialogs/GroupDialog.vue";
+import DeleteKeyDialog from "./components/dialogs/DeleteKeyDialog.vue";
+import { h, onMounted, ref, watch } from "vue";
+import usePreferencesStore from "./stores/preferences.js";
+import useConnectionStore from "./stores/connections.js";
+import { useI18n } from "vue-i18n";
+import { darkTheme, NButton, NSpace } from "naive-ui";
+import KeyFilterDialog from "./components/dialogs/KeyFilterDialog.vue";
+import {
+  Environment,
+  WindowSetDarkTheme,
+  WindowSetLightTheme,
+} from "wailsjs/runtime/runtime.js";
+import { darkThemeOverrides, themeOverrides } from "@/utils/theme.js";
+import AboutDialog from "@/components/dialogs/AboutDialog.vue";
+import FlushDbDialog from "@/components/dialogs/FlushDbDialog.vue";
+import ExportKeyDialog from "@/components/dialogs/ExportKeyDialog.vue";
+import ImportKeyDialog from "@/components/dialogs/ImportKeyDialog.vue";
+import { Info } from "wailsjs/go/services/systemService.js";
+import DecoderDialog from "@/components/dialogs/DecoderDialog.vue";
+import { loadModule, trackEvent } from "@/utils/analytics.js";
 
-
-const themeVars = useThemeVars()
-
-hljs.registerLanguage('json', json)
-hljs.registerLanguage('plaintext', plaintext)
-
-const data = reactive({
-	asideWith: 300,
-	hoverResize: false,
-	resizing: false,
-})
-
-const preferences = ref({})
-provide('preferences', preferences)
-const i18n = useI18n()
-
+const prefStore = usePreferencesStore();
+const connectionStore = useConnectionStore();
+const i18n = useI18n();
+const initializing = ref(true);
 onMounted(async () => {
-	preferences.value = await GetPreferences()
-	await nextTick(() => {
-		i18n.locale.value = get(preferences.value, 'general.language', 'en')
-	})
-})
+  try {
+    initializing.value = true;
+    await prefStore.loadFontList();
+    await prefStore.loadBuildInDecoder();
+    await connectionStore.initConnections();
+    if (prefStore.autoCheckUpdate) {
+      prefStore.checkForUpdate();
+    }
+    const env = await Environment();
+    loadModule(
+      env.buildType !== "dev" && prefStore.general.allowTrack !== false,
+    ).then(() => {
+      Info().then(({ data }) => {
+        trackEvent("startup", data, true);
+      });
+    });
 
-// TODO: apply font size to all elements
-const getFontSize = computed(() => {
-	return get(preferences.value, 'general.font_size', 'en')
-})
+    // show greetings and user behavior tracking statements
+    if (!!!prefStore.behavior.welcomed) {
+      const n = $notification.show({
+        title: () => i18n.t("dialogue.welcome.title"),
+        content: () => i18n.t("dialogue.welcome.content"),
+        // duration: 5000,
+        keepAliveOnHover: true,
+        closable: false,
+        meta: " ",
+        action: () =>
+          h(
+            NSpace,
+            {},
+            {
+              default: () => [
+                h(
+                  NButton,
+                  {
+                    secondary: true,
+                    type: "tertiary",
+                    onClick: () => {
+                      prefStore.setAsWelcomed(false);
+                      n.destroy();
+                    },
+                  },
+                  {
+                    default: () => i18n.t("dialogue.welcome.reject"),
+                  },
+                ),
+                h(
+                  NButton,
+                  {
+                    secondary: true,
+                    type: "primary",
+                    onClick: () => {
+                      prefStore.setAsWelcomed(true);
+                      n.destroy();
+                    },
+                  },
+                  {
+                    default: () => i18n.t("dialogue.welcome.accept"),
+                  },
+                ),
+              ],
+            },
+          ),
+      });
+    }
+  } finally {
+    initializing.value = false;
+  }
+});
 
-const themeOverrides = {
-	common: {
-		// primaryColor: '#409EFF',
-		borderRadius: '4px',
-		borderRadiusSmall: '3px',
-		fontFamily: `"Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-  "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue"`,
-		lineHeight: 1.5,
-	},
-	Tag: {
-		// borderRadius: '3px'
-	},
-}
+// watch theme and dynamically switch
+watch(
+  () => prefStore.isDark,
+  (isDark) => (isDark ? WindowSetDarkTheme() : WindowSetLightTheme()),
+);
 
-
+// watch language and dynamically switch
+watch(
+  () => prefStore.general.language,
+  (lang) => (i18n.locale.value = prefStore.currentLanguage),
+);
 </script>
 
 <template>
-	<n-config-provider :hljs="hljs" :inline-theme-disabled="true" :theme-overrides="themeOverrides" class="fill-height">
+  <n-config-provider
+    :inline-theme-disabled="true"
+    :locale="prefStore.themeLocale"
+    :theme="prefStore.isDark ? darkTheme : undefined"
+    :theme-overrides="prefStore.isDark ? darkThemeOverrides : themeOverrides"
+    class="fill-height"
+  >
+    <n-dialog-provider>
+      <app-content :loading="initializing" />
+
+      <!-- top modal dialogs -->
+      <config-dialog />
+      <connection-dialog />
+      <group-dialog />
+      <new-key-dialog />
+      <key-filter-dialog />
+      <add-fields-dialog />
+      <rename-key-dialog />
+      <delete-key-dialog />
+      <export-key-dialog />
+      <import-key-dialog />
+      <flush-db-dialog />
+      <set-ttl-dialog />
+      <preferences-dialog />
+      <decoder-dialog />
+      <about-dialog />
+    </n-dialog-provider>
   </n-config-provider>
 </template>
 
-<style>
-#logo {
-  display: block;
-  width: 50%;
-  height: 50%;
-  margin: auto;
-  padding: 10% 0 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-origin: content-box;
-}
-</style>
+<style lang="scss"></style>

@@ -1,10 +1,9 @@
 package storage
 
 import (
+	"github.com/vrischmann/userdir"
 	"os"
 	"path"
-
-	"github.com/vrischmann/userdir"
 )
 
 // localStorage provides reading and writing application data to the user's
@@ -16,7 +15,7 @@ type localStorage struct {
 // NewLocalStore returns a localStore instance.
 func NewLocalStore(filename string) *localStorage {
 	return &localStorage{
-		ConfPath: path.Join(userdir.GetConfigHome(), "KTT", filename),
+		ConfPath: path.Join(userdir.GetConfigHome(), "TinyRDM", filename),
 	}
 }
 
