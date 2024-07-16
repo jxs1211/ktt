@@ -1,8 +1,8 @@
 package sliceutil
 
 import (
-	"strings"
 	. "ktt/backend/utils"
+	"strings"
 )
 
 // Map map items to new array

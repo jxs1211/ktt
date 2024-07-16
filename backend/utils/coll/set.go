@@ -3,8 +3,8 @@ package coll
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	. "ktt/backend/utils"
+	"sort"
 )
 
 type Void struct{}

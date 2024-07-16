@@ -1,8 +1,8 @@
 package mathutil
 
 import (
-	"math"
 	. "ktt/backend/utils"
+	"math"
 )
 
 // MaxWithIndex 查找所有元素中的最大值

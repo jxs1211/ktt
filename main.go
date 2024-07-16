@@ -28,6 +28,10 @@ var gaMeasurementID, gaSecretKey string
 
 func main() {
 	// Create an instance of the app structure
+<<<<<<< Updated upstream
+=======
+	configSvc := services.NewConfiguration()
+>>>>>>> Stashed changes
 	sysSvc := services.System()
 	connSvc := services.Connection()
 	browserSvc := services.Browser()
