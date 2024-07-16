@@ -13,6 +13,9 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/net/proxy"
 	"io"
+	. "ktt/backend/storage"
+	"ktt/backend/types"
+	_ "ktt/backend/utils/proxy"
 	"net"
 	"net/url"
 	"os"
@@ -21,9 +24,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	. "ktt/backend/storage"
-	"ktt/backend/types"
-	_ "ktt/backend/utils/proxy"
 )
 
 type cmdHistoryItem struct {

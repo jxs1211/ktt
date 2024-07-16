@@ -2,9 +2,9 @@ package convutil
 
 import (
 	"errors"
-	"regexp"
 	"ktt/backend/types"
 	strutil "ktt/backend/utils/string"
+	"regexp"
 )
 
 type DataConvert interface {

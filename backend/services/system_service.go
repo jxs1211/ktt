@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	runtime2 "runtime"
-	"sync"
-	"time"
 	"ktt/backend/consts"
 	"ktt/backend/types"
 	sliceutil "ktt/backend/utils/slice"
+	runtime2 "runtime"
+	"sync"
+	"time"
 )
 
 type systemService struct {
