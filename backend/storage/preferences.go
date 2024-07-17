@@ -3,12 +3,12 @@ package storage
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"ktt/backend/consts"
+	"ktt/backend/types"
 	"log"
 	"reflect"
 	"strings"
 	"sync"
-	"ktt/backend/consts"
-	"ktt/backend/types"
 )
 
 type PreferencesStorage struct {

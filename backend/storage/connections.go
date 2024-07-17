@@ -3,10 +3,10 @@ package storage
 import (
 	"errors"
 	"gopkg.in/yaml.v3"
-	"slices"
-	"sync"
 	"ktt/backend/consts"
 	"ktt/backend/types"
+	"slices"
+	"sync"
 )
 
 type ConnectionsStorage struct {

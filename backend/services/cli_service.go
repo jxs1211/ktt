@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"strings"
-	"sync"
 	"ktt/backend/types"
 	sliceutil "ktt/backend/utils/slice"
 	strutil "ktt/backend/utils/string"
+	"strings"
+	"sync"
 )
 
 type cliService struct {
