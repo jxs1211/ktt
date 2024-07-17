@@ -28,6 +28,7 @@ var gaMeasurementID, gaSecretKey string
 
 func main() {
 	// Create an instance of the app structure
+	configSvc := services.Configuration()
 	sysSvc := services.System()
 	connSvc := services.Connection()
 	browserSvc := services.Browser()
@@ -67,6 +68,7 @@ func main() {
 		BackgroundColour: options.NewRGBA(27, 38, 54, 0),
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
+			configSvc.Start(ctx)
 			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			browserSvc.Start(ctx)
