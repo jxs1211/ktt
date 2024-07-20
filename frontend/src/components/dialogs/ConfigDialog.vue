@@ -12,13 +12,10 @@ import {
 } from "lodash";
 import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-  ListSentinelMasters,
-  TestConnection,
-} from "wailsjs/go/services/connectionService.js";
+// import { LoadConfig } from "wailsjs/go/client/ClientService.js";
 import useDialog, { ConnDialogType } from "stores/dialog";
 import Close from "@/components/icons/Close.vue";
-import useConnectionStore from "stores/connections.js";
+import useConfigStore from "stores/config.js";
 import FileOpenInput from "@/components/common/FileOpenInput.vue";
 import { KeyViewType } from "@/consts/key_view_type.js";
 import { useThemeVars } from "naive-ui";
@@ -33,11 +30,21 @@ import IconButton from "@/components/common/IconButton.vue";
 
 const themeVars = useThemeVars();
 const dialogStore = useDialog();
-const connectionStore = useConnectionStore();
+const configStore = useConfigStore();
 const browserStore = useBrowserStore();
 const i18n = useI18n();
 
 const editName = ref("");
+const content = ref("");
+const handleLoadConfig = async () => {
+  const result = await configStore.loadConfig(content.value);
+  if (result.success) {
+    validateResult.value = "";
+  } else {
+    validateResult.value = result.msg || $t("dialogue.connection.test_fail");
+  }
+  showValidateResult.value = true;
+};
 const generalForm = ref(null);
 const generalFormRules = () => {
   const requiredMsg = i18n.t("dialogue.field_required");
@@ -113,7 +120,6 @@ watch(
       const idx = toNumber(item);
       return isNaN(idx) ? 0 : idx;
     });
-    generalForm.value.dbFilterList = sortBy(dbList);
   },
   { deep: true },
 );
@@ -378,26 +384,31 @@ const pasteFromClipboard = async () => {
       <n-text>Add your kubeconfig</n-text>
       <n-space vertical>
         <n-input
-          v-model:value="value"
+          v-model:value="content"
           type="textarea"
           placeholder="config content here"
         />
       </n-space>
       <!-- validation result alert-->
       <n-alert
-          v-if="showValidateResult"
-          :on-close="() => (validateResult = '')"
-          :title="isEmpty(validateResult) ? '' : $t('dialogue.connection.test_fail')"
-          :type="isEmpty(validateResult) ? 'success' : 'error'"
-          closable>
-          <template v-if="isEmpty(validateResult)">{{ $t('dialogue.connection.test_succ') }}</template>
-          <template v-else>{{ validateResult }}</template>
+        v-if="showValidateResult"
+        :on-close="() => (validateResult = '')"
+        :title="
+          isEmpty(validateResult) ? '' : $t('dialogue.connection.test_fail')
+        "
+        :type="isEmpty(validateResult) ? 'success' : 'error'"
+        closable
+      >
+        <template v-if="isEmpty(validateResult)">{{
+          $t("dialogue.connection.test_succ")
+        }}</template>
+        <template v-else>{{ validateResult }}</template>
       </n-alert>
       <!-- <template #action> -->
-        <n-button :focusable="false" type="primary" @click="onSaveConnection">
-            <!-- {{ isEditMode ? $t('preferences.general.update') : $t('common.confirm') }} -->
-            {{ $t('common.confirm') }}
-        </n-button>
+      <n-button :focusable="false" type="primary" @click="handleLoadConfig">
+        <!-- {{ isEditMode ? $t('preferences.general.update') : $t('common.confirm') }} -->
+        {{ $t("common.confirm") }}
+      </n-button>
       <!-- </template> -->
     </n-spin>
 
