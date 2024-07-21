@@ -17,7 +17,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 //go:embed all:frontend/dist
@@ -28,19 +27,13 @@ var icon []byte
 
 var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
-var k8sFlags *genericclioptions.ConfigFlags
 
 func init() {
-	k8sFlags = genericclioptions.NewConfigFlags(client.UsePersistentConfig)
 }
 
 func main() {
+	clientSvc := client.NewClientService()
 	// Create an instance of the app structure
-	s := "./kubeconfig"
-	k8sFlags.KubeConfig = &s
-	k8sCfg := client.NewConfig(k8sFlags)
-	client := client.New(k8sCfg)
-
 	sysSvc := services.System()
 	connSvc := services.Connection()
 	browserSvc := services.Browser()
@@ -80,7 +73,7 @@ func main() {
 		BackgroundColour: options.NewRGBA(27, 38, 54, 0),
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
-			client.Start(ctx)
+			// clientSvc.Start(ctx)
 			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			browserSvc.Start(ctx)
@@ -108,6 +101,7 @@ func main() {
 			pubsubSvc.StopAll()
 		},
 		Bind: []interface{}{
+			clientSvc,
 			sysSvc,
 			connSvc,
 			browserSvc,
