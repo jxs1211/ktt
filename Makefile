@@ -36,8 +36,7 @@ test: fmt vet ## Run go test again code.
 	go test ./... -coverprofile cover.out
 
 .PHONY: report
-report: fmt vet ## Run go test again code.
-	go test ./... -coverprofile cover.out
+report: fmt vet test ## Run go test again code.
 	go tool cover -html=cover.out -o cover.html
 
 ##@ Build
@@ -45,18 +44,6 @@ report: fmt vet ## Run go test again code.
 .PHONY: build
 build: fmt vet ## Build binary.
 	go build -o ltsctl main.go
-
-.PHONY: run-help
-run-help: fmt vet ## Display help how to run a ltsctl from your host.
-	go run ./main.go 
-
-.PHONY: run-wms-agent
-run-wms-agent: fmt vet ## run a wms-agent using ltsctl from your host.
-	go run ./main.go run wms-agent 
-
-.PHONY: run-uploader
-run-uploader: fmt vet ## run a uploader using ltsctl from your host.
-	go run ./main.go run uploader
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
@@ -75,32 +62,4 @@ docker-login: ## Login docker image
 
 .PHONY: docker-build-push
 docker-build-push: docker-build docker-login docker-push## Build, Login and Push docker image 
-	@echo "docker build and push Done"
-
-.PHONY: docker-build-kwos
-docker-build-kwos: test ## Build docker image for kwos
-	docker build -t ${IMG_KWOS} -f ${DOCKERFILE_KWOS} .
-
-.PHONY: docker-push-kwos
-docker-push-kwos: ## Push docker image for kwos
-	docker push ${IMG_KWOS}
-
-.PHONY: docker-build-push-kwos
-docker-build-push-kwos: docker-build-kwos docker-login docker-push-kwos ## Build, Login and Push docker image for kwos
-	@echo "docker build and push Done"
-
-.PHONY: docker-build-debug
-docker-build-debug: test ## Build docker image for debug
-	docker build -t ${IMG_DEBUG} -f ${DOCKERFILE_DEBUG} .
-
-.PHONY: docker-push-debug
-docker-push-debug: ## Push docker image for debug
-	docker push ${IMG_DEBUG}
-
-.PHONY: docker-build-push-debug
-docker-build-push-debug: docker-build-debug docker-login docker-push-debug ## Build, Login and Push docker image for debug
-	@echo "docker build and push Done"
-
-.PHONY: docker-build-push-all
-docker-build-push-all: docker-build docker-build-kwos docker-login docker-push docker-push-kwos ## Build, Login and Push docker image for all
 	@echo "docker build and push Done"
