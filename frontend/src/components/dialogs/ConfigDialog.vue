@@ -43,16 +43,20 @@ const onLoadConfig = async () => {
     validateResult.value = result.msg || $t("dialogue.connection.test_fail");
   }
   showValidateResult.value = true;
-  $message.success(i18n.t("dialogue.handle_succ"));
-  onClose();
+  if (result.success) {
+    $message.success(i18n.t("dialogue.handle_succ"));
+    onClose();
+  }
 };
 const onTestConnection = async () => {
+  validating.value = true;
   const result = await configStore.testConnection(content.value);
   if (result.success) {
     validateResult.value = "";
   } else {
     validateResult.value = result || $t("dialogue.connection.test_fail");
   }
+  validating.value = false;
   showValidateResult.value = true;
 };
 const generalForm = ref(null);
@@ -101,12 +105,21 @@ const predefineColors = ref([
 const generalFormRef = ref(null);
 const advanceFormRef = ref(null);
 
-const resetForm = () => {
-  console.log("resetForm called");
+const resetData = () => {
+  validating.value = false;
+  validateResult.value = null;
 };
 const onClose = () => {
   dialogStore.closeConfigDialog();
 };
+watch(
+  () => dialogStore.configDialogVisible,
+  (visible) => {
+    if (visible) {
+      resetData();
+    }
+  },
+);
 </script>
 
 <template>
@@ -161,7 +174,7 @@ const onClose = () => {
         <n-button
           :disabled="closingConnection"
           :focusable="false"
-          :loading="testing"
+          :loading="validating"
           @click="onTestConnection"
         >
           {{ $t("dialogue.connection.test") }}
