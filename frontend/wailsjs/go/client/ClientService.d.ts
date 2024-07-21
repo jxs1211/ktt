@@ -6,3 +6,5 @@ import {context} from '../models';
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 
 export function Start(arg1:context.Context):Promise<void>;
+
+export function TestConnection(arg1:string):Promise<types.JSResp>;

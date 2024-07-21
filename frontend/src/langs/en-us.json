@@ -200,7 +200,7 @@
       "usr_tip": "(Optional) Auth username",
       "pwd_tip": "(Optional) Auth password (Redis > 6.0)",
       "test": "Test Connection",
-      "test_succ": "Successfully connected to apiserver",
+      "test_succ": "Successfully connected to Cluster",
       "test_fail": "Connection failed",
       "parse_url_clipboard": "Parse URL from Clipboard",
       "parse_pass": "Redis URL parsed: {url}",

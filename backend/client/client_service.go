@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -32,13 +33,31 @@ func NewClientService() *ClientService {
 // 	s.client = client
 // }
 
-func (s *ClientService) LoadConfig(configContent string) types.JSResp {
-	content := []byte(configContent)
-	config, err := clientcmd.Load(content)
+func (s *ClientService) TestConnection(config string) types.JSResp {
+	_, err := s.validate(config)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
-	err = clientcmd.Validate(*config)
+	return types.JSResp{
+		Success: true,
+	}
+}
+
+func (s *ClientService) validate(config string) (*clientcmdapi.Config, error) {
+	content := []byte(config)
+	apiConfig, err := clientcmd.Load(content)
+	if err != nil {
+		return nil, err
+	}
+	err = clientcmd.Validate(*apiConfig)
+	if err != nil {
+		return nil, err
+	}
+	return apiConfig, nil
+}
+
+func (s *ClientService) LoadConfig(configContent string) types.JSResp {
+	config, err := s.validate(configContent)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}

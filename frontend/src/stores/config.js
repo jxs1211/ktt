@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { get, isEmpty, isObject, uniq } from "lodash";
-import { LoadConfig } from "wailsjs/go/client/ClientService.js";
+import { LoadConfig, TestConnection } from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import useBrowserStore from "stores/browser.js";
 import { i18nGlobal } from "@/utils/i18n.js";
@@ -9,6 +9,7 @@ import { ClipboardGetText } from "wailsjs/runtime/runtime.js";
 const useConfigStore = defineStore("config", {
   state: () => ({
     loaded: false,
+    testResult: "",
   }),
   getters: {},
   actions: {
@@ -22,10 +23,16 @@ const useConfigStore = defineStore("config", {
         return { success: false, msg: "no config content" };
       }
 
-      const { success, data, msg } = await LoadConfig(content);
-      return { success, data, msg };
+      const { success, msg, data } = await LoadConfig(content);
+      return { success, msg, data };
     },
-
+    async testConnection(config) {
+      if (isEmpty(config)) {
+        return { success: false, msg: "no config content" };
+      }
+      const { success, msg, data } = await TestConnection(config);
+      return { success, msg, data };
+    },
     /**
      * get connection by name from local profile
      * @param name

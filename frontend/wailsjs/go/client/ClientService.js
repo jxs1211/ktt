@@ -9,3 +9,7 @@ export function LoadConfig(arg1) {
 export function Start(arg1) {
   return window['go']['client']['ClientService']['Start'](arg1);
 }
+
+export function TestConnection(arg1) {
+  return window['go']['client']['ClientService']['TestConnection'](arg1);
+}
