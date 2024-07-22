@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	kubeconfigPath = path.Join(homedir.HomeDir(), "KTT", "ktt-kube-config")
+	kubeconfigPath = path.Join(homedir.HomeDir(), ".KTT", "ktt-kube-config")
 )
 
 type ClientService struct {
@@ -44,6 +44,9 @@ func (s *ClientService) TestConnection(config string) types.JSResp {
 }
 
 func (s *ClientService) validate(config string) (*clientcmdapi.Config, error) {
+	if len(config) == 0 {
+		return nil, ErrEmptyConfig
+	}
 	content := []byte(config)
 	apiConfig, err := clientcmd.Load(content)
 	if err != nil {

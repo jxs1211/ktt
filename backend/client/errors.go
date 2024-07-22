@@ -11,6 +11,7 @@ func (e Error) Error() string {
 }
 
 const (
+	ErrEmptyConfig        = Error("no configuration has been provided")
 	noMetricServerErr     = Error("No metrics-server detected")
 	metricsUnsupportedErr = Error("No metrics api group " + metricsapi.GroupName + " found on cluster")
 )

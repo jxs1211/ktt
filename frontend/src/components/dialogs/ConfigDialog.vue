@@ -42,7 +42,6 @@ const onLoadConfig = async () => {
   } else {
     validateResult.value = result.msg || $t("dialogue.connection.test_fail");
   }
-  showValidateResult.value = true;
   if (result.success) {
     $message.success(i18n.t("dialogue.handle_succ"));
     onClose();
@@ -57,7 +56,6 @@ const onTestConnection = async () => {
     validateResult.value = result || $t("dialogue.connection.test_fail");
   }
   validating.value = false;
-  showValidateResult.value = true;
 };
 const generalForm = ref(null);
 const generalFormRules = () => {
@@ -127,7 +125,7 @@ watch(
     v-model:show="dialogStore.configDialogVisible"
     :closable="false"
     :mask-closable="false"
-    :on-after-leave="resetForm"
+    :on-after-leave="resetData"
     :show-icon="false"
     :title="
       isEditMode
