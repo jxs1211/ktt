@@ -15,6 +15,7 @@ import { useI18n } from "vue-i18n";
 import useDialog, { ConnDialogType } from "stores/dialog";
 import Close from "@/components/icons/Close.vue";
 import useConfigStore from "stores/config.js";
+import useConnectionStore from "stores/connections.js";
 import FileOpenInput from "@/components/common/FileOpenInput.vue";
 import { KeyViewType } from "@/consts/key_view_type.js";
 import { useThemeVars } from "naive-ui";
@@ -31,6 +32,7 @@ const themeVars = useThemeVars();
 const dialogStore = useDialog();
 const configStore = useConfigStore();
 const browserStore = useBrowserStore();
+const connectionStore = useConnectionStore();
 const i18n = useI18n();
 
 const editName = ref("");
@@ -39,6 +41,13 @@ const onLoadConfig = async () => {
   const result = await configStore.loadConfig(content.value);
   if (result.success) {
     validateResult.value = "";
+    connectionStore.clusters = result.data.map((_, index) => {
+      return {
+        label: result.data[index],
+        key: `${index}`,
+      };
+    });
+    console.log(connectionStore.clusters);
   } else {
     validateResult.value = result.msg || $t("dialogue.connection.test_fail");
   }

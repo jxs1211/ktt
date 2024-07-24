@@ -3,6 +3,8 @@
 import {types} from '../models';
 import {context} from '../models';
 
+export function GetClusters():Promise<Array<string>>;
+
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 
 export function Start(arg1:context.Context):Promise<void>;

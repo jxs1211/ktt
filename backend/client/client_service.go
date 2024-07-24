@@ -5,7 +5,7 @@ import (
 	"ktt/backend/types"
 	"path"
 
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/homedir"
@@ -16,9 +16,8 @@ var (
 )
 
 type ClientService struct {
-	// client *APIClient
-	client *kubernetes.Clientset
-	ctx    context.Context
+	apiClient *APIClient
+	ctx       context.Context
 }
 
 func NewClientService() *ClientService {
@@ -60,30 +59,38 @@ func (s *ClientService) validate(config string) (*clientcmdapi.Config, error) {
 }
 
 func (s *ClientService) LoadConfig(configContent string) types.JSResp {
-	config, err := s.validate(configContent)
+	userConfig, err := s.validate(configContent)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
 	// write to file
-	err = clientcmd.WriteToFile(*config, kubeconfigPath)
+	err = clientcmd.WriteToFile(*userConfig, kubeconfigPath)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
-	restClientConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		return types.FailedResp(err.Error())
-	}
-	clientset, err := kubernetes.NewForConfig(restClientConfig)
-	if err != nil {
-		return types.FailedResp(err.Error())
-	}
-	s.client = clientset
-
+	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
+	flags.KubeConfig = &kubeconfigPath
+	s.apiClient = New(
+		NewConfig(flags),
+	)
 	return types.JSResp{
 		Success: true,
+		Data:    s.GetClusters(),
 	}
 }
 
 func (s *ClientService) Start(ctx context.Context) {
 	s.ctx = ctx
+}
+
+func (s *ClientService) GetClusters() []string {
+	ctxs, err := s.apiClient.config.Contexts()
+	if err != nil {
+		return nil
+	}
+	m := make([]string, 0, len(ctxs))
+	for _, ctx := range ctxs {
+		m = append(m, ctx.Cluster)
+	}
+	return m
 }

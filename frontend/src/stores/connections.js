@@ -55,6 +55,7 @@ const useConnectionStore = defineStore("connections", {
     groups: [], // all group name set
     connections: [], // all connections
     serverProfile: {}, // all server profile in flat list
+    clusters: [],
   }),
   getters: {},
   actions: {
