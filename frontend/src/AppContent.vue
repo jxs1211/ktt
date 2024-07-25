@@ -254,7 +254,6 @@ const onKeyShortcut = (e) => {
             :min-size="300"
             :offset="data.navMenuWidth"
             class="flex-item"
-            @update:size="handleResize"
           >
             <connection-pane class="app-side flex-item-expand" />
           </resizeable-wrapper>

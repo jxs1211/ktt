@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 import { get, isEmpty, isObject, uniq } from "lodash";
-import { LoadConfig, TestConnection } from "wailsjs/go/client/ClientService.js";
+import {
+  LoadConfig,
+  TestConnection,
+  Analyze,
+  GetClusters,
+} from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import useBrowserStore from "stores/browser.js";
 import { i18nGlobal } from "@/utils/i18n.js";
@@ -22,9 +27,7 @@ const useConfigStore = defineStore("config", {
       if (isEmpty(content)) {
         return { success: false, msg: "no config content" };
       }
-
-      const { success, msg, data } = await LoadConfig(content);
-      return { success, msg, data };
+      return await LoadConfig(content);
     },
     async testConnection(config) {
       if (isEmpty(config)) {
@@ -32,6 +35,13 @@ const useConfigStore = defineStore("config", {
       }
       const { success, msg, data } = await TestConnection(config);
       return { success, msg, data };
+    },
+    async analyze(cluster, fitlers) {
+      const { success, msg, data } = await Analyze(cluster, fitlers);
+      return { success, msg, data };
+    },
+    async getClusters() {
+      return await GetClusters();
     },
     /**
      * get connection by name from local profile

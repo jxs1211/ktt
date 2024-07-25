@@ -57,6 +57,8 @@ const onLoadConfig = async () => {
   }
 };
 const onTestConnection = async () => {
+  const clusters = await configStore.getClusters();
+  console.log(clusters);
   validating.value = true;
   const result = await configStore.testConnection(content.value);
   if (result.success) {

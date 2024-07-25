@@ -3,7 +3,13 @@
 import {types} from '../models';
 import {context} from '../models';
 
+export function Analyze(arg1:string,arg2:Array<string>):Promise<types.JSResp>;
+
+export function CurrentContext():Promise<string>;
+
 export function GetClusters():Promise<Array<string>>;
+
+export function GetContexts():Promise<Array<string>>;
 
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 

@@ -2,13 +2,17 @@ package client
 
 import (
 	"context"
-	"ktt/backend/types"
+	"errors"
 	"path"
 
+	"github.com/k8sgpt-ai/k8sgpt/pkg/analysis"
+	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/homedir"
+
+	"ktt/backend/types"
 )
 
 var (
@@ -16,21 +20,13 @@ var (
 )
 
 type ClientService struct {
-	apiClient *APIClient
 	ctx       context.Context
+	apiClient *APIClient
 }
 
 func NewClientService() *ClientService {
 	return &ClientService{}
 }
-
-// func (s *ClientService) Load(configPath string) {
-// 	k8sFlags := genericclioptions.NewConfigFlags(UsePersistentConfig)
-// 	k8sFlags.KubeConfig = &configPath
-// 	k8sCfg := NewConfig(k8sFlags)
-// 	client := New(k8sCfg)
-// 	s.client = client
-// }
 
 func (s *ClientService) TestConnection(config string) types.JSResp {
 	_, err := s.validate(config)
@@ -75,7 +71,7 @@ func (s *ClientService) LoadConfig(configContent string) types.JSResp {
 	)
 	return types.JSResp{
 		Success: true,
-		Data:    s.GetClusters(),
+		Data:    s.GetContexts(),
 	}
 }
 
@@ -83,14 +79,59 @@ func (s *ClientService) Start(ctx context.Context) {
 	s.ctx = ctx
 }
 
+func (s *ClientService) GetContexts() []string {
+	config, err := s.apiClient.config.RawConfig()
+	if err != nil {
+		return nil
+	}
+	ctxs := config.Contexts
+	slice := make([]string, 0, len(ctxs))
+	for k := range ctxs {
+		slice = append(slice, k)
+	}
+	return slice
+}
+
 func (s *ClientService) GetClusters() []string {
 	ctxs, err := s.apiClient.config.Contexts()
 	if err != nil {
 		return nil
 	}
-	m := make([]string, 0, len(ctxs))
+	slice := make([]string, 0, len(ctxs))
 	for _, ctx := range ctxs {
-		m = append(m, ctx.Cluster)
+		slice = append(slice, ctx.Cluster)
 	}
-	return m
+	return slice
+}
+
+func (s *ClientService) CurrentContext() string {
+	return s.apiClient.ActiveContext()
+}
+
+func (s *ClientService) Analyze(cluster string, filters []string) types.JSResp {
+	if len(cluster) == 0 {
+		return types.FailedResp("cluster is empty")
+	}
+	viper.Set("kubecontext", cluster)
+	viper.Set("kubeconfig", kubeconfigPath)
+
+	analyzer, err := analysis.NewAnalysis(
+		"noopai", "english", filters, "", "", false, false, 1, false, false, []string{},
+	)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	defer analyzer.Close()
+	analyzer.RunAnalysis()
+	if len(analyzer.Errors) > 0 {
+		errs := make([]error, 0, len(analyzer.Errors))
+		for _, err := range analyzer.Errors {
+			errs = append(errs, errors.New(err))
+		}
+		return types.FailedResp(errors.Join(errs...).Error())
+	}
+	return types.JSResp{
+		Success: true,
+		Data:    analyzer.Results,
+	}
 }

@@ -506,7 +506,6 @@ const onCancelOpen = () => {
       :block-node="true"
       :cancelable="false"
       :data="connectionStore.clusters"
-      :draggable="true"
       :expanded-keys="expandedKeys"
       :node-props="nodeProps"
       :pattern="props.filterPattern"
@@ -516,7 +515,6 @@ const onCancelOpen = () => {
       :selected-keys="selectedKeys"
       class="fill-height"
       virtual-scroll
-      @drop="handleDrop"
       @update:selected-keys="onUpdateSelectedKeys"
       @update:expanded-keys="onUpdateExpandedKeys"
     >
