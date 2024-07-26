@@ -2,9 +2,11 @@ import { defineStore } from "pinia";
 import { get, isEmpty, isObject, uniq } from "lodash";
 import {
   LoadConfig,
+  GetLocalConfig,
   TestConnection,
   Analyze,
   GetClusters,
+  GetAvailableFilteredResources,
 } from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import useBrowserStore from "stores/browser.js";
@@ -15,14 +17,16 @@ const useConfigStore = defineStore("config", {
   state: () => ({
     loaded: false,
     testResult: "",
+    localConfig: {},
   }),
   getters: {},
   actions: {
-    /**
-     * load configuration
-     * @param {boolean} [force]
-     * @returns {Promise<void>}
-     */
+    async getAvailableResources() {
+      return await GetAvailableFilteredResources();
+    },
+    async getLocalConfig() {
+      return await GetLocalConfig();
+    },
     async loadConfig(content) {
       if (isEmpty(content)) {
         return { success: false, msg: "no config content" };
@@ -37,8 +41,7 @@ const useConfigStore = defineStore("config", {
       return { success, msg, data };
     },
     async analyze(cluster, fitlers) {
-      const { success, msg, data } = await Analyze(cluster, fitlers);
-      return { success, msg, data };
+      return await Analyze(cluster, fitlers);
     },
     async getClusters() {
       return await GetClusters();

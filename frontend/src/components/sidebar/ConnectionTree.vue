@@ -277,6 +277,9 @@ const onUpdateExpandedKeys = (keys, option) => {
 
 const onUpdateSelectedKeys = (keys, option) => {
   selectedKeys.value = keys;
+  if (!isEmpty(keys)) {
+    connectionStore.currentCluster = option[0].label;
+  }
 };
 
 /**
@@ -516,7 +519,6 @@ const onCancelOpen = () => {
       class="fill-height"
       virtual-scroll
       @update:selected-keys="onUpdateSelectedKeys"
-      @update:expanded-keys="onUpdateExpandedKeys"
     >
       <template #empty>
         <n-empty

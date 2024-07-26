@@ -10,12 +10,20 @@ export function CurrentContext() {
   return window['go']['client']['ClientService']['CurrentContext']();
 }
 
+export function GetAvailableFilteredResources() {
+  return window['go']['client']['ClientService']['GetAvailableFilteredResources']();
+}
+
 export function GetClusters() {
   return window['go']['client']['ClientService']['GetClusters']();
 }
 
 export function GetContexts() {
   return window['go']['client']['ClientService']['GetContexts']();
+}
+
+export function GetLocalConfig() {
+  return window['go']['client']['ClientService']['GetLocalConfig']();
 }
 
 export function LoadConfig(arg1) {

@@ -15,9 +15,11 @@ import {
   SaveRefreshInterval,
   SaveSortedConnection,
 } from "wailsjs/go/services/connectionService.js";
+import { GetAvailableFilteredResources } from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import { KeyViewType } from "@/consts/key_view_type.js";
 import useBrowserStore from "stores/browser.js";
+import useConfigStore from "stores/config";
 import { i18nGlobal } from "@/utils/i18n.js";
 import { ClipboardGetText } from "wailsjs/runtime/runtime.js";
 
@@ -56,9 +58,29 @@ const useConnectionStore = defineStore("connections", {
     connections: [], // all connections
     serverProfile: {}, // all server profile in flat list
     clusters: [],
+    currentCluster: "",
+    filteredResources: [],
   }),
   getters: {},
   actions: {
+    async getAvailableResources() {
+      const resp = await GetAvailableFilteredResources();
+      if (resp.success) {
+        return resp.data;
+      }
+    },
+    async updateClusterFromConfig(config) {
+      const configStore = useConfigStore();
+      const resp = await configStore.loadConfig(config);
+      if (resp.success) {
+        this.clusters = resp.data.map((_, index) => {
+          return {
+            label: resp.data[index],
+            key: `${index}`,
+          };
+        });
+      }
+    },
     /**
      * load all store connections struct from local profile
      * @param {boolean} [force]

@@ -2,7 +2,7 @@
 import ContentPane from "./components/content/ContentPane.vue";
 import BrowserPane from "./components/sidebar/BrowserPane.vue";
 import { computed, onMounted, reactive, ref, watchEffect } from "vue";
-import { debounce } from "lodash";
+import { debounce, isEmpty } from "lodash";
 import { useThemeVars } from "naive-ui";
 import Ribbon from "./components/sidebar/Ribbon.vue";
 import ConnectionPane from "./components/sidebar/ConnectionPane.vue";
@@ -10,6 +10,7 @@ import ContentServerPane from "./components/content/ContentServerPane.vue";
 import useTabStore from "./stores/tab.js";
 import usePreferencesStore from "./stores/preferences.js";
 import ContentLogPane from "./components/content/ContentLogPane.vue";
+import ContentErrorPane from "./components/content/ContentErrorPane.vue";
 import ContentValueTab from "@/components/content/ContentValueTab.vue";
 import ToolbarControlWidget from "@/components/common/ToolbarControlWidget.vue";
 import {
@@ -22,6 +23,8 @@ import { isMacOS } from "@/utils/platform.js";
 import iconUrl from "@/assets/images/icon.png";
 import ResizeableWrapper from "@/components/common/ResizeableWrapper.vue";
 import { extraTheme } from "@/utils/extra_theme.js";
+import useConnectionStore from "./stores/connections.js";
+import useConfigStore from "./stores/config.js";
 
 const themeVars = useThemeVars();
 
@@ -35,6 +38,8 @@ const data = reactive({
 });
 
 const tabStore = useTabStore();
+const connectionStore = useConnectionStore();
+const configStore = useConfigStore();
 const prefStore = usePreferencesStore();
 const logPaneRef = ref(null);
 const exThemeVars = computed(() => {
@@ -51,9 +56,9 @@ const handleResize = () => {
 };
 
 watchEffect(() => {
-  if (tabStore.nav === "log") {
-    logPaneRef.value?.refresh();
-  }
+  // if (tabStore.nav === "log") {
+  logPaneRef.value?.refresh();
+  // }
 });
 
 const logoWrapperWidth = computed(() => {
@@ -116,6 +121,11 @@ onMounted(async () => {
   onToggleFullscreen(fullscreen === true);
   const maximised = await WindowIsMaximised();
   onToggleMaximize(maximised);
+  // load config from local
+  const { success, msg, data } = await configStore.getLocalConfig();
+  if (success) {
+    connectionStore.updateClusterFromConfig(data);
+  }
 });
 
 const onKeyShortcut = (e) => {
@@ -257,16 +267,24 @@ const onKeyShortcut = (e) => {
           >
             <connection-pane class="app-side flex-item-expand" />
           </resizeable-wrapper>
-          <content-server-pane class="flex-item-expand" />
+          <content-server-pane
+            v-if="isEmpty(connectionStore.clusters)"
+            class="flex-item-expand"
+          />
+          <content-error-pane
+            v-else
+            ref="logPaneRef"
+            class="flex-item-expand"
+          />
         </div>
 
         <!-- log page -->
-        <div
+        <!-- <div
           v-show="tabStore.nav === 'log'"
           class="content-area flex-box-h flex-item-expand"
         >
           <content-log-pane ref="logPaneRef" class="flex-item-expand" />
-        </div>
+        </div> -->
       </div>
     </div>
   </n-spin>

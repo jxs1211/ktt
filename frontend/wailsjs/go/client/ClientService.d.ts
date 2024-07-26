@@ -7,9 +7,13 @@ export function Analyze(arg1:string,arg2:Array<string>):Promise<types.JSResp>;
 
 export function CurrentContext():Promise<string>;
 
+export function GetAvailableFilteredResources():Promise<types.JSResp>;
+
 export function GetClusters():Promise<Array<string>>;
 
-export function GetContexts():Promise<Array<string>>;
+export function GetContexts():Promise<types.JSResp>;
+
+export function GetLocalConfig():Promise<types.JSResp>;
 
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 
