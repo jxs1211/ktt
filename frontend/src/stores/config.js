@@ -40,8 +40,8 @@ const useConfigStore = defineStore("config", {
       const { success, msg, data } = await TestConnection(config);
       return { success, msg, data };
     },
-    async analyze(cluster, fitlers) {
-      return await Analyze(cluster, fitlers);
+    async analyze(cluster, aibackend, model, fitlers, explain) {
+      return await Analyze(cluster, aibackend, model, fitlers, explain);
     },
     async getClusters() {
       return await GetClusters();

@@ -5,6 +5,7 @@ import "ktt/backend/consts"
 type Preferences struct {
 	Behavior PreferencesBehavior  `json:"behavior" yaml:"behavior"`
 	General  PreferencesGeneral   `json:"general" yaml:"general"`
+	AI       PreferencesAI        `json:"ai" yaml:"ai"`
 	Editor   PreferencesEditor    `json:"editor" yaml:"editor"`
 	Cli      PreferencesCli       `json:"cli" yaml:"cli"`
 	Decoder  []PreferencesDecoder `json:"decoder" yaml:"decoder,omitempty"`
@@ -25,6 +26,11 @@ func NewPreferences() Preferences {
 			KeyIconStyle: 0,
 			CheckUpdate:  true,
 			AllowTrack:   true,
+		},
+		AI: PreferencesAI{
+			Enable:  false,
+			Backend: "noopai",
+			Explain: false,
 		},
 		Editor: PreferencesEditor{
 			FontSize:    consts.DEFAULT_FONT_SIZE,
@@ -64,6 +70,16 @@ type PreferencesGeneral struct {
 	CheckUpdate     bool     `json:"checkUpdate" yaml:"check_update"`
 	SkipVersion     string   `json:"skipVersion" yaml:"skip_version,omitempty"`
 	AllowTrack      bool     `json:"allowTrack" yaml:"allow_track"`
+}
+
+type PreferencesAI struct {
+	Enable  bool   `json:"enable" yaml:"enable"`
+	Backend string `json:"backend" yaml:"backend"`
+	Explain bool   `json:"explain" yaml:"explain"`
+	Model   string `json:"model" yaml:"model"`
+	Url     string `json:"url" yaml:"url"`
+	AppId   string `json:"appId" yaml:"app_id,omitempty"`
+	ApiKey  string `json:"apiKey" yaml:"api_key,omitempty"`
 }
 
 type PreferencesEditor struct {

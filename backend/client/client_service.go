@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/k8sgpt-ai/k8sgpt/pkg/ai"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/analysis"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/analyzer"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/common"
@@ -18,14 +19,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/client-go/util/homedir"
 
 	"ktt/backend/types"
 	sliceutil "ktt/backend/utils/slice"
+	strutil "ktt/backend/utils/string"
 )
 
 var (
-	kubeconfigPath = path.Join(homedir.HomeDir(), ".KTT", "ktt-kube-config")
+	kubeconfigPath = path.Join(strutil.RootPath(), "ktt-kube-config")
 )
 
 type ClientService struct {
@@ -162,22 +163,31 @@ func (s *ClientService) CurrentContext() string {
 	return s.apiClient.ActiveContext()
 }
 
-func (s *ClientService) Analyze(cluster string, filters []string) types.JSResp {
+// feat: support to analyze with ai
+func (s *ClientService) Analyze(
+	cluster, aiBackend, model string,
+	filters []string, explain bool) types.JSResp {
 	if len(cluster) == 0 {
 		return types.FailedResp("cluster is empty")
 	}
 	viper.Set("kubecontext", cluster)
 	viper.Set("kubeconfig", kubeconfigPath)
-
-	log.Println("filters: ", filters)
-	resources, err := s.getAvailableFilteredResources()
-	if err != nil {
-		return types.FailedResp(err.Error())
+	log.Println("explain: ", explain)
+	if explain {
+		viper.Set("ai", ai.AIConfiguration{
+			DefaultProvider: aiBackend,
+			Providers: []ai.AIProvider{
+				ai.AIProvider{
+					Name:  aiBackend,
+					Model: model,
+				},
+			},
+		})
 	}
-	log.Println("resources: ", resources)
 
 	analyzer, err := analysis.NewAnalysis(
-		"noopai", "english", filters, "", "", false, false, 1, false, false, []string{},
+		aiBackend, "english", filters, "", "", false,
+		explain, 1, false, false, []string{},
 	)
 	if err != nil {
 		return types.FailedResp(err.Error())
@@ -194,6 +204,12 @@ func (s *ClientService) Analyze(cluster string, filters []string) types.JSResp {
 	}
 	if analyzer.Results == nil {
 		analyzer.Results = []common.Result{}
+	}
+	anonymize := true
+	if explain {
+		if err := analyzer.GetAIResults("json", anonymize); err != nil {
+			return types.FailedResp(err.Error())
+		}
 	}
 	return types.JSResp{
 		Success: true,

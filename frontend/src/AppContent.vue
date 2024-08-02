@@ -41,7 +41,8 @@ const tabStore = useTabStore();
 const connectionStore = useConnectionStore();
 const configStore = useConfigStore();
 const prefStore = usePreferencesStore();
-const logPaneRef = ref(null);
+// feat: errorPaneRef support to trigger fetching data from backend using watchEffect
+const errorPaneRef = ref(null);
 const exThemeVars = computed(() => {
   return extraTheme(prefStore.isDark);
 });
@@ -56,9 +57,9 @@ const handleResize = () => {
 };
 
 watchEffect(() => {
-  // if (tabStore.nav === "log") {
-  logPaneRef.value?.refresh();
-  // }
+  if (connectionStore.clusters.length > 0) {
+    errorPaneRef.value?.refresh();
+  }
 });
 
 const logoWrapperWidth = computed(() => {
@@ -273,7 +274,7 @@ const onKeyShortcut = (e) => {
           />
           <content-error-pane
             v-else
-            ref="logPaneRef"
+            ref="errorPaneRef"
             class="flex-item-expand"
           />
         </div>

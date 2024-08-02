@@ -3,7 +3,7 @@
 import {types} from '../models';
 import {context} from '../models';
 
-export function Analyze(arg1:string,arg2:Array<string>):Promise<types.JSResp>;
+export function Analyze(arg1:string,arg2:string,arg3:string,arg4:Array<string>,arg5:boolean):Promise<types.JSResp>;
 
 export function CurrentContext():Promise<string>;
 

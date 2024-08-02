@@ -3,18 +3,22 @@ import IconButton from "@/components/common/IconButton.vue";
 import Refresh from "@/components/icons/Refresh.vue";
 import {
   capitalize,
-  filter,
   includes,
   isEmpty,
   map,
   split,
   uniqBy,
+  isString,
+  isNumber,
+  isNull,
+  isUndefined,
 } from "lodash";
 import { useThemeVars } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
-import { computed, h, nextTick, reactive, ref, watch } from "vue";
+import usePreferencesStore from "stores/preferences.js";
+import { computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const themeVars = useThemeVars();
@@ -22,12 +26,13 @@ const themeVars = useThemeVars();
 const browserStore = useBrowserStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
+const preferencesStore = usePreferencesStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
   server: "",
-  filters: [],
   options: [],
+  selectedOptions: [],
   history: [],
   results: [],
 });
@@ -193,38 +198,23 @@ const columns = computed(() => [
   // },
 ]);
 
-// watch(
-//   () => connectionStore.currentCluster,
-//   (currentCluster, previousCluster) => {
-//     // await nextTick();
-//     analyze(currentCluster, data.filters);
-//   },
-// );
-
 const analyze = async () => {
   if (isEmpty(connectionStore.currentCluster)) {
     $message.warning(i18n.t("error.no_cluster_selected"));
     return;
   }
-  // so far, the value of input is a string, we just workaround it by wrapping it up.
-  if (typeof data.filters === "string") {
-    if (data.trim !== "") {
-      data.filters = [capitalize(data.filters)];
-    } else {
-      data.filters = [];
-    }
-  }
-  // fix: the element in the array is empty string
-  if (typeof data.filters === "array") {
-    data.filters = filter(data.filters, (o) => o.trim() !== "");
-  }
-  console.log(data.filters);
+  // feat: provide selectable options fetched from backend
+  console.log("analyze: ", data.selectedOptions);
   try {
     await nextTick();
     data.loading = true;
+    console.log("analyze ai:", preferencesStore.ai);
     const resp = await configStore.analyze(
       connectionStore.currentCluster,
-      data.filters,
+      preferencesStore.ai.backend,
+      preferencesStore.ai.model,
+      data.selectedOptions,
+      preferencesStore.ai.explain,
     );
     if (!resp.success) {
       data.results = [];
@@ -250,6 +240,7 @@ const loadResources = async () => {
     data.loading = true;
     const list = await connectionStore.getAvailableResources();
     data.options = list || [];
+    console.log("data.options: ", data.options);
   } finally {
     data.loading = false;
     await nextTick();
@@ -274,11 +265,26 @@ const cleanHistory = async () => {
   });
 };
 
+const onSelectedItemUpdate = (keys) => {
+  // fix: be compatiable with other possible types
+  if (isString(keys)) {
+    keys = [keys];
+  } else if (isNumber(keys)) {
+    keys = [keys.toString()];
+  } else if (isNull(keys)) {
+    keys = [];
+  } else if (isUndefined(keys)) {
+    keys = [];
+  }
+  data.selectedOptions = keys;
+  console.log("selectedUpdate: ", data.selectedOptions);
+};
+
 defineExpose({
   refresh: loadResources,
 });
 </script>
-
+<!-- feat: support multiple choice on select -->
 <template>
   <div
     class="content-log content-container content-value fill-height flex-box-v"
@@ -287,15 +293,17 @@ defineExpose({
     <n-form :disabled="data.loading" class="flex-item" inline>
       <n-form-item :label="$t('error.filter_resource')">
         <n-select
-          v-model:value="data.server"
           :consistent-menu-width="false"
           :options="filterOptions"
-          style="min-width: 100px"
+          multiple
+          filterable
+          @update:value="onSelectedItemUpdate"
+          style="min-width: 200px"
         />
       </n-form-item>
-      <n-form-item :label="$t('error.filter_keyword')">
+      <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />
-      </n-form-item>
+      </n-form-item> -->
       <n-form-item label="&nbsp;">
         <icon-button
           :icon="Refresh"

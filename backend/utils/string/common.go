@@ -1,7 +1,10 @@
 package strutil
 
 import (
+	"path"
 	"unicode"
+
+	"k8s.io/client-go/util/homedir"
 )
 
 func ContainsBinary(str string) bool {
@@ -39,4 +42,8 @@ func IsSameChar(str string) bool {
 	}
 
 	return true
+}
+
+func RootPath() string {
+	return path.Join(homedir.HomeDir(), ".KTT")
 }

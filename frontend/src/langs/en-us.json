@@ -51,6 +51,30 @@
       "privacy": "Privacy",
       "allow_track": "Allows anonymous data to be collected"
     },
+    "ai": {
+      "name": "AI",
+      "enable": "Enable AI",
+      "api_key": "API Key",
+      "providers": {
+        "localai": {
+          "name": "localai",
+          "model": "model",
+          "base_url": "Base URL"
+        },
+        "openai": {
+          "name": "openai",
+          "model": "model",
+          "base_url": "Base URL",
+          "api_key": "API Key"
+        },
+        "azure": {
+          "name": "azure",
+          "model": "model",
+          "base_url": "Base URL",
+          "api_key": "API Key"
+        }
+      }
+    },
     "editor": {
       "name": "Editor",
       "show_linenum": "Show Line Numbers",
