@@ -211,10 +211,41 @@ func (s *ClientService) Analyze(
 			return types.FailedResp(err.Error())
 		}
 	}
+	results := parseDetail(analyzer.Results)
 	return types.JSResp{
 		Success: true,
-		Data:    analyzer.Results,
+		Data:    results,
 	}
+}
+
+func parseDetail(results []common.Result) []Result {
+	res := make([]Result, 0, len(results))
+	for _, result := range results {
+		parts := strings.Split(result.Details, "\n\nSolution: \n")
+		detail := Detail{}
+		if len(parts) > 0 {
+			detail.Error = strings.TrimPrefix(parts[0], "Error: ")
+		}
+		if len(parts) > 1 {
+			solutionSteps := strings.Split(parts[1], "\n")
+			for _, step := range solutionSteps {
+				if step != "" {
+					detail.Solution = append(detail.Solution, strings.TrimSpace(step))
+				}
+			}
+		}
+		if len(detail.Solution) == 0 {
+			detail.Solution = []string{}
+		}
+		res = append(res, Result{
+			Kind:         result.Kind,
+			Name:         result.Name,
+			Error:        result.Error,
+			Details:      detail,
+			ParentObject: result.ParentObject,
+		})
+	}
+	return res
 }
 
 // feat: implement api-resources API

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/k8sgpt-ai/k8sgpt/pkg/common"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery/cached/disk"
 	"k8s.io/client-go/dynamic"
@@ -166,3 +167,14 @@ type NodesMetrics map[string]NodeMetrics
 
 // PodsMetrics tracks usage metrics per pods.
 type PodsMetrics map[string]PodMetrics
+type Result struct {
+	Kind         string           `json:"kind"`
+	Name         string           `json:"name"`
+	Error        []common.Failure `json:"error"`
+	Details      Detail           `json:"details"`
+	ParentObject string           `json:"parentObject"`
+}
+type Detail struct {
+	Error    string   `json:"error"`
+	Solution []string `json:"solution"`
+}

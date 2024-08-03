@@ -1,6 +1,7 @@
 <script setup>
 import IconButton from "@/components/common/IconButton.vue";
 import Refresh from "@/components/icons/Refresh.vue";
+import ErrorExplain from "@/components/content_value/ErrorExplain.vue";
 import {
   capitalize,
   includes,
@@ -13,7 +14,7 @@ import {
   isNull,
   isUndefined,
 } from "lodash";
-import { useThemeVars } from "naive-ui";
+import { useThemeVars, NTag } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
@@ -69,44 +70,110 @@ const filterOptions = computed(() => {
   return options;
 });
 const tableRef = ref(null);
-
+const handleNamespaceName = (nsname) => {
+  if (isEmpty(nsname)) {
+    return "N/A";
+  }
+  if (!nsname.includes("/")) {
+    return nsname;
+  }
+  const [ns, name] = split(nsname, "/");
+  return h(
+    "div",
+    {
+      style: {
+        marginRight: "6px",
+      },
+      type: "info",
+      bordered: false,
+    },
+    [
+      h(
+        NTag,
+        {
+          style: {
+            marginRight: "6px",
+          },
+          type: "info",
+          bordered: false,
+        },
+        {
+          default: () => ns,
+        },
+      ),
+      h(
+        "div",
+        {
+          style: {
+            marginRight: "6px",
+          },
+          type: "info",
+          bordered: false,
+        },
+        {
+          default: () => name,
+        },
+      ),
+    ],
+  );
+};
 const columns = computed(() => [
   {
     title: () => i18n.t("error.kind"),
     key: "kind",
     // defaultSortOrder: "ascend",
     // sorter: "default",
-    width: 180,
-    align: "center",
-    titleAlign: "center",
+    width: 50,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
     // render: ({ timestamp }, index) => {
     //   return dayjs(timestamp).format("YYYY-MM-DD HH:mm:ss");
     // },
+    render(row) {
+      return h("div", { class: "error-kind" }, row.kind);
+    },
   },
   {
     title: () => i18n.t("error.name"),
     key: "name",
-    width: 150,
-    align: "center",
-    titleAlign: "center",
+    width: 80,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
     // ellipsis: {
     //   tooltip: true,
     // },
     render(row) {
-      const [ns, name] = split(row.name, "/");
-      return `${ns}:${name}`;
+      return handleNamespaceName(row.name);
+    },
+  },
+  {
+    title: () => i18n.t("error.parent"),
+    key: "parent",
+    width: 50,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
+    // ellipsis: {
+    //   tooltip: true,
+    // },
+    render(row) {
+      return handleNamespaceName(row.parentObject);
     },
   },
   {
     title: () => i18n.t("error.error"),
     key: "error",
-    width: 150,
-    align: "center",
-    titleAlign: "center",
+    width: 100,
+    fixed: "left",
+    // align: "left",
+    // titleAlign: "center",
     render(row) {
       const tags = row.error.map((object) => {
         return h(
           "div",
+          // NTag,
           {
             style: {
               marginRight: "6px",
@@ -124,26 +191,14 @@ const columns = computed(() => [
     },
   },
   {
-    title: () => i18n.t("error.details"),
+    title: () => i18n.t("error.advice"),
     key: "details",
     width: 150,
-    align: "center",
-    titleAlign: "center",
+    fixed: "left",
     render(row) {
-      return row.details || "N/A";
-    },
-  },
-  {
-    title: () => i18n.t("error.parent"),
-    key: "parent",
-    width: 150,
-    align: "center",
-    titleAlign: "center",
-    // ellipsis: {
-    //   tooltip: true,
-    // },
-    render(row) {
-      return row.parentObject || "N/A";
+      console.log("row.details.error: ", row.details.error);
+      return h(ErrorExplain, { data: row.details });
+      // return row.details || "N/A";
     },
   },
   // {
@@ -197,7 +252,9 @@ const columns = computed(() => [
   //   },
   // },
 ]);
-
+const pagination = {
+  pageSize: 10,
+};
 const analyze = async () => {
   if (isEmpty(connectionStore.currentCluster)) {
     $message.warning(i18n.t("error.no_cluster_selected"));
@@ -324,11 +381,14 @@ defineExpose({
     <n-data-table
       ref="tableRef"
       :columns="columns"
+      :pagination="pagination"
       :data="data.results"
       :loading="data.loading"
       class="flex-item-expand"
       flex-height
       virtual-scroll
+      striped
+      :scroll-x="1800"
     />
   </div>
 </template>
