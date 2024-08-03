@@ -460,6 +460,7 @@
     "error": "Error",
     "details": "Details",
     "explain": "Explain",
+    "advice": "Advice",
     "parent": "Parent",
     "server": "Server",
     "cmd": "Command",

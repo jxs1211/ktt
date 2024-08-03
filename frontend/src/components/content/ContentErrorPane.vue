@@ -1,6 +1,7 @@
 <script setup>
 import IconButton from "@/components/common/IconButton.vue";
 import Refresh from "@/components/icons/Refresh.vue";
+import ErrorExplain from "@/components/content_value/ErrorExplain.vue";
 import {
   capitalize,
   includes,
@@ -122,19 +123,24 @@ const columns = computed(() => [
     key: "kind",
     // defaultSortOrder: "ascend",
     // sorter: "default",
-    width: 180,
-    align: "center",
-    titleAlign: "center",
+    width: 50,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
     // render: ({ timestamp }, index) => {
     //   return dayjs(timestamp).format("YYYY-MM-DD HH:mm:ss");
     // },
+    render(row) {
+      return h("div", { class: "error-kind" }, row.kind);
+    },
   },
   {
     title: () => i18n.t("error.name"),
     key: "name",
-    width: 150,
-    align: "center",
-    titleAlign: "center",
+    width: 80,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
     // ellipsis: {
     //   tooltip: true,
     // },
@@ -143,11 +149,26 @@ const columns = computed(() => [
     },
   },
   {
+    title: () => i18n.t("error.parent"),
+    key: "parent",
+    width: 50,
+    fixed: "left",
+    // align: "center",
+    // titleAlign: "center",
+    // ellipsis: {
+    //   tooltip: true,
+    // },
+    render(row) {
+      return handleNamespaceName(row.parentObject);
+    },
+  },
+  {
     title: () => i18n.t("error.error"),
     key: "error",
-    width: 150,
-    align: "left",
-    titleAlign: "center",
+    width: 100,
+    fixed: "left",
+    // align: "left",
+    // titleAlign: "center",
     render(row) {
       const tags = row.error.map((object) => {
         return h(
@@ -170,26 +191,14 @@ const columns = computed(() => [
     },
   },
   {
-    title: () => i18n.t("error.explain"),
+    title: () => i18n.t("error.advice"),
     key: "details",
     width: 150,
-    align: "center",
-    titleAlign: "center",
+    fixed: "left",
     render(row) {
-      return row.details || "N/A";
-    },
-  },
-  {
-    title: () => i18n.t("error.parent"),
-    key: "parent",
-    width: 150,
-    align: "center",
-    titleAlign: "center",
-    // ellipsis: {
-    //   tooltip: true,
-    // },
-    render(row) {
-      return handleNamespaceName(row.parentObject);
+      console.log("row.details.error: ", row.details.error);
+      return h(ErrorExplain, { data: row.details });
+      // return row.details || "N/A";
     },
   },
   // {
@@ -378,6 +387,8 @@ defineExpose({
       class="flex-item-expand"
       flex-height
       virtual-scroll
+      striped
+      :scroll-x="1800"
     />
   </div>
 </template>
