@@ -13,7 +13,7 @@ import {
   isNull,
   isUndefined,
 } from "lodash";
-import { useThemeVars } from "naive-ui";
+import { useThemeVars, NTag } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
@@ -69,7 +69,53 @@ const filterOptions = computed(() => {
   return options;
 });
 const tableRef = ref(null);
-
+const handleNamespaceName = (nsname) => {
+  if (isEmpty(nsname)) {
+    return "N/A";
+  }
+  if (!nsname.includes("/")) {
+    return nsname;
+  }
+  const [ns, name] = split(nsname, "/");
+  return h(
+    "div",
+    {
+      style: {
+        marginRight: "6px",
+      },
+      type: "info",
+      bordered: false,
+    },
+    [
+      h(
+        NTag,
+        {
+          style: {
+            marginRight: "6px",
+          },
+          type: "info",
+          bordered: false,
+        },
+        {
+          default: () => ns,
+        },
+      ),
+      h(
+        "div",
+        {
+          style: {
+            marginRight: "6px",
+          },
+          type: "info",
+          bordered: false,
+        },
+        {
+          default: () => name,
+        },
+      ),
+    ],
+  );
+};
 const columns = computed(() => [
   {
     title: () => i18n.t("error.kind"),
@@ -93,20 +139,20 @@ const columns = computed(() => [
     //   tooltip: true,
     // },
     render(row) {
-      const [ns, name] = split(row.name, "/");
-      return `${ns}:${name}`;
+      return handleNamespaceName(row.name);
     },
   },
   {
     title: () => i18n.t("error.error"),
     key: "error",
     width: 150,
-    align: "center",
+    align: "left",
     titleAlign: "center",
     render(row) {
       const tags = row.error.map((object) => {
         return h(
           "div",
+          // NTag,
           {
             style: {
               marginRight: "6px",
@@ -124,7 +170,7 @@ const columns = computed(() => [
     },
   },
   {
-    title: () => i18n.t("error.details"),
+    title: () => i18n.t("error.explain"),
     key: "details",
     width: 150,
     align: "center",
@@ -143,7 +189,7 @@ const columns = computed(() => [
     //   tooltip: true,
     // },
     render(row) {
-      return row.parentObject || "N/A";
+      return handleNamespaceName(row.parentObject);
     },
   },
   // {

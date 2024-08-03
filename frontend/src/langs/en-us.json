@@ -459,6 +459,7 @@
     "name": "Name",
     "error": "Error",
     "details": "Details",
+    "explain": "Explain",
     "parent": "Parent",
     "server": "Server",
     "cmd": "Command",
