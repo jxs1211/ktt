@@ -197,7 +197,9 @@ const columns = computed(() => [
   //   },
   // },
 ]);
-
+const pagination = {
+  pageSize: 10,
+};
 const analyze = async () => {
   if (isEmpty(connectionStore.currentCluster)) {
     $message.warning(i18n.t("error.no_cluster_selected"));
@@ -324,6 +326,7 @@ defineExpose({
     <n-data-table
       ref="tableRef"
       :columns="columns"
+      :pagination="pagination"
       :data="data.results"
       :loading="data.loading"
       class="flex-item-expand"
