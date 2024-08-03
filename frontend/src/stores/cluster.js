@@ -12,7 +12,7 @@ import {
   size,
 } from "lodash";
 import { defineStore } from "pinia";
-import { TabItem } from "@/objects/tabItem.js";
+import { TabItem } from "@/objects/clusterItem.js";
 import useBrowserStore from "stores/browser.js";
 import { i18nGlobal } from "@/utils/i18n.js";
 

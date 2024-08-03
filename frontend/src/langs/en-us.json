@@ -51,6 +51,30 @@
       "privacy": "Privacy",
       "allow_track": "Allows anonymous data to be collected"
     },
+    "ai": {
+      "name": "AI",
+      "enable": "Enable AI",
+      "api_key": "API Key",
+      "providers": {
+        "localai": {
+          "name": "localai",
+          "model": "model",
+          "base_url": "Base URL"
+        },
+        "openai": {
+          "name": "openai",
+          "model": "model",
+          "base_url": "Base URL",
+          "api_key": "API Key"
+        },
+        "azure": {
+          "name": "azure",
+          "model": "model",
+          "base_url": "Base URL",
+          "api_key": "API Key"
+        }
+      }
+    },
     "editor": {
       "name": "Editor",
       "show_linenum": "Show Line Numbers",
@@ -147,11 +171,11 @@
     "load_all_entries": "Load All",
     "more_action": "More Actions",
     "nonexist_tab_content": "Selected key does not exist or none selected. Retry after refresh.",
-    "empty_server_content": "Select and open a connection from the left panel",
-    "empty_server_list": "No Redis server added",
+    "empty_server_content": "Load and start any cluster connection",
+    "empty_server_list": "No K8S server added",
     "action": "Action",
     "type": "Type",
-    "cli_welcome": "Welcome to KT Redis Console",
+    "cli_welcome": "Welcome to KT K8S Console",
     "retrieving_version": "Checking for updates",
     "sub_tab": {
       "status": "Status",
@@ -195,16 +219,16 @@
       "usr": "Username",
       "pwd": "Password",
       "name_tip": "Connection name",
-      "addr_tip": "Redis server address",
-      "sock_tip": "Redis unix socket file",
+      "addr_tip": "K8S server address",
+      "sock_tip": "K8S unix socket file",
       "usr_tip": "(Optional) Auth username",
-      "pwd_tip": "(Optional) Auth password (Redis > 6.0)",
+      "pwd_tip": "(Optional) Auth password (K8S > 6.0)",
       "test": "Test Connection",
-      "test_succ": "Successfully connected to Redis server",
+      "test_succ": "Successfully connected to Cluster",
       "test_fail": "Connection failed",
       "parse_url_clipboard": "Parse URL from Clipboard",
-      "parse_pass": "Redis URL parsed: {url}",
-      "parse_fail": "Failed to parse Redis URL: {reason}",
+      "parse_pass": "K8S URL parsed: {url}",
+      "parse_fail": "Failed to parse K8S URL: {reason}",
       "advn": {
         "title": "Advanced",
         "filter": "Default Key Filter",
@@ -264,7 +288,7 @@
         "auto_discover": "Auto Discover",
         "password": "Master Password",
         "username": "Master Username",
-        "pwd_tip": "(Optional) Master auth password (Redis > 6.0)",
+        "pwd_tip": "(Optional) Master auth password (K8S > 6.0)",
         "usr_tip": "(Optional) Master auth username"
       },
       "cluster": {
@@ -417,6 +441,25 @@
     "clean_log": "Clean Log",
     "confirm_clean_log": "Confirm clean launch log",
     "exec_time": "Exec Time",
+    "server": "Server",
+    "cmd": "Command",
+    "cost_time": "Cost",
+    "refresh": "Refresh"
+  },
+  "error": {
+    "title": "Diagnose Error",
+    "filter_resource": "Filter Resource",
+    "filter_keyword": "Filter Keyword",
+    "clean_log": "Clean Error",
+    "confirm_clean_log": "Confirm clean diagnose error",
+    "no_cluster_selected": "Not select any cluster",
+    "exec_time": "Exec Time",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "name": "Name",
+    "error": "Error",
+    "details": "Details",
+    "parent": "Parent",
     "server": "Server",
     "cmd": "Command",
     "cost_time": "Cost",

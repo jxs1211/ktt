@@ -1,9 +1,11 @@
 package storage
 
 import (
-	"github.com/vrischmann/userdir"
+	"log"
 	"os"
 	"path"
+
+	strutil "ktt/backend/utils/string"
 )
 
 // localStorage provides reading and writing application data to the user's
@@ -15,7 +17,7 @@ type localStorage struct {
 // NewLocalStore returns a localStore instance.
 func NewLocalStore(filename string) *localStorage {
 	return &localStorage{
-		ConfPath: path.Join(userdir.GetConfigHome(), "TinyRDM", filename),
+		ConfPath: path.Join(strutil.RootPath(), filename),
 	}
 }
 
@@ -39,6 +41,7 @@ func (l *localStorage) Store(data []byte) error {
 	if err := os.WriteFile(l.ConfPath, data, 0777); err != nil {
 		return err
 	}
+	log.Printf("write file: %s\n", l.ConfPath)
 	return nil
 }
 

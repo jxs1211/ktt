@@ -110,3 +110,9 @@ type GetHashParam struct {
 	Format string `json:"format,omitempty"`
 	Decode string `json:"decode,omitempty"`
 }
+
+func FailedResp(msg string) JSResp {
+	return JSResp{
+		Msg: msg,
+	}
+}

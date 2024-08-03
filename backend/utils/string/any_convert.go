@@ -162,3 +162,10 @@ func SplitCmd(cmd string) []string {
 
 	return result
 }
+
+func Capitalize(s []string) []string {
+	for i, v := range s {
+		s[i] = strings.ToTitle(strings.TrimSpace(v))
+	}
+	return s
+}

@@ -2,13 +2,14 @@ package storage
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"ktt/backend/consts"
 	"ktt/backend/types"
 	"log"
 	"reflect"
 	"strings"
 	"sync"
+
+	"gopkg.in/yaml.v3"
 )
 
 type PreferencesStorage struct {
@@ -36,9 +37,11 @@ func (p *PreferencesStorage) getPreferences() (ret types.Preferences) {
 	}
 
 	if err = yaml.Unmarshal(b, &ret); err != nil {
+		log.Println("unmarshal: ", err)
 		ret = p.DefaultPreferences()
 		return
 	}
+	log.Printf("get preferences: %+v\n", ret)
 	return
 }
 
@@ -89,6 +92,7 @@ func (p *PreferencesStorage) savePreferences(pf *types.Preferences) error {
 		return err
 	}
 
+	log.Printf("save preferences: %+v\n", *pf)
 	if err = p.storage.Store(b); err != nil {
 		return err
 	}

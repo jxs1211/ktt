@@ -130,6 +130,7 @@ watch(
 
       <!-- top modal dialogs -->
       <config-dialog />
+
       <connection-dialog />
       <group-dialog />
       <new-key-dialog />

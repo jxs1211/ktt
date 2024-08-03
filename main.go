@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"embed"
+	"runtime"
+
+	"ktt/backend/client"
 	"ktt/backend/consts"
 	"ktt/backend/services"
-	"runtime"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -26,9 +28,12 @@ var icon []byte
 var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
+func init() {
+}
+
 func main() {
+	clientSvc := client.NewClientService()
 	// Create an instance of the app structure
-	configSvc := services.Configuration()
 	sysSvc := services.System()
 	connSvc := services.Connection()
 	browserSvc := services.Browser()
@@ -68,7 +73,7 @@ func main() {
 		BackgroundColour: options.NewRGBA(27, 38, 54, 0),
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
-			configSvc.Start(ctx)
+			clientSvc.Start(ctx)
 			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			browserSvc.Start(ctx)
@@ -96,6 +101,7 @@ func main() {
 			pubsubSvc.StopAll()
 		},
 		Bind: []interface{}{
+			clientSvc,
 			sysSvc,
 			connSvc,
 			browserSvc,

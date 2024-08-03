@@ -69,3 +69,23 @@ func Unique[S ~[]T, T Hashable](arr S) S {
 	}
 	return result
 }
+
+// feat: implement available api-resources API
+func FindCommonElements[T comparable](slice1, slice2 []T) []T {
+	elementsMap := make(map[T]struct{})
+	result := make([]T, 0)
+
+	for _, v := range slice1 {
+		elementsMap[v] = struct{}{}
+	}
+
+	for _, v := range slice2 {
+		if _, exists := elementsMap[v]; exists {
+			result = append(result, v)
+			// avoid duplicates
+			delete(elementsMap, v)
+		}
+	}
+
+	return result
+}

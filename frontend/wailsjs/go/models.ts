@@ -426,6 +426,30 @@ export namespace types {
 	        this.links = source["links"];
 	    }
 	}
+	export class PreferencesAI {
+	    enable: boolean;
+	    backend: string;
+	    explain: boolean;
+	    model: string;
+	    url: string;
+	    appId: string;
+	    apiKey: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PreferencesAI(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enable = source["enable"];
+	        this.backend = source["backend"];
+	        this.explain = source["explain"];
+	        this.model = source["model"];
+	        this.url = source["url"];
+	        this.appId = source["appId"];
+	        this.apiKey = source["apiKey"];
+	    }
+	}
 	export class PreferencesGeneral {
 	    theme: string;
 	    language: string;
@@ -487,6 +511,7 @@ export namespace types {
 	export class Preferences {
 	    behavior: PreferencesBehavior;
 	    general: PreferencesGeneral;
+	    ai: PreferencesAI;
 	    editor: PreferencesEditor;
 	    cli: PreferencesCli;
 	    decoder: PreferencesDecoder[];
@@ -499,6 +524,7 @@ export namespace types {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.behavior = this.convertValues(source["behavior"], PreferencesBehavior);
 	        this.general = this.convertValues(source["general"], PreferencesGeneral);
+	        this.ai = this.convertValues(source["ai"], PreferencesAI);
 	        this.editor = this.convertValues(source["editor"], PreferencesEditor);
 	        this.cli = this.convertValues(source["cli"], PreferencesCli);
 	        this.decoder = this.convertValues(source["decoder"], PreferencesDecoder);
@@ -522,6 +548,7 @@ export namespace types {
 		    return a;
 		}
 	}
+	
 	
 	
 	
