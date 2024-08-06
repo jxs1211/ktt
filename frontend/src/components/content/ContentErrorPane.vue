@@ -201,56 +201,6 @@ const columns = computed(() => [
       // return row.details || "N/A";
     },
   },
-  // {
-  //   title: () => i18n.t("error.server"),
-  //   key: "server",
-  //   filterOptionValue: data.server,
-  //   filter: (value, row) => {
-  //     return value === "" || row.server === value.toString();
-  //   },
-  //   width: 150,
-  //   align: "center",
-  //   titleAlign: "center",
-  //   ellipsis: {
-  //     tooltip: true,
-  //   },
-  // },
-  // {
-  //   title: () => i18n.t("error.cmd"),
-  //   key: "cmd",
-  //   titleAlign: "center",
-  //   filterOptionValue: data.keyword,
-  //   resizable: true,
-  //   filter: (value, row) => {
-  //     return value === "" || !!~row.cmd.indexOf(value.toString());
-  //   },
-  //   render: ({ cmd }, index) => {
-  //     const cmdList = split(cmd, "\n");
-  //     if (size(cmdList) > 1) {
-  //       return h(
-  //         "div",
-  //         null,
-  //         map(cmdList, (c) => h("div", { class: "cmd-line" }, c)),
-  //       );
-  //     }
-  //     return h("div", { class: "cmd-line" }, cmd);
-  //   },
-  // },
-  // {
-  //   title: () => i18n.t("error.cost_time"),
-  //   key: "cost",
-  //   width: 100,
-  //   align: "center",
-  //   titleAlign: "center",
-  //   render: ({ cost }, index) => {
-  //     const ms = dayjs.duration(cost).asMilliseconds();
-  //     if (ms < 1000) {
-  //       return `${ms} ms`;
-  //     } else {
-  //       return `${Math.floor(ms / 1000)} s`;
-  //     }
-  //   },
-  // },
 ]);
 const pagination = {
   pageSize: 10,
@@ -272,6 +222,8 @@ const analyze = async () => {
       preferencesStore.ai.model,
       data.selectedOptions,
       preferencesStore.ai.explain,
+      preferencesStore.ai.aggregate,
+      false,
     );
     if (!resp.success) {
       data.results = [];
