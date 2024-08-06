@@ -72,6 +72,7 @@ const usePreferencesStore = defineStore("preferences", {
       enable: false,
       backend: "noopai",
       explain: false,
+      aggregate: true,
       model: "",
       url: "",
       appId: "",

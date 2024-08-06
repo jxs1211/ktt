@@ -166,7 +166,8 @@ func (s *ClientService) CurrentContext() string {
 // feat: support to analyze with ai
 func (s *ClientService) Analyze(
 	cluster, aiBackend, model string,
-	filters []string, explain bool) types.JSResp {
+	filters []string, explain, aggregate, anonymize bool,
+) types.JSResp {
 	if len(cluster) == 0 {
 		return types.FailedResp("cluster is empty")
 	}
@@ -205,7 +206,6 @@ func (s *ClientService) Analyze(
 	if analyzer.Results == nil {
 		analyzer.Results = []common.Result{}
 	}
-	anonymize := true
 	if explain {
 		if err := analyzer.GetAIResults("json", anonymize); err != nil {
 			return types.FailedResp(err.Error())
