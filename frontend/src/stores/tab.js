@@ -12,7 +12,7 @@ import {
   size,
 } from "lodash";
 import { defineStore } from "pinia";
-import { TabItem } from "@/objects/tabItem.js";
+import { TabItem, ClusterTabItem } from "@/objects/tabItem.js";
 import useBrowserStore from "stores/browser.js";
 import { i18nGlobal } from "@/utils/i18n.js";
 
@@ -131,7 +131,8 @@ const useTabStore = defineStore("tab", {
     _setActivatedIndex(idx, switchNav, subTab) {
       this.activatedIndex = idx;
       if (switchNav === true) {
-        this.nav = idx >= 0 ? "browser" : "server";
+        // this.nav = idx >= 0 ? "browser" : "server";
+        this.nav = "server";
         if (!isEmpty(subTab)) {
           set(this.tabList, [idx, "subTab"], subTab);
         }
@@ -140,6 +141,7 @@ const useTabStore = defineStore("tab", {
           this.nav = "server";
         }
       }
+      console.log("setActivatedIndex", idx, switchNav, subTab, this.nav);
     },
 
     openBlank(server) {
@@ -233,6 +235,27 @@ const useTabStore = defineStore("tab", {
         if (clearValue === true) {
           tab.value = undefined;
         }
+      }
+      this._setActivatedIndex(tabIndex, true, subTab);
+    },
+
+    upsertClusterTab({ subTab, server }) {
+      let tabIndex = findIndex(this.tabList, { name: server });
+      if (tabIndex === -1) {
+        const tabItem = new ClusterTabItem({
+          name: server,
+          title: server,
+          subTab,
+          server,
+        });
+        this.tabList.push(tabItem);
+        tabIndex = this.tabList.length - 1;
+      } else {
+        const tab = this.tabList[tabIndex];
+        tab.subTab = subTab;
+        // tab.title = db !== undefined ? `${server}/db${db}` : `${server}`
+        tab.title = server;
+        tab.server = server;
       }
       this._setActivatedIndex(tabIndex, true, subTab);
     },

@@ -56,11 +56,11 @@ const handleResize = () => {
   saveSidebarWidth();
 };
 
-watchEffect(() => {
-  if (connectionStore.clusters.length > 0) {
-    errorPaneRef.value?.refresh();
-  }
-});
+// watchEffect(() => {
+//   if (connectionStore.clusters.length > 0) {
+//     errorPaneRef.value?.refresh();
+//   }
+// });
 
 const logoWrapperWidth = computed(() => {
   return `${data.navMenuWidth + prefStore.behavior.asideWidth - 4}px`;
@@ -262,13 +262,20 @@ const onKeyShortcut = (e) => {
         >
           <resizeable-wrapper
             v-model:size="prefStore.behavior.asideWidth"
-            :min-size="300"
+            :min-size="250"
             :offset="data.navMenuWidth"
             class="flex-item"
           >
             <connection-pane class="app-side flex-item-expand" />
           </resizeable-wrapper>
-          <content-server-pane
+          <content-pane
+            v-for="t in tabStore.tabs"
+            v-show="tabStore.currentTabName === t.name"
+            :key="t.name"
+            :server="t.name"
+            class="flex-item-expand"
+          />
+          <!-- <content-server-pane
             v-if="isEmpty(connectionStore.clusters)"
             class="flex-item-expand"
           />
@@ -276,7 +283,7 @@ const onKeyShortcut = (e) => {
             v-else
             ref="errorPaneRef"
             class="flex-item-expand"
-          />
+          /> -->
         </div>
 
         <!-- log page -->

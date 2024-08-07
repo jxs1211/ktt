@@ -2,7 +2,9 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { find, map, toUpper } from "lodash";
 import useTabStore from "stores/tab.js";
+import useConnectionStore from "stores/connections.js";
 import ContentServerStatus from "@/components/content_value/ContentServerStatus.vue";
+import ContentErrorPane from "@/components/content/ContentErrorPane.vue";
 import Status from "@/components/icons/Status.vue";
 import { useThemeVars } from "naive-ui";
 import { BrowserTabType } from "@/consts/browser_tab_type.js";
@@ -32,7 +34,14 @@ const themeVars = useThemeVars();
 const props = defineProps({
   server: String,
 });
-
+// feat: errorPaneRef support to trigger fetching data from backend using watchEffect
+const errorPaneRef = ref(null);
+// watchEffect(() => {
+//   if (connectionStore.clusters.length > 0) {
+//     errorPaneRef.value?.refresh();
+//   }
+// });
+const connectionStore = useConnectionStore();
 const tabStore = useTabStore();
 const tab = computed(() =>
   map(tabStore.tabs, (item) => ({
@@ -140,7 +149,7 @@ watch(
         />
       </n-tab-pane>
 
-      <!-- key detail pane -->
+      <!-- diagnostic pane -->
       <n-tab-pane
         :name="BrowserTabType.KeyDetail.toString()"
         display-directive="show:lazy"
@@ -162,10 +171,19 @@ watch(
                 stroke-width="4"
               />
             </n-icon>
-            <span>{{ $t("interface.sub_tab.key_detail") }}</span>
+            <span>{{ $t("interface.sub_tab.diagnostic") }}</span>
           </n-space>
         </template>
-        <content-value-wrapper :blank="isBlankValue" :content="tabContent" />
+        <!-- <content-value-wrapper :blank="isBlankValue" :content="tabContent" /> -->
+        <content-server-pane
+          v-if="isEmpty(connectionStore.clusters)"
+          class="flex-item-expand"
+        />
+        <content-error-pane
+          v-else
+          ref="errorPaneRef"
+          class="flex-item-expand"
+        />
       </n-tab-pane>
 
       <!-- cli pane -->
@@ -246,34 +264,6 @@ watch(
           </n-space>
         </template>
         <content-monitor :server="props.server" />
-      </n-tab-pane>
-
-      <!-- pub/sub message pane -->
-      <n-tab-pane
-        :name="BrowserTabType.PubMessage.toString()"
-        display-directive="show:lazy"
-      >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <subscribe
-                :inverse="
-                  selectedSubTab === BrowserTabType.PubMessage.toString()
-                "
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.pub_message") }}</span>
-          </n-space>
-        </template>
-        <content-pubsub :server="props.server" />
       </n-tab-pane>
     </n-tabs>
   </div>

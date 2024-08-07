@@ -19,7 +19,7 @@ import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
 import usePreferencesStore from "stores/preferences.js";
-import { computed, h, nextTick, reactive, ref } from "vue";
+import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const themeVars = useThemeVars();
@@ -292,6 +292,14 @@ const onSelectedItemUpdate = (keys) => {
 defineExpose({
   refresh: loadResources,
 });
+
+// feat: support to reset error table after cluster changed
+watch(
+  () => connectionStore.currentCluster,
+  async (newVal, oldVal) => {
+    data.results = [];
+  },
+);
 </script>
 <!-- feat: support multiple choice on select -->
 <template>
