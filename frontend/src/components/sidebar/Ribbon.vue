@@ -52,11 +52,11 @@ const menuOptions = computed(() => {
       key: "server",
       icon: Server,
     },
-    // {
-    //   label: "ribbon.log",
-    //   key: "log",
-    //   icon: Record,
-    // },
+    {
+      label: "ribbon.log",
+      key: "log",
+      icon: Record,
+    },
   ];
 });
 

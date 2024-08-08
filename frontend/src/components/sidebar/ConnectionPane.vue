@@ -40,55 +40,6 @@ const onSelectOptions = async (select) => {
 <template>
   <div class="nav-pane-container flex-box-v">
     <connection-tree :filter-pattern="filterPattern" />
-
-    <!-- bottom function bar -->
-    <!-- <div class="nav-pane-bottom nav-pane-func flex-box-h">
-      <icon-button
-        :button-class="['nav-pane-func-btn']"
-        :icon="AddLink"
-        :stroke-width="3.5"
-        size="20"
-        t-tooltip="interface.new_conn"
-        @click="dialogStore.openNewDialog()"
-      />
-      <icon-button
-        :button-class="['nav-pane-func-btn']"
-        :icon="AddGroup"
-        :stroke-width="3.5"
-        size="20"
-        t-tooltip="interface.new_group"
-        @click="dialogStore.openNewGroupDialog()"
-      />
-      <n-divider vertical />
-      <n-input
-        v-model:value="filterPattern"
-        :autofocus="false"
-        :placeholder="$t('interface.filter')"
-        clearable
-      >
-        <template #prefix>
-          <n-icon :component="Filter" size="20" />
-        </template>
-      </n-input>
-      <n-dropdown
-        :options="moreOptions"
-        :render-icon="
-          ({ icon }) => render.renderIcon(icon, { strokeWidth: 3.5 })
-        "
-        :render-label="({ label }) => $t(label)"
-        placement="top-end"
-        style="min-width: 130px"
-        trigger="click"
-        @select="onSelectOptions"
-      >
-        <icon-button
-          :button-class="['nav-pane-func-btn']"
-          :icon="More"
-          :stroke-width="3.5"
-          size="20"
-        />
-      </n-dropdown>
-    </div> -->
   </div>
 </template>
 

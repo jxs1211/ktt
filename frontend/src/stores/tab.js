@@ -162,23 +162,6 @@ const useTabStore = defineStore("tab", {
       );
     },
 
-    /**
-     * update or insert a new tab if not exists with the same name
-     * @param {string} subTab
-     * @param {string} server
-     * @param {number} [db]
-     * @param {number} [type]
-     * @param {number} [ttl]
-     * @param {string} [key]
-     * @param {string} [keyCode]
-     * @param {number} [size]
-     * @param {number} [length]
-     * @param {string} [matchPattern]
-     * @param {boolean} [clearValue]
-     * @param {string} format
-     * @param {string} decode
-     * @param {*} [value]
-     */
     upsertTab({
       subTab,
       server,
@@ -252,8 +235,6 @@ const useTabStore = defineStore("tab", {
         tabIndex = this.tabList.length - 1;
       } else {
         const tab = this.tabList[tabIndex];
-        tab.subTab = subTab;
-        // tab.title = db !== undefined ? `${server}/db${db}` : `${server}`
         tab.title = server;
         tab.server = server;
       }

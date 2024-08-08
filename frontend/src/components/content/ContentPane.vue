@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from "vue";
-import { find, map, toUpper } from "lodash";
+import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
 import ContentServerStatus from "@/components/content_value/ContentServerStatus.vue";
@@ -118,7 +118,7 @@ watch(
       placement="top"
       tab-style="padding-left: 10px; padding-right: 10px;"
       type="line"
-      @update:value="tabStore.switchSubTab"
+      @update:value="(val) => tabStore.switchSubTab(val)"
     >
       <!-- server status pane -->
       <n-tab-pane
@@ -151,7 +151,7 @@ watch(
 
       <!-- diagnostic pane -->
       <n-tab-pane
-        :name="BrowserTabType.KeyDetail.toString()"
+        :name="BrowserTabType.Diagnose.toString()"
         display-directive="show:lazy"
       >
         <template #tab>
@@ -164,9 +164,7 @@ watch(
           >
             <n-icon size="16">
               <detail
-                :inverse="
-                  selectedSubTab === BrowserTabType.KeyDetail.toString()
-                "
+                :inverse="selectedSubTab === BrowserTabType.Diagnose.toString()"
                 :stroke-color="themeVars.tabColor"
                 stroke-width="4"
               />

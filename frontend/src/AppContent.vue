@@ -225,36 +225,6 @@ const onKeyShortcut = (e) => {
         style="--wails-draggable: none"
       >
         <ribbon v-model:value="tabStore.nav" :width="data.navMenuWidth" />
-        <!-- browser page -->
-        <div
-          v-show="tabStore.nav === 'browser'"
-          class="content-area flex-box-h flex-item-expand"
-        >
-          <resizeable-wrapper
-            v-model:size="prefStore.behavior.asideWidth"
-            :min-size="300"
-            :offset="data.navMenuWidth"
-            class="flex-item"
-            @update:size="handleResize"
-          >
-            <browser-pane
-              v-for="t in tabStore.tabs"
-              v-show="tabStore.currentTabName === t.name"
-              :key="t.name"
-              :db="t.db"
-              :server="t.name"
-              class="app-side flex-item-expand"
-            />
-          </resizeable-wrapper>
-          <content-pane
-            v-for="t in tabStore.tabs"
-            v-show="tabStore.currentTabName === t.name"
-            :key="t.name"
-            :server="t.name"
-            class="flex-item-expand"
-          />
-        </div>
-
         <!-- server list page -->
         <div
           v-show="tabStore.nav === 'server'"
@@ -275,15 +245,6 @@ const onKeyShortcut = (e) => {
             :server="t.name"
             class="flex-item-expand"
           />
-          <!-- <content-server-pane
-            v-if="isEmpty(connectionStore.clusters)"
-            class="flex-item-expand"
-          />
-          <content-error-pane
-            v-else
-            ref="errorPaneRef"
-            class="flex-item-expand"
-          /> -->
         </div>
 
         <!-- log page -->
