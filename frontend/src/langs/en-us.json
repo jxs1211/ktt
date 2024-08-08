@@ -179,7 +179,7 @@
     "retrieving_version": "Checking for updates",
     "sub_tab": {
       "status": "Status",
-      "key_detail": "Key Detail",
+      "diagnostic": "Diagnostic",
       "cli": "Console",
       "slow_log": "Slow Log",
       "cmd_monitor": "Monitor Commands",

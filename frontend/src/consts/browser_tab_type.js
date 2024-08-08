@@ -3,10 +3,10 @@
  * @enum {string}
  */
 export const BrowserTabType = {
-    Status: 'status',
-    KeyDetail: 'key_detail',
-    Cli: 'cli',
-    SlowLog: 'slow_log',
-    CmdMonitor: 'cmd_monitor',
-    PubMessage: 'pub_message',
-}
+  Status: "status",
+  Diagnose: "diagnose",
+  Cli: "cli",
+  SlowLog: "slow_log",
+  CmdMonitor: "cmd_monitor",
+  PubMessage: "pub_message",
+};

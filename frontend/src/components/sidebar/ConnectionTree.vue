@@ -226,6 +226,7 @@ const getServerMenu = (connected) => {
       h(IconButton, {
         tTooltip: "interface.open_connection",
         icon: Connect,
+        // handle open connection
         onClick: () => handleSelectContextMenu("server_open"),
       }),
       h(IconButton, {
@@ -279,6 +280,8 @@ const onUpdateSelectedKeys = (keys, option) => {
   selectedKeys.value = keys;
   if (!isEmpty(keys)) {
     connectionStore.currentCluster = option[0].label;
+    console.log(keys, option[0].label);
+    tabStore.upsertClusterTab({ server: option[0].label });
   }
 };
 
@@ -295,6 +298,7 @@ const openConnection = async (name) => {
     }
     // check if connection already canceled before finish open
     if (!isEmpty(connectingServer.value)) {
+      // init conttent table with server
       tabStore.upsertTab({
         server: name,
         db: browserStore.getSelectedDB(name),
