@@ -29,8 +29,19 @@ func NewPreferences() Preferences {
 		},
 		AI: PreferencesAI{
 			Enable:  false,
-			Backend: "noopai",
 			Explain: false,
+			Backend: "noopai",
+			Backends: []Backend{
+				{
+					Name: "noopai",
+				},
+				{
+					Name: "localai",
+				},
+				{
+					Name: "openai",
+				},
+			},
 		},
 		Editor: PreferencesEditor{
 			FontSize:    consts.DEFAULT_FONT_SIZE,
@@ -73,11 +84,16 @@ type PreferencesGeneral struct {
 }
 
 type PreferencesAI struct {
-	Enable  bool   `json:"enable" yaml:"enable"`
-	Backend string `json:"backend" yaml:"backend"`
-	Explain bool   `json:"explain" yaml:"explain"`
+	Enable   bool      `json:"enable" yaml:"enable"`
+	Explain  bool      `json:"explain" yaml:"explain"`
+	Backend  string    `json:"backend" yaml:"backend"`
+	Backends []Backend `json:"backends" yaml:"backends"`
+}
+
+type Backend struct {
+	Name    string `json:"name" yaml:"name"`
 	Model   string `json:"model" yaml:"model"`
-	Url     string `json:"url" yaml:"url"`
+	BaseUrl string `json:"baseUrl" yaml:"baseUrl,omitempty"`
 	AppId   string `json:"appId" yaml:"app_id,omitempty"`
 	ApiKey  string `json:"apiKey" yaml:"api_key,omitempty"`
 }

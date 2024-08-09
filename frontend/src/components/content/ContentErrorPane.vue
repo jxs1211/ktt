@@ -216,10 +216,12 @@ const analyze = async () => {
     await nextTick();
     data.loading = true;
     console.log("analyze ai:", preferencesStore.ai);
+    const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
     const resp = await configStore.analyze(
       connectionStore.currentCluster,
-      preferencesStore.ai.backend,
-      preferencesStore.ai.model,
+      backend.name,
+      backend.model,
+      backend.baseUrl,
       data.selectedOptions,
       preferencesStore.ai.explain,
       preferencesStore.ai.aggregate,

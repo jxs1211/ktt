@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/vrischmann/userdir v0.0.0-20151206171402-20f291cebd68
-	github.com/wailsapp/wails/v2 v2.9.0
+	github.com/wailsapp/wails/v2 v2.9.1
 	golang.org/x/crypto v0.24.0
 	golang.org/x/net v0.26.0
 	gopkg.in/yaml.v3 v3.0.1
