@@ -31,6 +31,7 @@ const themeVars = useThemeVars();
  * @property {boolean} autoLoading loading status for auto refresh
  */
 
+const defaultTab = "diagnose";
 const props = defineProps({
   server: String,
 });
@@ -79,7 +80,7 @@ const isBlankValue = computed(() => {
 });
 
 const selectedSubTab = computed(() => {
-  const { subTab = "status" } = tabStore.currentTab || {};
+  const { subTab = defaultTab } = tabStore.currentTab || {};
   return subTab;
 });
 
@@ -113,7 +114,6 @@ watch(
       }"
       :value="selectedSubTab"
       class="content-sub-tab"
-      default-value="status"
       pane-class="content-sub-tab-pane"
       placement="top"
       tab-style="padding-left: 10px; padding-right: 10px;"

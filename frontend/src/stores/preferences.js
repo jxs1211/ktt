@@ -70,13 +70,26 @@ const usePreferencesStore = defineStore("preferences", {
     // feat: support to analyze with ai
     ai: {
       enable: false,
-      backend: "noopai",
       explain: false,
       aggregate: true,
-      model: "",
-      url: "",
-      appId: "",
-      apiKey: "",
+      backend: "noopai",
+      backends: [
+        {
+          name: "noopai",
+        },
+        {
+          name: "localai",
+          model: "",
+          baseUrl: "",
+        },
+        {
+          name: "openai",
+          model: "",
+          baseUrl: "",
+          appId: "",
+          apiKey: "",
+        },
+      ],
     },
     editor: {
       font: "",
@@ -101,7 +114,6 @@ const usePreferencesStore = defineStore("preferences", {
     getSeparator() {
       return ":";
     },
-
     themeOption() {
       return [
         {
@@ -296,6 +308,16 @@ const usePreferencesStore = defineStore("preferences", {
     },
   },
   actions: {
+    getBackend(name) {
+      const backends = this.ai.backends;
+      for (const index in this.ai.backends) {
+        if (backends[index].name === name) {
+          return backends[index];
+        }
+      }
+      console.warn("backend not found: ", name);
+      return {};
+    },
     onSelectedTab(label) {
       this.ai.backend = label;
       this.ai.explain = true;
@@ -314,9 +336,12 @@ const usePreferencesStore = defineStore("preferences", {
      */
     async loadPreferences() {
       const { success, data } = await GetPreferences();
+      console.log("load preferences from local: ", data);
       if (success) {
         this.lastPref = cloneDeep(data);
+        console.log("lastPref: ", this.lastPref);
         this._applyPreferences(data);
+        console.log("ai: ", this.ai);
         // default value
         const showLineNum = get(data, "editor.showLineNum");
         if (showLineNum === undefined) {

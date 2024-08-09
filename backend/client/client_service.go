@@ -165,22 +165,26 @@ func (s *ClientService) CurrentContext() string {
 
 // feat: support to analyze with ai
 func (s *ClientService) Analyze(
-	cluster, aiBackend, model string,
+	cluster, aiBackend, model, baseURL string,
 	filters []string, explain, aggregate, anonymize bool,
 ) types.JSResp {
 	if len(cluster) == 0 {
-		return types.FailedResp("cluster is empty")
+		return types.FailedResp("no cluster available, add any first")
 	}
 	viper.Set("kubecontext", cluster)
 	viper.Set("kubeconfig", kubeconfigPath)
 	log.Println("explain: ", explain)
 	if explain {
+		if len(baseURL) <= 0 && aiBackend == "localai" {
+			return types.FailedResp("baseURL is required for localai")
+		}
 		viper.Set("ai", ai.AIConfiguration{
 			DefaultProvider: aiBackend,
 			Providers: []ai.AIProvider{
 				ai.AIProvider{
-					Name:  aiBackend,
-					Model: model,
+					Name:    aiBackend,
+					Model:   model,
+					BaseURL: baseURL,
 				},
 			},
 		})

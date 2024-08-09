@@ -7,7 +7,7 @@ import Edit from "@/components/icons/Edit.vue";
 import Help from "@/components/icons/Help.vue";
 import { typesIconStyle } from "@/consts/support_redis_type.js";
 import { joinCommand } from "@/utils/decoder_cmd.js";
-import { find, map, sortBy } from "lodash";
+import { find, map, sortBy, get } from "lodash";
 import { NButton, NEllipsis, NIcon, NSpace, NTooltip } from "naive-ui";
 import useDialog from "stores/dialog.js";
 import usePreferencesStore from "stores/preferences.js";
@@ -225,7 +225,9 @@ const openDecodeHelp = () => {
 const onSavePreferences = async () => {
   const success = await prefStore.savePreferences();
   if (success) {
-    $message.success(i18n.t("dialogue.handle_succ"));
+    const message = i18n.t("dialogue.handle_succ");
+    const backend = prefStore.ai.backend;
+    $message.success(`${message}: ${backend} is selected`);
     dialogStore.closePreferencesDialog();
   }
 };
@@ -235,6 +237,42 @@ const onClose = () => {
   prefStore.resetToLastPreferences();
   dialogStore.closePreferencesDialog();
 };
+const localaiModel = computed({
+  get: () => prefStore.getBackend("localai")?.model || "",
+  set: (value) => {
+    const backend = prefStore.getBackend("localai");
+    if (backend) {
+      backend.model = value;
+    }
+  },
+});
+const localaiBaseUrl = computed({
+  get: () => prefStore.getBackend("localai")?.baseUrl || "",
+  set: (value) => {
+    const backend = prefStore.getBackend("localai");
+    if (backend) {
+      backend.baseUrl = value;
+    }
+  },
+});
+const openaiModel = computed({
+  get: () => prefStore.getBackend("openai")?.model || "",
+  set: (value) => {
+    const backend = prefStore.getBackend("openai");
+    if (backend) {
+      backend.model = value;
+    }
+  },
+});
+const openaiApiKey = computed({
+  get: () => prefStore.getBackend("openai")?.apiKey || "",
+  set: (value) => {
+    const backend = prefStore.getBackend("openai");
+    if (backend) {
+      backend.apiKey = value;
+    }
+  },
+});
 </script>
 
 <template>
@@ -425,12 +463,12 @@ const onClose = () => {
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.model')"
                   >
-                    <n-input v-model:value="prefStore.ai.model" type="text" />
+                    <n-input v-model:value="localaiModel" type="text" />
                   </n-form-item-gi>
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.base_url')"
                   >
-                    <n-input v-model:value="prefStore.ai.url" type="text" />
+                    <n-input v-model:value="localaiBaseUrl" type="text" />
                   </n-form-item-gi>
                 </n-grid>
               </n-tab-pane>
@@ -443,14 +481,14 @@ const onClose = () => {
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.openai.model')"
                   >
-                    <n-input v-model:value="prefStore.ai.model" type="text" />
+                    <n-input v-model:value="openaiModel" type="text" />
                   </n-form-item-gi>
                   <n-form-item-gi :label="$t('preferences.ai.api_key')">
-                    <n-input v-model:value="prefStore.ai.apiKey" type="text" />
+                    <n-input v-model:value="openaiApiKey" type="text" />
                   </n-form-item-gi>
                 </n-grid>
               </n-tab-pane>
-              <n-tab-pane
+              <!-- <n-tab-pane
                 :tab="$t('preferences.ai.providers.azure.name')"
                 display-directive="show"
                 name="azure"
@@ -465,7 +503,7 @@ const onClose = () => {
                     <n-input v-model:value="prefStore.ai.apiKey" type="text" />
                   </n-form-item-gi>
                 </n-grid>
-              </n-tab-pane>
+              </n-tab-pane> -->
             </n-tabs>
           </n-form-item-gi>
         </n-grid>

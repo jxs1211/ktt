@@ -1,7 +1,7 @@
 <script setup>
 import ContentPane from "./components/content/ContentPane.vue";
 import BrowserPane from "./components/sidebar/BrowserPane.vue";
-import { computed, onMounted, reactive, ref, watchEffect } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { debounce, isEmpty } from "lodash";
 import { useThemeVars } from "naive-ui";
 import Ribbon from "./components/sidebar/Ribbon.vue";
