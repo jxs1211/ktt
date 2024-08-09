@@ -459,7 +459,7 @@ const openaiApiKey = computed({
                 display-directive="show"
                 name="localai"
               >
-                <n-grid :cols="1">
+                <n-grid :cols="1" :style="{ width: '90%' }">
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.model')"
                   >
@@ -477,7 +477,7 @@ const openaiApiKey = computed({
                 display-directive="show"
                 name="openai"
               >
-                <n-grid :cols="1">
+                <n-grid :cols="1" :style="{ width: '90%' }">
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.openai.model')"
                   >
