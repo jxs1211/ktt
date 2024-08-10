@@ -16,8 +16,29 @@ import { useI18n } from "vue-i18n";
 import { BrowserOpenURL } from "wailsjs/runtime/runtime.js";
 
 const prefStore = usePreferencesStore();
-
+const modelPlaceholder = ref("Please select a model");
 const prevPreferences = ref({});
+
+const localaiModelOptions = computed(() => [
+  {
+    value: "llama2",
+    label: "llama2",
+  },
+  {
+    value: "llama3",
+    label: "llama3",
+  },
+]);
+const openaiModelOptions = computed(() => [
+  {
+    value: "gpt-3.5-turbo",
+    label: "gpt-3.5-turbo",
+  },
+  {
+    value: "gpt-4",
+    label: "gpt-4",
+  },
+]);
 const tab = ref("general");
 const aiProviderTab = ref("localai");
 const dialogStore = useDialog();
@@ -225,9 +246,11 @@ const openDecodeHelp = () => {
 const onSavePreferences = async () => {
   const success = await prefStore.savePreferences();
   if (success) {
-    const message = i18n.t("dialogue.handle_succ");
-    const backend = prefStore.ai.backend;
-    $message.success(`${message}: ${backend} is selected`);
+    if (prefStore.ai.enable) {
+      const message = i18n.t("dialogue.handle_succ");
+      const backend = prefStore.ai.backend;
+      $message.success(`${message}: ${backend} is selected`);
+    }
     dialogStore.closePreferencesDialog();
   }
 };
@@ -463,7 +486,12 @@ const openaiApiKey = computed({
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.model')"
                   >
-                    <n-input v-model:value="localaiModel" type="text" />
+                    <n-select
+                      v-model:value="localaiModel"
+                      filterable
+                      :placeholder="modelPlaceholder"
+                      :options="localaiModelOptions"
+                    />
                   </n-form-item-gi>
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.base_url')"
@@ -481,7 +509,12 @@ const openaiApiKey = computed({
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.openai.model')"
                   >
-                    <n-input v-model:value="openaiModel" type="text" />
+                    <n-select
+                      v-model:value="openaiModel"
+                      filterable
+                      :placeholder="modelPlaceholder"
+                      :options="openaiModelOptions"
+                    />
                   </n-form-item-gi>
                   <n-form-item-gi :label="$t('preferences.ai.api_key')">
                     <n-input v-model:value="openaiApiKey" type="text" />
