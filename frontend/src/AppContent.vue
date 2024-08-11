@@ -183,19 +183,18 @@ const onKeyShortcut = (e) => {
               color="#0000"
               style="min-width: 28px"
             />
-            <div style="min-width: 68px; white-space: nowrap; font-weight: 800">
+            <div style="min-width: 30px; white-space: nowrap; font-weight: 800">
               KT
             </div>
-            <transition name="fade">
-              <n-text
-                v-if="tabStore.nav === 'browser'"
-                class="ellipsis"
-                strong
-                style="font-size: 13px"
-              >
-                - {{ tabStore.currentTabName }}
-              </n-text>
-            </transition>
+            <n-gradient-text
+              type="success"
+              :size="16"
+              v-if="
+                tabStore.nav === 'server' && !isEmpty(tabStore.currentTabName)
+              "
+            >
+              - {{ tabStore.currentTabName }}
+            </n-gradient-text>
           </n-space>
         </div>
 
