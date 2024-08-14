@@ -178,3 +178,10 @@ type Detail struct {
 	Error    string   `json:"error"`
 	Solution []string `json:"solution"`
 }
+
+type ClusterInfo struct {
+	VersionInfo version.Info `json:"versionInfo"`
+	ErrorsCount int          `json:"errorsCount"`
+	CPUCount    int          `json:"cpuCount"`
+	MemCount    int          `json:"memCount"`
+}

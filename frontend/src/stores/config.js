@@ -7,6 +7,8 @@ import {
   Analyze,
   GetClusters,
   GetAvailableFilteredResources,
+  GetErrorsCount,
+  GetClusterInfo,
 } from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import useBrowserStore from "stores/browser.js";
@@ -44,6 +46,7 @@ const useConfigStore = defineStore("config", {
       cluster,
       aibackend,
       model,
+      baseUrl,
       fitlers,
       explain,
       aggregate,
@@ -53,6 +56,49 @@ const useConfigStore = defineStore("config", {
         cluster,
         aibackend,
         model,
+        baseUrl,
+        fitlers,
+        explain,
+        aggregate,
+        anonymize,
+      );
+    },
+    async getErrorsCount(
+      cluster,
+      aibackend,
+      model,
+      baseUrl,
+      fitlers,
+      explain,
+      aggregate,
+      anonymize,
+    ) {
+      return await GetErrorsCount(
+        cluster,
+        aibackend,
+        model,
+        baseUrl,
+        fitlers,
+        explain,
+        aggregate,
+        anonymize,
+      );
+    },
+    async getClusterInfo(
+      cluster,
+      aibackend,
+      model,
+      baseUrl,
+      fitlers,
+      explain,
+      aggregate,
+      anonymize,
+    ) {
+      return await GetClusterInfo(
+        cluster,
+        aibackend,
+        model,
+        baseUrl,
         fitlers,
         explain,
         aggregate,

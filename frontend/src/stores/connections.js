@@ -15,7 +15,11 @@ import {
   SaveRefreshInterval,
   SaveSortedConnection,
 } from "wailsjs/go/services/connectionService.js";
-import { GetAvailableFilteredResources } from "wailsjs/go/client/ClientService.js";
+import {
+  GetAvailableFilteredResources,
+  CheckConnectivity,
+  GetClusterInfo,
+} from "wailsjs/go/client/ClientService.js";
 import { ConnectionType } from "@/consts/connection_type.js";
 import { KeyViewType } from "@/consts/key_view_type.js";
 import useBrowserStore from "stores/browser.js";
@@ -69,6 +73,19 @@ const useConnectionStore = defineStore("connections", {
         return resp.data;
       }
     },
+    async checkConnectivity(name) {
+      const { success } = await CheckConnectivity(name);
+      return success;
+    },
+    // async getClusterInfo(name) {
+    //   const success = await this.checkConnectivity(name);
+    //   console.log(success);
+    //   if (!success) {
+    //     return {};
+    //   }
+    //   const info = await GetClusterInfo();
+    //   return info;
+    // },
     async updateClusterFromConfig(config) {
       const configStore = useConfigStore();
       const resp = await configStore.loadConfig(config);
@@ -90,6 +107,7 @@ const useConnectionStore = defineStore("connections", {
       if (!force && !isEmpty(this.connections)) {
         return;
       }
+      console.log("init connection");
       const conns = [];
       const groups = [];
       const profiles = {};
