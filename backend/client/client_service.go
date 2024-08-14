@@ -168,15 +168,63 @@ func (s *ClientService) Analyze(
 	cluster, aiBackend, model, baseURL string,
 	filters []string, explain, aggregate, anonymize bool,
 ) types.JSResp {
+	results, err := s.analyze(
+		cluster, aiBackend, model, baseURL,
+		filters, explain, aggregate, anonymize,
+	)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{
+		Success: true,
+		Data:    results,
+	}
+}
+
+func (s *ClientService) GetErrorsCount(
+	cluster, aiBackend, model, baseURL string,
+	filters []string, explain, aggregate, anonymize bool,
+) types.JSResp {
+	count, err := s.getErrorsCount(
+		cluster, aiBackend, model, baseURL,
+		filters, explain, aggregate, anonymize,
+	)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{
+		Success: true,
+		Data:    count,
+	}
+}
+
+func (s *ClientService) getErrorsCount(
+	cluster, aiBackend, model, baseURL string,
+	filters []string, explain, aggregate, anonymize bool,
+) (int, error) {
+	results, err := s.analyze(
+		cluster, aiBackend, model, baseURL,
+		filters, explain, aggregate, anonymize,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return len(results), nil
+}
+
+func (s *ClientService) analyze(
+	cluster, aiBackend, model, baseURL string,
+	filters []string, explain, aggregate, anonymize bool,
+) ([]Result, error) {
 	if len(cluster) == 0 {
-		return types.FailedResp("no cluster available, add any first")
+		return nil, errors.New("no cluster available, add any first")
 	}
 	viper.Set("kubecontext", cluster)
 	viper.Set("kubeconfig", kubeconfigPath)
 	log.Println("explain: ", explain)
 	if explain {
 		if len(baseURL) <= 0 && aiBackend == "localai" {
-			return types.FailedResp("baseURL is required for localai")
+			return nil, errors.New("baseURL is required for localai")
 		}
 		viper.Set("ai", ai.AIConfiguration{
 			DefaultProvider: aiBackend,
@@ -195,7 +243,7 @@ func (s *ClientService) Analyze(
 		explain, 1, false, false, []string{},
 	)
 	if err != nil {
-		return types.FailedResp(err.Error())
+		return nil, err
 	}
 	defer analyzer.Close()
 	analyzer.RunAnalysis()
@@ -205,21 +253,18 @@ func (s *ClientService) Analyze(
 		for _, err := range analyzer.Errors {
 			errs = append(errs, errors.New(err))
 		}
-		return types.FailedResp(errors.Join(errs...).Error())
+		return nil, errors.Join(errs...)
 	}
 	if analyzer.Results == nil {
 		analyzer.Results = []common.Result{}
 	}
 	if explain {
 		if err := analyzer.GetAIResults("json", anonymize); err != nil {
-			return types.FailedResp(err.Error())
+			return nil, err
 		}
 	}
 	results := parseDetail(analyzer.Results)
-	return types.JSResp{
-		Success: true,
-		Data:    results,
-	}
+	return results, nil
 }
 
 func parseDetail(results []common.Result) []Result {
@@ -309,5 +354,41 @@ func (s *ClientService) GetAvailableFilteredResources() types.JSResp {
 	return types.JSResp{
 		Success: true,
 		Data:    resources,
+	}
+}
+
+func (s *ClientService) CheckConnectivity(name string) types.JSResp {
+	err := s.apiClient.SwitchContext(name)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{
+		Success: true,
+		Data:    "connected to cluster",
+	}
+}
+
+func (s *ClientService) GetClusterInfo(
+	cluster, aiBackend, model, baseUrl string,
+	filters []string, explain, aggregate, anonymize bool,
+) types.JSResp {
+	info, err := s.apiClient.ServerVersion()
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	count, err := s.getErrorsCount(
+		cluster, aiBackend, model, baseUrl,
+		filters, explain, aggregate, anonymize,
+	)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	clusterInfo := ClusterInfo{
+		VersionInfo: *info,
+		ErrorsCount: count,
+	}
+	return types.JSResp{
+		Success: true,
+		Data:    clusterInfo,
 	}
 }

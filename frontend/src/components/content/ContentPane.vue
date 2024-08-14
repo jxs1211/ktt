@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
-import ContentServerStatus from "@/components/content_value/ContentServerStatus.vue";
+import ContentClusterStatus from "@/components/content_value/ContentClusterStatus.vue";
 import ContentErrorPane from "@/components/content/ContentErrorPane.vue";
 import Status from "@/components/icons/Status.vue";
 import { useThemeVars } from "naive-ui";
@@ -31,7 +31,7 @@ const themeVars = useThemeVars();
  * @property {boolean} autoLoading loading status for auto refresh
  */
 
-const defaultTab = "diagnose";
+const defaultTab = "status";
 const props = defineProps({
   server: String,
 });
@@ -143,7 +143,7 @@ watch(
             <span>{{ $t("interface.sub_tab.status") }}</span>
           </n-space>
         </template>
-        <content-server-status
+        <content-cluster-status
           :pause="selectedSubTab !== BrowserTabType.Status.toString()"
           :server="props.server"
         />

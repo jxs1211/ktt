@@ -468,9 +468,12 @@
     "refresh": "Refresh"
   },
   "status": {
+    "status": "Status",
     "uptime": "Uptime",
     "connected_clients": "Clients",
+    "catched_errors": "Errors",
     "total_keys": "Keys",
+    "used_cpu": "CPU",
     "memory_used": "Memory",
     "server_info": "Server Info",
     "activity_status": "Activity",
