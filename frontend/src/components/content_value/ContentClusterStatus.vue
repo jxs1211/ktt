@@ -60,7 +60,7 @@ const serverInfo = ref({});
 const clusterInfo = ref([]);
 const pageState = reactive({
   autoRefresh: false,
-  refreshInterval: 5,
+  refreshInterval: 10,
   loading: false, // loading status for refresh
   autoLoading: false, // loading status for auto refresh
 });
@@ -130,9 +130,25 @@ const refreshInfo = async (force) => {
       return;
     }
     if (!isEmpty(data)) {
-      serverInfo.value = data;
-      console.log(serverInfo.value);
-      // _updateChart(info);
+      if (data.name === currentCluster) {
+        // const foundCluster = find(clusterInfo.value, {
+        //   name: currentCluster,
+        // });
+        const index = clusterInfo.value.findIndex(
+          (cluster) => cluster.name === data.name,
+        );
+        const updateTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
+        if (index !== -1) {
+          clusterInfo.value[index] = {
+            ...clusterInfo.value[index],
+            ...data,
+            lastUpdated: updateTime,
+          };
+        } else {
+          clusterInfo.value.push({ ...data, lastUpdated: updateTime });
+        }
+        console.log("updated cluster: ", clusterInfo.value);
+      }
     }
   } finally {
     pageState.loading = false;
@@ -308,7 +324,7 @@ const onToggleRefresh = (on) => {
 
 onMounted(() => {
   console.log("onMounted");
-  const { interval = 5 } = connectionStore.getRefreshInterval(props.server);
+  const { interval = 10 } = connectionStore.getRefreshInterval(props.server);
   if (interval >= 0) {
     pageState.autoRefresh = true;
     pageState.refreshInterval = interval === 0 ? 5 : interval;
@@ -325,21 +341,47 @@ onUnmounted(() => {
 });
 
 const clusterVersion = computed(() => {
-  return get(serverInfo.value, "versionInfo.gitVersion", "");
+  for (const cluster of clusterInfo.value) {
+    if (cluster.name === tabStore.currentTabName) {
+      return get(cluster, "versionInfo.gitVersion", "");
+    }
+  }
 });
+
 const errorsCount = computed(() => {
-  return get(serverInfo.value, "errorsCount", "N/A");
+  for (const cluster of clusterInfo.value) {
+    if (cluster.name === tabStore.currentTabName) {
+      return get(cluster, "errorsCount", "N/A");
+    }
+  }
+  return "N/A";
 });
+
 const clusterStatus = computed(() => {
-  return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
+  for (const cluster of clusterInfo.value) {
+    if (cluster.name === tabStore.currentTabName) {
+      return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
+    }
+  }
+  return "Loading";
 });
+
 const usedCPU = computed(() => {
-  return get(serverInfo.value, "cpuCount", "0");
+  for (const cluster of clusterInfo.value) {
+    if (cluster.name === tabStore.currentTabName) {
+      return ["fake", "fake"];
+      console.log("matched: ", cluster);
+      return get(cluster, "cpuCount", "fake");
+    }
+  }
 });
 const usedMemory = computed(() => {
-  let size = parseInt(get(serverInfo.value, "memCount", "0"));
-  const { value, unit } = convertBytes(size);
-  return [value, unit];
+  return ["fake", "fake"];
+  for (const cluster of clusterInfo.value) {
+    if (cluster.name === tabStore.currentTabName) {
+      console.log("matched: ", cluster);
+    }
+  }
 });
 const timeUnit = ["common.unit_minute", "common.unit_hour", "common.unit_day"];
 const uptime = computed(() => {
@@ -426,13 +468,15 @@ watch(
 watch(
   () => tabStore.activatedIndex,
   (newVal, oldVal) => {
-    // reset data
-    set(serverInfo.value, "errorsCount", "Loading");
-    const version = get(serverInfo.value, "versionInfo.gitVersion", "Loading");
-    if (version == "Loading") {
-      set(serverInfo.value, "versionInfo.gitVersion", "Loading");
+    for (const cluster of clusterInfo.value) {
+      if (cluster.name === tabStore.currentTabName) {
+        set(cluster, "errorsCount", "Loading");
+        const version = get(cluster, "versionInfo.gitVersion", "Loading");
+        if (version === "Loading") {
+          set(cluster, "versionInfo.gitVersion", "Loading");
+        }
+      }
     }
-    console.log(newVal, oldVal);
   },
 );
 const chartBGColor = [

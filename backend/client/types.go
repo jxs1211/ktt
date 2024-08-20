@@ -180,6 +180,7 @@ type Detail struct {
 }
 
 type ClusterInfo struct {
+	Name        string       `json:"name"`
 	VersionInfo version.Info `json:"versionInfo"`
 	ErrorsCount int          `json:"errorsCount"`
 	CPUCount    int          `json:"cpuCount"`

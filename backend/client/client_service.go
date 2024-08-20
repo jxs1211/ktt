@@ -387,6 +387,7 @@ func (s *ClientService) GetClusterInfo(
 		return types.FailedResp(err.Error())
 	}
 	clusterInfo := ClusterInfo{
+		Name:        cluster,
 		VersionInfo: *info,
 		ErrorsCount: count,
 	}
