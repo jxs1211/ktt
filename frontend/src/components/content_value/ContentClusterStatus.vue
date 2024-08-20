@@ -367,9 +367,9 @@ const clusterStatus = computed(() => {
 });
 
 const usedCPU = computed(() => {
+  return "fake";
   for (const cluster of clusterInfo.value) {
     if (cluster.name === tabStore.currentTabName) {
-      return ["fake", "fake"];
       console.log("matched: ", cluster);
       return get(cluster, "cpuCount", "fake");
     }

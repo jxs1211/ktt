@@ -241,7 +241,12 @@ const onKeyShortcut = (e) => {
           >
             <connection-pane class="app-side flex-item-expand" />
           </resizeable-wrapper>
+          <content-server-pane
+            v-if="isEmpty(connectionStore.clusters)"
+            class="flex-item-expand"
+          />
           <content-pane
+            v-else
             v-for="t in tabStore.tabs"
             v-show="tabStore.currentTabName === t.name"
             :key="t.name"
