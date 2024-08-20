@@ -90,6 +90,7 @@ const useTabStore = defineStore("tab", {
     asideWidth: 300,
     tabList: [],
     activatedIndex: 0, // current activated tab index
+    clusterTabsQueue: [],
   }),
   getters: {
     /**
@@ -121,6 +122,28 @@ const useTabStore = defineStore("tab", {
     },
   },
   actions: {
+    appendClusterTab(cluster) {
+      if (this.alreadyExists(cluster)) {
+        return;
+      }
+      this.clusterTabsQueue.push(cluster);
+      console.log("clusterTabsQueue: ", this.clusterTabsQueue);
+    },
+    removeClusterTab(cluster) {
+      remove(this.clusterTabsQueue, (elem) => elem === cluster);
+      console.log("clusterTabsQueue: ", this.clusterTabsQueue);
+    },
+    alreadyExists(cluster) {
+      for (let i = 0; i < this.clusterTabsQueue.length; i++) {
+        if (this.clusterTabsQueue[i] === cluster) {
+          return true;
+        }
+      }
+      return false;
+      // const exist = includes(this.clusterTabsQueue.value, cluster);
+      // console.log("alreadyExist: ", cluster);
+      // return exist;
+    },
     /**
      *
      * @param idx
