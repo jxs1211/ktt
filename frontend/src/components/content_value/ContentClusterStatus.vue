@@ -57,6 +57,7 @@ const tabStore = useTabStore();
 const i18n = useI18n();
 const themeVars = useThemeVars();
 const serverInfo = ref({});
+const clusterInfo = ref([]);
 const pageState = reactive({
   autoRefresh: false,
   refreshInterval: 5,
@@ -83,32 +84,6 @@ const generateData = (origin, labels, datalist) => {
   return cloneDeep(ret);
 };
 
-const getErrorsCount = async () => {
-  if (isEmpty(connectionStore.currentCluster)) {
-    $message.warning(i18n.t("error.no_cluster_selected"));
-    return "N/A";
-  }
-  // feat: count errors
-  try {
-    console.log("analyze ai:", preferencesStore.ai);
-    const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
-    const resp = await configStore.getErrorsCount(
-      connectionStore.currentCluster,
-      backend.name,
-      backend.model,
-      backend.baseUrl,
-      [],
-      false,
-      preferencesStore.ai.aggregate,
-      false,
-    );
-    if (!resp.success) {
-      return "N/A";
-    }
-    return resp.data;
-  } finally {
-  }
-};
 /**
  * refresh server status info
  * @param {boolean} [force] force refresh will show loading indicator
@@ -121,36 +96,48 @@ const refreshInfo = async (force) => {
     pageState.autoLoading = true;
   }
   const currentCluster = tabStore.currentTabName;
+  if (isEmpty(currentCluster)) {
+    $message.warning(`current cluster is empty string: ${currentCluster}`);
+    return;
+  }
   console.log("current cluster: ", currentCluster);
-  if (
-    !isEmpty(currentCluster) &&
-    connectionStore.checkConnectivity(currentCluster)
-  ) {
-    try {
-      const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
-      const { success, msg, data } = await configStore.getClusterInfo(
-        connectionStore.currentCluster,
-        backend.name,
-        backend.model,
-        backend.baseUrl,
-        [],
-        false,
-        false,
-        false,
-      );
-      if (!success) {
-        $message.error(msg);
-        return;
-      }
-      if (!isEmpty(data)) {
-        serverInfo.value = data;
-        console.log(serverInfo.value);
-        // _updateChart(info);
-      }
-    } finally {
-      pageState.loading = false;
-      pageState.autoLoading = false;
+  if (tabStore.alreadyExists(currentCluster)) {
+    console.log("fast return due to already exists: ", currentCluster);
+    return;
+  }
+  const { success, msg, _ } =
+    await connectionStore.checkConnectivity(currentCluster);
+  if (!success) {
+    $message.error(msg);
+    return;
+  }
+  tabStore.appendClusterTab(currentCluster);
+  try {
+    const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
+    const { success, msg, data } = await configStore.getClusterInfo(
+      connectionStore.currentCluster,
+      backend.name,
+      backend.model,
+      backend.baseUrl,
+      [],
+      false,
+      false,
+      false,
+    );
+    if (!success) {
+      $message.error(msg);
+      tabStore.removeClusterTab(currentCluster);
+      return;
     }
+    if (!isEmpty(data)) {
+      serverInfo.value = data;
+      console.log(serverInfo.value);
+      // _updateChart(info);
+    }
+  } finally {
+    pageState.loading = false;
+    pageState.autoLoading = false;
+    tabStore.removeClusterTab(currentCluster);
   }
 };
 
@@ -286,6 +273,13 @@ const startAutoRefresh = async () => {
       pageState.autoLoading ||
       !expired(lastExec)
     ) {
+      console.log(
+        "skip for refreshing: ",
+        props.pause,
+        pageState.loading,
+        pageState.autoLoading,
+        !expired(lastExec),
+      );
       continue;
     }
     lastExec = Date.now();
@@ -313,6 +307,7 @@ const onToggleRefresh = (on) => {
 };
 
 onMounted(() => {
+  console.log("onMounted");
   const { interval = 5 } = connectionStore.getRefreshInterval(props.server);
   if (interval >= 0) {
     pageState.autoRefresh = true;
@@ -433,7 +428,10 @@ watch(
   (newVal, oldVal) => {
     // reset data
     set(serverInfo.value, "errorsCount", "Loading");
-    set(serverInfo.value, "versionInfo.gitVersion", "Loading");
+    const version = get(serverInfo.value, "versionInfo.gitVersion", "Loading");
+    if (version == "Loading") {
+      set(serverInfo.value, "versionInfo.gitVersion", "Loading");
+    }
     console.log(newVal, oldVal);
   },
 );
@@ -844,7 +842,7 @@ const clientTableColumns = computed(() => {
         </n-tab-pane>
 
         <!-- info tab pane -->
-        <n-tab-pane :tab="$t('status.server_info')" name="info">
+        <!-- <n-tab-pane :tab="$t('status.server_info')" name="info">
           <n-space :wrap="false" :wrap-item="false" class="flex-item-expand">
             <n-space align="end" item-style="padding: 0 5px;" vertical>
               <n-button
@@ -887,7 +885,7 @@ const clientTableColumns = computed(() => {
               striped
             />
           </n-space>
-        </n-tab-pane>
+        </n-tab-pane> -->
       </n-tabs>
     </n-card>
   </n-space>

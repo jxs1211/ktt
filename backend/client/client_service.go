@@ -23,10 +23,12 @@ import (
 	"ktt/backend/types"
 	sliceutil "ktt/backend/utils/slice"
 	strutil "ktt/backend/utils/string"
+	"ktt/backend/utils/tool"
 )
 
 var (
-	kubeconfigPath = path.Join(strutil.RootPath(), "ktt-kube-config")
+	kubeconfigPath        = path.Join(strutil.RootPath(), "ktt-kube-config")
+	defaultMaxConcurrency = 20
 )
 
 type ClientService struct {
@@ -216,6 +218,7 @@ func (s *ClientService) analyze(
 	cluster, aiBackend, model, baseURL string,
 	filters []string, explain, aggregate, anonymize bool,
 ) ([]Result, error) {
+	defer tool.TrackTime("clientService.analyze")()
 	if len(cluster) == 0 {
 		return nil, errors.New("no cluster available, add any first")
 	}
@@ -240,7 +243,7 @@ func (s *ClientService) analyze(
 
 	analyzer, err := analysis.NewAnalysis(
 		aiBackend, "english", filters, "", "", false,
-		explain, 1, false, false, []string{},
+		explain, defaultMaxConcurrency, false, false, []string{},
 	)
 	if err != nil {
 		return nil, err
