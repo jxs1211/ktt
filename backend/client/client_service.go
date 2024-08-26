@@ -3,16 +3,19 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/ai"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/analysis"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/analyzer"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/common"
 	"github.com/spf13/viper"
+	uberzap "go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -21,6 +24,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"ktt/backend/types"
+	logutil "ktt/backend/utils/log"
 	sliceutil "ktt/backend/utils/slice"
 	strutil "ktt/backend/utils/string"
 	"ktt/backend/utils/tool"
@@ -33,6 +37,7 @@ var (
 
 type ClientService struct {
 	ctx       context.Context
+	logr      logr.Logger
 	apiClient *APIClient
 }
 
@@ -64,6 +69,45 @@ func (s *ClientService) validate(config string) (*clientcmdapi.Config, error) {
 		return nil, err
 	}
 	return apiConfig, nil
+}
+
+func (s *ClientService) LoadConfigFromLocal() types.JSResp {
+	err := s.loadConfigFrom(kubeconfigPath)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{
+		Success: true,
+	}
+}
+
+func (s *ClientService) loadConfigFrom(path string) error {
+	if len(path) == 0 {
+		return errors.New("config path is empty")
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if fileInfo.Size() == 0 {
+		return ErrEmptyConfig
+	}
+	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
+	flags.KubeConfig = &path
+	config, err := clientcmd.BuildConfigFromFlags("", path)
+	if err != nil {
+		return err
+	}
+	c, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	s.apiClient = New(
+		NewConfig(flags),
+	)
+	s.apiClient.setClient(c)
+	s.logr.Info("resource-list-load-failed", "client", s.apiClient.client)
+	return nil
 }
 
 func (s *ClientService) LoadConfig(configContent string) types.JSResp {
@@ -101,7 +145,11 @@ func (s *ClientService) LoadConfig(configContent string) types.JSResp {
 }
 
 func (s *ClientService) Start(ctx context.Context) {
+	// load config from local file if it exists
 	s.ctx = ctx
+	s.logr = logutil.New(
+		uberzap.WithCaller(true),
+	)
 }
 
 func (s *ClientService) GetLocalConfig() types.JSResp {
@@ -232,7 +280,7 @@ func (s *ClientService) analyze(
 		viper.Set("ai", ai.AIConfiguration{
 			DefaultProvider: aiBackend,
 			Providers: []ai.AIProvider{
-				ai.AIProvider{
+				{
 					Name:    aiBackend,
 					Model:   model,
 					BaseURL: baseURL,
@@ -267,6 +315,7 @@ func (s *ClientService) analyze(
 		}
 	}
 	results := parseDetail(analyzer.Results)
+	s.logr.Info(fmt.Sprintf("Errors count: %d", len(results)))
 	return results, nil
 }
 
@@ -314,6 +363,7 @@ func parseDetail(results []common.Result) []Result {
 
 // feat: implement api-resources API
 func (s *ClientService) getApiResources() ([]string, error) {
+	s.logr.Info("resource-list-load-failed", "client", s.apiClient.client)
 	lists, err := s.apiClient.client.Discovery().ServerPreferredResources()
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { get, isEmpty, isObject, uniq } from "lodash";
 import {
   LoadConfig,
+  LoadConfigFromLocal,
   GetLocalConfig,
   TestConnection,
   Analyze,
@@ -23,6 +24,9 @@ const useConfigStore = defineStore("config", {
   }),
   getters: {},
   actions: {
+    async loadConfigFromLocal() {
+      return await LoadConfigFromLocal();
+    },
     async getAvailableResources() {
       return await GetAvailableFilteredResources();
     },

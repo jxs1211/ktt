@@ -6,50 +6,48 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/ai"
 	"github.com/spf13/viper"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-func TestNewClientService(t *testing.T) {
-	tests := []struct {
-		name string
-		want *ClientService
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewClientService(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewClientService() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+func makeApiClient() *APIClient {
+	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
+	flags.KubeConfig = &kubeconfigPath
+	// config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// c, err := kubernetes.NewForConfig(config)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	client := New(
+		NewConfig(flags),
+	)
+
+	return client
 }
 
 func TestConnection(t *testing.T) {
-	type fields struct {
+	tests := []struct {
+		name      string
+		config    string
 		ctx       context.Context
 		apiClient *APIClient
-	}
-	type args struct {
-		config string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   types.JSResp
-	}{
-		// TODO: Add test cases.
-	}
+		want      types.JSResp
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &ClientService{
-				ctx:       tt.fields.ctx,
-				apiClient: tt.fields.apiClient,
+				ctx:       tt.ctx,
+				apiClient: tt.apiClient,
 			}
-			if got := s.TestConnection(tt.args.config); !reflect.DeepEqual(got, tt.want) {
+			if got := s.TestConnection(tt.config); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ClientService.TestConnection() = %v, want %v", got, tt.want)
 			}
 		})
@@ -57,35 +55,83 @@ func TestConnection(t *testing.T) {
 }
 
 func TestClientService_validate(t *testing.T) {
-	type fields struct {
+	tests := []struct {
+		name      string
 		ctx       context.Context
 		apiClient *APIClient
-	}
-	type args struct {
-		config string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *clientcmdapi.Config
-		wantErr bool
+		config    string
+		want      *clientcmdapi.Config
+		wantErr   bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:      "base",
+			ctx:       context.Background(),
+			apiClient: makeApiClient(),
+			config: `apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: https://1.1.1.1
+  name: production
+contexts:
+- context:
+    cluster: production
+    user: production
+  name: production
+current-context: production
+users:
+- name: production
+  user:
+    auth-provider:
+      name: gcp`,
+			want: &clientcmdapi.Config{
+				CurrentContext: "production",
+				Extensions:     map[string]k8sruntime.Object{},
+				Preferences: api.Preferences{
+					Extensions: map[string]k8sruntime.Object{},
+				},
+				Contexts: map[string]*clientcmdapi.Context{
+					"production": {
+						Cluster:    "production",
+						AuthInfo:   "production",
+						Extensions: map[string]k8sruntime.Object{},
+					},
+				},
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{
+					"production": {
+						AuthProvider: &clientcmdapi.AuthProviderConfig{
+							Name: "gcp",
+						},
+						Extensions: map[string]k8sruntime.Object{},
+					},
+				},
+				Clusters: map[string]*clientcmdapi.Cluster{
+					"production": {
+						Server:     "https://1.1.1.1",
+						Extensions: map[string]k8sruntime.Object{},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &ClientService{
-				ctx:       tt.fields.ctx,
-				apiClient: tt.fields.apiClient,
+				ctx:       tt.ctx,
+				apiClient: tt.apiClient,
 			}
-			got, err := s.validate(tt.args.config)
+			got, err := s.validate(tt.config)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ClientService.validate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			diff := cmp.Diff(got, tt.want)
+			t.Log("diff: ", diff)
+			if len(diff) != 0 {
+				t.Errorf("The diff of ClientService.validate() = %v", diff)
+			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ClientService.validate() = %v, want %v", got, tt.want)
+				t.Errorf("ClientService.validate() = %+v, \nwant %+v", got, tt.want)
 			}
 		})
 	}
@@ -277,35 +323,29 @@ func TestClientService_CurrentContext(t *testing.T) {
 	}
 }
 
-func TestClientService_Analyze(t *testing.T) {
-	type fields struct {
-		ctx       context.Context
-		apiClient *APIClient
-	}
-	type args struct {
-		cluster string
-		filters []string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   types.JSResp
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &ClientService{
-				ctx:       tt.fields.ctx,
-				apiClient: tt.fields.apiClient,
-			}
-			if got := s.Analyze(tt.args.cluster, tt.args.filters); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ClientService.Analyze() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+// func TestClientService_Analyze(t *testing.T) {
+// 	tests := []struct {
+// 		name   string
+// 		ctx       context.Context
+// 		apiClient *APIClient
+// 		cluster string
+// 		filters []string
+// 		want   types.JSResp
+// 	}{
+// 		// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := &ClientService{
+// 				ctx:       tt.ctx,
+// 				apiClient: tt.apiClient,
+// 			}
+// 			if got := s.Analyze(tt.cluster, tt.filters); !reflect.DeepEqual(got, tt.want) {
+// 				t.Errorf("ClientService.Analyze() = %v, want %v", got, tt.want)
+// 			}
+// 		})
+// 	}
+// }
 
 func TestClientService_getApiResources(t *testing.T) {
 	type fields struct {
@@ -339,23 +379,18 @@ func TestClientService_getApiResources(t *testing.T) {
 }
 
 func TestClientService_getAvailableFilteredResources(t *testing.T) {
-	type fields struct {
+	tests := []struct {
+		name      string
 		ctx       context.Context
 		apiClient *APIClient
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    []string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
+		want      []string
+		wantErr   bool
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &ClientService{
-				ctx:       tt.fields.ctx,
-				apiClient: tt.fields.apiClient,
+				ctx:       tt.ctx,
+				apiClient: tt.apiClient,
 			}
 			got, err := s.getAvailableFilteredResources()
 			if (err != nil) != tt.wantErr {
@@ -409,4 +444,39 @@ func TestViper(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("AI config: %+v", configAI)
+}
+
+func TestClientService_loadConfigFrom(t *testing.T) {
+	tests := []struct {
+		name      string
+		ctx       context.Context
+		apiClient *APIClient
+		path      string
+		wantErr   bool
+	}{
+		{
+			name:      "base",
+			ctx:       context.Background(),
+			apiClient: makeApiClient(),
+			path:      kubeconfigPath,
+		},
+		{
+			name:      "configPathNotExist",
+			ctx:       context.Background(),
+			apiClient: makeApiClient(),
+			path:      "/path/not/exist",
+			wantErr:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &ClientService{
+				ctx:       tt.ctx,
+				apiClient: tt.apiClient,
+			}
+			if err := s.loadConfigFrom(tt.path); (err != nil) != tt.wantErr {
+				t.Errorf("ClientService.loadConfigFrom() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

@@ -247,14 +247,21 @@ const analyze = async () => {
 
 const loadResources = async () => {
   try {
-    await nextTick();
-    data.loading = true;
-    const list = await connectionStore.getAvailableResources();
-    data.options = list || [];
-    console.log("data.options: ", data.options);
+    // await nextTick();
+    // data.loading = true;
+    const { success, msg, data } =
+      await connectionStore.getAvailableResources();
+    console.log("resources list: ", data);
+    if (!success) {
+      console.warn(`get resource list failed: ${msg}`);
+    } else {
+      data.options = data || [];
+    }
+  } catch {
+    console.error("get resource list failed");
   } finally {
-    data.loading = false;
-    await nextTick();
+    // data.loading = false;
+    // await nextTick();
     // tableRef.value?.scrollTo({ position: "bottom" });
   }
 };

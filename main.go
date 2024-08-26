@@ -5,10 +5,6 @@ import (
 	"embed"
 	"runtime"
 
-	"ktt/backend/client"
-	"ktt/backend/consts"
-	"ktt/backend/services"
-
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -17,6 +13,10 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"ktt/backend/client"
+	"ktt/backend/consts"
+	"ktt/backend/services"
 )
 
 //go:embed all:frontend/dist
@@ -27,9 +27,6 @@ var icon []byte
 
 var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
-
-func init() {
-}
 
 func main() {
 	clientSvc := client.NewClientService()

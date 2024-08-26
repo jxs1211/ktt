@@ -42,6 +42,10 @@ export function LoadConfig(arg1) {
   return window['go']['client']['ClientService']['LoadConfig'](arg1);
 }
 
+export function LoadConfigFromLocal() {
+  return window['go']['client']['ClientService']['LoadConfigFromLocal']();
+}
+
 export function Start(arg1) {
   return window['go']['client']['ClientService']['Start'](arg1);
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch, watchEffect } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
@@ -11,14 +11,11 @@ import { BrowserTabType } from "@/consts/browser_tab_type.js";
 import Terminal from "@/components/icons/Terminal.vue";
 import Log from "@/components/icons/Log.vue";
 import Detail from "@/components/icons/Detail.vue";
-import ContentValueWrapper from "@/components/content_value/ContentValueWrapper.vue";
 import ContentCli from "@/components/content_value/ContentCli.vue";
 import Monitor from "@/components/icons/Monitor.vue";
 import ContentSlog from "@/components/content_value/ContentSlog.vue";
 import ContentMonitor from "@/components/content_value/ContentMonitor.vue";
 import { decodeRedisKey } from "@/utils/key_convert.js";
-import ContentPubsub from "@/components/content_value/ContentPubsub.vue";
-import Subscribe from "@/components/icons/Subscribe.vue";
 
 const themeVars = useThemeVars();
 
@@ -37,12 +34,8 @@ const props = defineProps({
 });
 // feat: errorPaneRef support to trigger fetching data from backend using watchEffect
 const errorPaneRef = ref(null);
-// watchEffect(() => {
-//   if (connectionStore.clusters.length > 0) {
-//     errorPaneRef.value?.refresh();
-//   }
-// });
 const connectionStore = useConnectionStore();
+
 const tabStore = useTabStore();
 const tab = computed(() =>
   map(tabStore.tabs, (item) => ({
@@ -99,6 +92,11 @@ watch(
     }
   },
 );
+watchEffect(() => {
+  if (connectionStore.clusters.length > 0) {
+    errorPaneRef.value?.refresh();
+  }
+});
 </script>
 
 <template>

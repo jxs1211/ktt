@@ -23,6 +23,8 @@ export function GetLocalConfig():Promise<types.JSResp>;
 
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 
+export function LoadConfigFromLocal():Promise<types.JSResp>;
+
 export function Start(arg1:context.Context):Promise<void>;
 
 export function TestConnection(arg1:string):Promise<types.JSResp>;

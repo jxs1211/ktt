@@ -68,23 +68,11 @@ const useConnectionStore = defineStore("connections", {
   getters: {},
   actions: {
     async getAvailableResources() {
-      const resp = await GetAvailableFilteredResources();
-      if (resp.success) {
-        return resp.data;
-      }
+      return await GetAvailableFilteredResources();
     },
     async checkConnectivity(name) {
       return await CheckConnectivity(name);
     },
-    // async getClusterInfo(name) {
-    //   const success = await this.checkConnectivity(name);
-    //   console.log(success);
-    //   if (!success) {
-    //     return {};
-    //   }
-    //   const info = await GetClusterInfo();
-    //   return info;
-    // },
     async updateClusterFromConfig(config) {
       const configStore = useConfigStore();
       const resp = await configStore.loadConfig(config);

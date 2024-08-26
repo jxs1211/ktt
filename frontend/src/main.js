@@ -11,6 +11,7 @@ import usePreferencesStore from "stores/preferences.js";
 import { loadEnvironment } from "@/utils/platform.js";
 import { setupMonaco } from "@/utils/monaco.js";
 import { setupChart } from "@/utils/chart.js";
+import useConfigStore from "./stores/config";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -26,6 +27,13 @@ async function setupApp() {
   const prefStore = usePreferencesStore();
   await prefStore.loadPreferences();
   await setupDiscreteApi();
+  const configStore = useConfigStore();
+  const { success, msg, _ } = await configStore.loadConfigFromLocal();
+  if (!success) {
+    console.error("load config from local failed: ", msg);
+  } else {
+    console.log("load config from local success");
+  }
   app.config.errorHandler = (err, instance, info) => {
     // TODO: add "send error message to author" later
     nextTick().then(() => {
