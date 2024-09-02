@@ -283,7 +283,7 @@ const onUpdateSelectedKeys = (keys, option) => {
     connectionStore.switchedClusterOK = false;
     switchCluster(connectionStore.currentCluster);
     // console.log(keys, option[0].label);
-    tabStore.upsertClusterTab({ cluster: option[0].label });
+    tabStore.upsertClusterTab({ subTab: "status", cluster: option[0].label });
   }
 };
 

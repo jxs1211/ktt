@@ -186,66 +186,6 @@ const useTabStore = defineStore("tab", {
       );
     },
 
-    upsertTab({
-      subTab,
-      server,
-      db,
-      type,
-      ttl,
-      key,
-      keyCode,
-      size,
-      length,
-      matchPattern = "",
-      clearValue,
-      format = "",
-      decode = "",
-    }) {
-      let tabIndex = findIndex(this.tabList, { name: server });
-      if (tabIndex === -1) {
-        const tabItem = new TabItem({
-          name: server,
-          title: server,
-          subTab,
-          server,
-          db,
-          type,
-          ttl,
-          key,
-          keyCode,
-          size,
-          length,
-          matchPattern,
-          value: undefined,
-          format,
-          decode,
-        });
-        this.tabList.push(tabItem);
-        tabIndex = this.tabList.length - 1;
-      } else {
-        const tab = this.tabList[tabIndex];
-        tab.blank = false;
-        tab.subTab = subTab;
-        // tab.title = db !== undefined ? `${server}/db${db}` : `${server}`
-        tab.title = server;
-        tab.server = server;
-        tab.db = db == null ? tab.db : db;
-        tab.type = type;
-        tab.ttl = ttl;
-        tab.key = key;
-        tab.keyCode = keyCode;
-        tab.size = size;
-        tab.length = length;
-        tab.matchPattern = matchPattern;
-        tab.format = format;
-        tab.decode = decode;
-        if (clearValue === true) {
-          tab.value = undefined;
-        }
-      }
-      this._setActivatedIndex(tabIndex, true, subTab);
-    },
-
     upsertClusterTab({ subTab, cluster }) {
       let tabIndex = findIndex(this.tabList, { name: cluster });
       if (tabIndex === -1) {
