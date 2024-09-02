@@ -64,6 +64,7 @@ const useConnectionStore = defineStore("connections", {
     clusters: [],
     currentCluster: "",
     filteredResources: [],
+    switchedClusterOK: false,
   }),
   getters: {},
   actions: {
@@ -73,8 +74,8 @@ const useConnectionStore = defineStore("connections", {
         return resp.data;
       }
     },
-    async checkConnectivity(name) {
-      return await CheckConnectivity(name);
+    checkConnectivity(name) {
+      return CheckConnectivity(name);
     },
     // async getClusterInfo(name) {
     //   const success = await this.checkConnectivity(name);

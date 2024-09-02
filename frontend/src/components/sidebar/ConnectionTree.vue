@@ -280,9 +280,21 @@ const onUpdateSelectedKeys = (keys, option) => {
   selectedKeys.value = keys;
   if (!isEmpty(keys)) {
     connectionStore.currentCluster = option[0].label;
-    console.log(keys, option[0].label);
-    tabStore.upsertClusterTab({ server: option[0].label });
+    connectionStore.switchedClusterOK = false;
+    switchCluster(connectionStore.currentCluster);
+    // console.log(keys, option[0].label);
+    tabStore.upsertClusterTab({ cluster: option[0].label });
   }
+};
+
+const switchCluster = async (name) => {
+  const { success, msg, _ } = await connectionStore.checkConnectivity(name);
+  if (!success) {
+    $message.error(msg);
+    return;
+  }
+  connectionStore.switchedClusterOK = true;
+  console.log("selected available cluster:", name);
 };
 
 /**

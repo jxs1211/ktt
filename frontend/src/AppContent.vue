@@ -124,7 +124,7 @@ onMounted(async () => {
   onToggleMaximize(maximised);
   // load config from local
   const { success, msg, data } = await configStore.getLocalConfig();
-  console.log("load config from local", success, msg, data);
+  console.log("load config from local", success, msg);
   if (success) {
     connectionStore.updateClusterFromConfig(data);
   } else {

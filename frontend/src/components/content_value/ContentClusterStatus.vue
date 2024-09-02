@@ -84,17 +84,16 @@ const generateData = (origin, labels, datalist) => {
   return cloneDeep(ret);
 };
 
+const resetLoadingState = () => {
+  pageState.loading = false;
+  pageState.autoLoading = false;
+};
 /**
  * refresh server status info
  * @param {boolean} [force] force refresh will show loading indicator
  * @returns {Promise<void>}
  */
 const refreshInfo = async (force) => {
-  if (force) {
-    pageState.loading = true;
-  } else {
-    pageState.autoLoading = true;
-  }
   const currentCluster = tabStore.currentTabName;
   if (isEmpty(currentCluster)) {
     $message.warning(`current cluster is empty string: ${currentCluster}`);
@@ -105,12 +104,12 @@ const refreshInfo = async (force) => {
     console.log("fast return due to already exists: ", currentCluster);
     return;
   }
-  const { success, msg, _ } =
-    await connectionStore.checkConnectivity(currentCluster);
-  if (!success) {
-    $message.error(msg);
-    return;
+  if (force) {
+    pageState.loading = true;
+  } else {
+    pageState.autoLoading = true;
   }
+  // process cluster
   tabStore.appendClusterTab(currentCluster);
   try {
     const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
@@ -127,6 +126,7 @@ const refreshInfo = async (force) => {
     if (!success) {
       $message.error(msg);
       tabStore.removeClusterTab(currentCluster);
+      resetLoadingState();
       return;
     }
     if (!isEmpty(data)) {
@@ -139,6 +139,7 @@ const refreshInfo = async (force) => {
         );
         const updateTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
         if (index !== -1) {
+          // update
           clusterInfo.value[index] = {
             ...clusterInfo.value[index],
             ...data,
@@ -151,8 +152,7 @@ const refreshInfo = async (force) => {
       }
     }
   } finally {
-    pageState.loading = false;
-    pageState.autoLoading = false;
+    resetLoadingState();
     tabStore.removeClusterTab(currentCluster);
   }
 };
@@ -289,13 +289,7 @@ const startAutoRefresh = async () => {
       pageState.autoLoading ||
       !expired(lastExec)
     ) {
-      console.log(
-        "skip for refreshing: ",
-        props.pause,
-        pageState.loading,
-        pageState.autoLoading,
-        !expired(lastExec),
-      );
+      // console.log("skip for refreshing");
       continue;
     }
     lastExec = Date.now();
@@ -341,6 +335,8 @@ onUnmounted(() => {
 });
 
 const clusterVersion = computed(() => {
+  console.log("clusterInfo: ", clusterInfo.value);
+  console.log("currentTabName: ", tabStore.currentTabName);
   for (const cluster of clusterInfo.value) {
     if (cluster.name === tabStore.currentTabName) {
       return get(cluster, "versionInfo.gitVersion", "");
@@ -471,10 +467,8 @@ watch(
     for (const cluster of clusterInfo.value) {
       if (cluster.name === tabStore.currentTabName) {
         set(cluster, "errorsCount", "Loading");
-        const version = get(cluster, "versionInfo.gitVersion", "Loading");
-        if (version === "Loading") {
-          set(cluster, "versionInfo.gitVersion", "Loading");
-        }
+        // const version = get(cluster, "versionInfo.gitVersion", "Loading");
+        set(cluster, "versionInfo.gitVersion", "");
       }
     }
   },

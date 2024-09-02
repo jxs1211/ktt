@@ -1,6 +1,7 @@
 package watch
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 )
 
 type WatcherManager struct {
+	ctx        context.Context
 	watcherMap map[string]*Watcher
 }
 
@@ -21,6 +23,10 @@ func NewWatcherManager() *WatcherManager {
 	return &WatcherManager{
 		watcherMap: make(map[string]*Watcher),
 	}
+}
+
+func (wm *WatcherManager) Start(ctx context.Context) {
+	wm.ctx = ctx
 }
 
 func (wm *WatcherManager) validate(watcher *Watcher) error {
@@ -153,9 +159,6 @@ func (wm *WatcherManager) GetWatcherList() []string {
 		res = append(res, k)
 	}
 	return res
-}
-
-func (wm *WatcherManager) Start() {
 }
 
 func (wm *WatcherManager) RunWatcher(name string) types.JSResp {

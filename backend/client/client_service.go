@@ -211,6 +211,7 @@ func (s *ClientService) getErrorsCount(
 	if err != nil {
 		return 0, err
 	}
+	log.Println("error results count: ", len(results))
 	return len(results), nil
 }
 
@@ -218,7 +219,10 @@ func (s *ClientService) analyze(
 	cluster, aiBackend, model, baseURL string,
 	filters []string, explain, aggregate, anonymize bool,
 ) ([]Result, error) {
-	defer tool.TrackTime("clientService.analyze")()
+	defer func() {
+		tool.TrackTime("clientService.analyze")()
+		log.Println("cluster: ", cluster, " explain: ", explain)
+	}()
 	if len(cluster) == 0 {
 		return nil, errors.New("no cluster available, add any first")
 	}

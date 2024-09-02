@@ -26,7 +26,7 @@ async function setupApp() {
   setupChart();
   const prefStore = usePreferencesStore();
   await prefStore.loadPreferences();
-  // await setupDiscreteApi();
+  await setupDiscreteApi();
   // const configStore = useConfigStore();
   // const { success, msg, _ } = await configStore.loadConfigFromLocal();
   // if (!success) {

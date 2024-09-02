@@ -17,6 +17,7 @@ import (
 	"ktt/backend/client"
 	"ktt/backend/consts"
 	"ktt/backend/services"
+	"ktt/backend/watch"
 )
 
 //go:embed all:frontend/dist
@@ -33,6 +34,7 @@ func init() {
 
 func main() {
 	clientSvc := client.NewClientService()
+	watcherManager := watch.NewWatcherManager()
 	// Create an instance of the app structure
 	sysSvc := services.System()
 	connSvc := services.Connection()
@@ -74,6 +76,7 @@ func main() {
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
 			clientSvc.Start(ctx)
+			watcherManager.Start(ctx)
 			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			browserSvc.Start(ctx)

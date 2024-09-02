@@ -182,6 +182,7 @@
       "diagnostic": "Diagnostic",
       "cli": "Console",
       "slow_log": "Slow Log",
+      "watch": "Watch",
       "cmd_monitor": "Monitor Commands",
       "pub_message": "Pub/Sub"
     }
