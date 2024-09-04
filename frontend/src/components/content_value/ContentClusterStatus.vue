@@ -25,6 +25,7 @@ import {
   shallowRef,
   toRaw,
   watch,
+  watchEffect,
 } from "vue";
 import IconButton from "@/components/common/IconButton.vue";
 import Filter from "@/components/icons/Filter.vue";
@@ -57,7 +58,9 @@ const tabStore = useTabStore();
 const i18n = useI18n();
 const themeVars = useThemeVars();
 const serverInfo = ref({});
-const clusterInfo = ref([]);
+// cluster info
+const clusterInfo = ref({});
+// const clusterVersion = ref("Loading2");
 const pageState = reactive({
   autoRefresh: false,
   refreshInterval: 10,
@@ -118,10 +121,7 @@ const refreshInfo = async (force) => {
       backend.name,
       backend.model,
       backend.baseUrl,
-      [],
-      false,
-      false,
-      false,
+      [], false, false, false,
     );
     if (!success) {
       $message.error(msg);
@@ -134,21 +134,25 @@ const refreshInfo = async (force) => {
         // const foundCluster = find(clusterInfo.value, {
         //   name: currentCluster,
         // });
-        const index = clusterInfo.value.findIndex(
-          (cluster) => cluster.name === data.name,
-        );
+        // const index = clusterInfo.value.findIndex(
+        //   (cluster) => cluster.name === data.name,
+        // );
         const updateTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-        if (index !== -1) {
-          // update
-          clusterInfo.value[index] = {
-            ...clusterInfo.value[index],
-            ...data,
-            lastUpdated: updateTime,
-          };
-        } else {
-          clusterInfo.value.push({ ...data, lastUpdated: updateTime });
-        }
-        console.log("updated cluster: ", clusterInfo.value);
+        // clusterInfo.value = {...data, lastUpdated: updateTime}
+        clusterInfo.value = reactive({...data, lastUpdated: updateTime});
+        clusterInfo.value = {...clusterInfo.value}; // Force reactivity update
+        // Force reactivity update
+        console.log("updated clusterInfo: ", clusterInfo.value)
+        // console.log("updated clusterVersion: ", clusterVersion.value)
+        // Remove the existing item if found
+        // if (index !== -1) {
+        //   console.log("Removing existing clusterInfo");
+        //   clusterInfo.value.splice(index, 1);
+        // }
+
+        // Always push the new data
+        // clusterInfo.value.push({ ...data, lastUpdated: updateTime });
+        // clusterInfo.value = [...clusterInfo.value];
       }
     }
   } finally {
@@ -317,7 +321,7 @@ const onToggleRefresh = (on) => {
 };
 
 onMounted(() => {
-  console.log("onMounted");
+  // console.log("onMounted");
   const { interval = 10 } = connectionStore.getRefreshInterval(props.server);
   if (interval >= 0) {
     pageState.autoRefresh = true;
@@ -335,33 +339,17 @@ onUnmounted(() => {
 });
 
 const clusterVersion = computed(() => {
-  console.log("clusterInfo: ", clusterInfo.value);
-  console.log("currentTabName: ", tabStore.currentTabName);
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return get(cluster, "versionInfo.gitVersion", "");
-    }
-  }
+  const ver = clusterInfo.value?.versionInfo?.gitVersion || '';
+  console.log("clusterInfo in computed:", clusterInfo.value);
+  console.log("version:", ver);
+  return ver;
 });
-
-const errorsCount = computed(() => {
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return get(cluster, "errorsCount", "N/A");
-    }
-  }
-  return "N/A";
-});
-
 const clusterStatus = computed(() => {
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
-    }
-  }
-  return "Loading";
+  return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
 });
-
+const errorsCount = computed(() => {
+  return get(clusterInfo.value, "errorsCount", "Loading");
+});
 const usedCPU = computed(() => {
   return "fake";
   for (const cluster of clusterInfo.value) {
@@ -443,7 +431,9 @@ const onFilterGroup = (group) => {
     infoFilter.group = group;
   }
 };
-
+watchEffect(() => {
+  console.log("clusterInfo changed:", clusterInfo.value);
+});
 watch(
   () => prefStore.currentLanguage,
   () => {
@@ -461,18 +451,13 @@ watch(
     networkRate.value = generateData(networkRate.value);
   },
 );
-watch(
-  () => tabStore.activatedIndex,
-  (newVal, oldVal) => {
-    for (const cluster of clusterInfo.value) {
-      if (cluster.name === tabStore.currentTabName) {
-        set(cluster, "errorsCount", "Loading");
-        // const version = get(cluster, "versionInfo.gitVersion", "Loading");
-        set(cluster, "versionInfo.gitVersion", "");
-      }
-    }
-  },
-);
+// watch(
+//   () => tabStore.activatedIndex,
+//   (newVal, oldVal) => {
+//     set(clusterInfo, "errorsCount", "Loading");
+//     set(clusterInfo, "versionInfo.gitVersion", "");
+//   },
+// );
 const chartBGColor = [
   "rgba(255, 99, 132, 0.2)",
   "rgba(255, 159, 64, 0.2)",

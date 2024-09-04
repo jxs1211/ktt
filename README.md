@@ -14,8 +14,7 @@
 [![Discord](https://img.shields.io/discord/1170373259133456434?label=Discord&color=5865F2)](https://discord.gg/VTFbBMGjWh)
 [![X](https://img.shields.io/badge/Twitter-black?logo=x&logoColor=white)](https://twitter.com/Lykin53448)
 
-<strong>KT is a modern lightweight cross-platform Redis desktop manager available for Mac, Windows, and
-Linux.</strong>
+<strong>A lightweight, user-friendly and cross-platform k8s diagnosing tool.</strong>
 </div>
 
 <picture>
