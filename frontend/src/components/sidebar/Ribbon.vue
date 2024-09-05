@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
+import { isEmpty } from "lodash";
 import { NIcon, useThemeVars } from "naive-ui";
 import Database from "@/components/icons/Database.vue";
 import Server from "@/components/icons/Server.vue";
@@ -18,6 +19,7 @@ import bilibiliUrl from "@/assets/images/bilibili_official.png";
 import QRCode from "@/components/icons/QRCode.vue";
 import Twitter from "@/components/icons/Twitter.vue";
 import { trackEvent } from "@/utils/analytics.js";
+import useConnectionStore from "../../stores/connections";
 
 const themeVars = useThemeVars();
 const render = useRender();
@@ -38,25 +40,26 @@ const emit = defineEmits(["update:value"]);
 const iconSize = computed(() => Math.floor(props.width * 0.45));
 
 const browserStore = useBrowserStore();
+const connectionStore = useConnectionStore();
 const showWechat = ref(false);
 const menuOptions = computed(() => {
   return [
-    // {
-    //   label: "ribbon.browser",
-    //   key: "browser",
-    //   icon: Database,
-    //   show: browserStore.anyConnectionOpened,
-    // },
+    {
+      label: "ribbon.browser",
+      key: "browser",
+      icon: Database,
+      show: !isEmpty(connectionStore.currentCluster) && connectionStore.switchedClusterOK,
+    },
     {
       label: "ribbon.server",
       key: "server",
       icon: Server,
     },
-    {
-      label: "ribbon.log",
-      key: "log",
-      icon: Record,
-    },
+    // {
+    //   label: "ribbon.log",
+    //   key: "log",
+    //   icon: Record,
+    // },
   ];
 });
 

@@ -194,22 +194,13 @@ const onKeyShortcut = (e) => {
               type="success"
               :size="16"
               v-if="
-                tabStore.nav === 'server' && !isEmpty(tabStore.currentTabName)
+                tabStore.nav !== 'log' && !isEmpty(tabStore.currentTabName)
               "
             >
               - {{ tabStore.currentTabName }}
             </n-gradient-text>
           </n-space>
         </div>
-
-        <!-- browser tabs -->
-        <div
-          v-show="tabStore.nav === 'browser'"
-          class="app-toolbar-tab flex-item-expand"
-        >
-          <content-value-tab />
-        </div>
-
         <div class="flex-item-expand" style="min-width: 15px"></div>
         <!-- simulate window control buttons -->
         <toolbar-control-widget
@@ -228,6 +219,22 @@ const onKeyShortcut = (e) => {
         style="--wails-draggable: none"
       >
         <ribbon v-model:value="tabStore.nav" :width="data.navMenuWidth" />
+
+        <!-- browser -->
+        <div
+          v-show="tabStore.nav === 'browser'"
+          class="content-area flex-box-h flex-item-expand"
+        >
+          <!-- <content-value-tab /> -->
+          <content-pane
+            v-for="t in tabStore.tabs"
+            v-show="tabStore.currentTabName === t.name"
+            :key="t.name"
+            :server="t.name"
+            class="flex-item-expand"
+          />
+        </div>
+
         <!-- server list page -->
         <div
           v-show="tabStore.nav === 'server'"
@@ -241,18 +248,7 @@ const onKeyShortcut = (e) => {
           >
             <connection-pane class="app-side flex-item-expand" />
           </resizeable-wrapper>
-          <content-server-pane
-            v-if="isEmpty(connectionStore.clusters)"
-            class="flex-item-expand"
-          />
-          <content-pane
-            v-else
-            v-for="t in tabStore.tabs"
-            v-show="tabStore.currentTabName === t.name"
-            :key="t.name"
-            :server="t.name"
-            class="flex-item-expand"
-          />
+          <content-server-pane class="flex-item-expand" />
         </div>
 
         <!-- log page -->

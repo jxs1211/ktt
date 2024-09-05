@@ -1,5 +1,8 @@
 name: Release Windows App
 
+permissions:
+  contents: write
+
 on:
   release:
     types: [ published ]
@@ -94,13 +97,6 @@ jobs:
         working-directory: ./build/bin
         run: Compress-Archive "KT.exe" "KT_Portable_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.zip"
 
-      - name: Upload release asset (Portable)
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ steps.normalise_version.outputs.version }}
-          files: ./build/bin/KT_Portable_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Windows NSIS installer
         shell: bash
         run: |
@@ -122,9 +118,33 @@ jobs:
         working-directory: ./build/bin
         run: Rename-Item -Path "KT-${{ steps.normalise_platform_name.outputs.pname }}-installer.exe" -NewName "KT_Setup_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe"
 
-      - name: Upload release asset (Installer)
+      - name: Check for existing release
+        id: check_release
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: 'v${{ steps.normalise_version.outputs.version }}'
+              });
+              return release.data.id;
+            } catch (e) {
+              return '';
+            }
+
+      - name: Create or Update Release and Upload Assets
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.normalise_version.outputs.version }}
-          files: ./build/bin/KT_Setup_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release v${{ steps.normalise_version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            ./build/bin/KT_Portable_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.zip
+            ./build/bin/KT_Setup_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe
+          update_existing: ${{ steps.check_release.outputs.result != '' }}
