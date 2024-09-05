@@ -131,17 +131,10 @@ const refreshInfo = async (force) => {
     }
     if (!isEmpty(data)) {
       if (data.name === currentCluster) {
-        // const foundCluster = find(clusterInfo.value, {
-        //   name: currentCluster,
-        // });
-        // const index = clusterInfo.value.findIndex(
-        //   (cluster) => cluster.name === data.name,
-        // );
         const updateTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-        // clusterInfo.value = {...data, lastUpdated: updateTime}
         clusterInfo.value = reactive({...data, lastUpdated: updateTime});
-        clusterInfo.value = {...clusterInfo.value}; // Force reactivity update
         // Force reactivity update
+        clusterInfo.value = {...clusterInfo.value};
         console.log("updated clusterInfo: ", clusterInfo.value)
         // console.log("updated clusterVersion: ", clusterVersion.value)
         // Remove the existing item if found
