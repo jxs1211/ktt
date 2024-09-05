@@ -97,6 +97,8 @@ const useConnectionStore = defineStore("connections", {
           };
         });
       }
+      console.log("load config from local: ", this.clusters)
+      console.log("load config from local: ", this.currentCluster)
     },
     /**
      * load all store connections struct from local profile

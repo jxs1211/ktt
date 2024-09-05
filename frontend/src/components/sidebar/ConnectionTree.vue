@@ -279,10 +279,10 @@ const onUpdateExpandedKeys = (keys, option) => {
 const onUpdateSelectedKeys = (keys, option) => {
   selectedKeys.value = keys;
   if (!isEmpty(keys)) {
+    console.log("updated connections keys: ", keys, option[0].label);
     connectionStore.currentCluster = option[0].label;
     connectionStore.switchedClusterOK = false;
     switchCluster(connectionStore.currentCluster);
-    // console.log(keys, option[0].label);
     tabStore.upsertClusterTab({ subTab: "status", cluster: option[0].label });
   }
 };
@@ -294,6 +294,7 @@ const switchCluster = async (name) => {
     return;
   }
   connectionStore.switchedClusterOK = true;
+  tabStore.nav = "browser"
   console.log("selected available cluster:", name);
 };
 

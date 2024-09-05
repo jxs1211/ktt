@@ -102,7 +102,7 @@ jobs:
         shell: bash
         working-directory: ./build
         run: |
-          mv bin/tinyrdm.app "bin/KT.app"
+          mv bin/kt.app "bin/KT.app"
           ./create-dmg/create-dmg \
             --no-internet-enable \
             --volname "KT" \
