@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"ktt/backend/types"
+	logutil "ktt/backend/utils/log"
 	sliceutil "ktt/backend/utils/slice"
 	strutil "ktt/backend/utils/string"
 	"ktt/backend/utils/tool"
@@ -211,7 +211,7 @@ func (s *ClientService) getErrorsCount(
 	if err != nil {
 		return 0, err
 	}
-	log.Println("error results count: ", len(results))
+	logutil.Info("error results count", "count", len(results))
 	return len(results), nil
 }
 
@@ -221,14 +221,14 @@ func (s *ClientService) analyze(
 ) ([]Result, error) {
 	defer func() {
 		tool.TrackTime("clientService.analyze")()
-		log.Println("cluster: ", cluster, " explain: ", explain)
+		logutil.Info("analyze", "cluster", cluster, "explain", explain)
 	}()
 	if len(cluster) == 0 {
 		return nil, errors.New("no cluster available, add any first")
 	}
 	viper.Set("kubecontext", cluster)
 	viper.Set("kubeconfig", kubeconfigPath)
-	log.Println("explain: ", explain)
+	logutil.Info("explain: ", "value", explain)
 	if explain {
 		if len(baseURL) <= 0 && aiBackend == "localai" {
 			return nil, errors.New("baseURL is required for localai")
