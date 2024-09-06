@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"path/filepath"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"
@@ -17,6 +18,8 @@ import (
 	"ktt/backend/client"
 	"ktt/backend/consts"
 	"ktt/backend/services"
+	"ktt/backend/utils/log"
+	strutil "ktt/backend/utils/string"
 	"ktt/backend/watch"
 )
 
@@ -30,6 +33,7 @@ var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
 func init() {
+	log.Init(filepath.Join(strutil.RootPath(), "logs"))
 }
 
 func main() {
