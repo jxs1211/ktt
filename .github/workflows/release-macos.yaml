@@ -1,5 +1,8 @@
 name: Release macOS App
 
+permissions:
+  contents: write
+
 on:
   release:
     types: [ published ]
@@ -9,6 +12,10 @@ on:
         description: 'Version tag'
         required: true
         default: '1.0.0'
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   release:
@@ -65,7 +72,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Build frontend assets
         shell: bash

@@ -69,10 +69,7 @@ const useConnectionStore = defineStore("connections", {
   getters: {},
   actions: {
     async getAvailableResources() {
-      const resp = await GetAvailableFilteredResources();
-      if (resp.success) {
-        return resp.data;
-      }
+      return await GetAvailableFilteredResources();
     },
     checkConnectivity(name) {
       return CheckConnectivity(name);
