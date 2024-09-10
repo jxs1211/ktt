@@ -352,12 +352,18 @@ func (s *ClientService) getAvailableFilteredResources() ([]string, error) {
 	return mergedRes, nil
 }
 
+func (s *ClientService) getAvailableFilteredResourcesFromFilters() []string {
+	coreResources, _, _ := analyzer.ListFilters()
+	return coreResources
+}
+
 // feat: implement available api-resources API
 func (s *ClientService) GetAvailableFilteredResources() types.JSResp {
-	resources, err := s.getAvailableFilteredResources()
-	if err != nil {
-		return types.FailedResp(err.Error())
-	}
+	// resources, err := s.getAvailableFilteredResources()
+	// if err != nil {
+	// 	return types.FailedResp(err.Error())
+	// }
+	resources := s.getAvailableFilteredResourcesFromFilters()
 	return types.JSResp{
 		Success: true,
 		Data:    resources,

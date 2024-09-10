@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
@@ -34,13 +34,13 @@ const props = defineProps({
 });
 // feat: errorPaneRef support to trigger fetching data from backend using watchEffect
 const errorPaneRef = ref(null);
-// watchEffect(() => {
-//   if (connectionStore.clusters.length > 0) {
-//     errorPaneRef.value?.refresh();
-//   }
-// });
 const connectionStore = useConnectionStore();
 const tabStore = useTabStore();
+watchEffect(() => {
+  if (connectionStore.clusters.length > 0) {
+    errorPaneRef.value?.refresh();
+  }
+});
 const tab = computed(() =>
   map(tabStore.tabs, (item) => ({
     key: item.name,
