@@ -12,7 +12,7 @@ import {
 import "xterm/css/xterm.css";
 import { EventsEmit, EventsOff, EventsOn } from "wailsjs/runtime/runtime.js";
 import { get, isEmpty, set } from "lodash";
-import { CloseCli, StartCli } from "wailsjs/go/services/cliService.js";
+import { StartTerminal, WriteInput, Resize, CloseTerminal } from "wailsjs/go/cli/TerminalService.js";
 import usePreferencesStore from "stores/preferences.js";
 import { i18nGlobal } from "@/utils/i18n.js";
 
@@ -72,18 +72,29 @@ onMounted(() => {
   window.addEventListener("resize", resizeTerm);
 
   term.writeln("\r\n" + i18nGlobal.t("interface.cli_welcome"));
-  // term.write('\x1b[4h') // insert mode
-  CloseCli(props.name);
-  StartCli(props.name, 0);
+  StartTerminal();
 
-  EventsOn(`cmd:output:${props.name}`, receiveTermOutput);
+  EventsOn("terminal:output", receiveTermOutput);
   fitAddon.fit();
   term.focus();
+
+  // Send initial size
+  Resize(term.rows, term.cols);
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", resizeTerm);
-  EventsOff(`cmd:output:${props.name}`);
+  EventsOff("terminal:output");
+  CloseTerminal();
+  termInst.dispose();
+  termInst = null;
+  console.warn("destroy term");
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", resizeTerm);
+  EventsOff("terminal:output");
+  CloseTerminal();
   termInst.dispose();
   termInst = null;
   console.warn("destroy term");
@@ -92,6 +103,10 @@ onUnmounted(() => {
 const resizeTerm = () => {
   if (fitAddonInst != null) {
     fitAddonInst.fit();
+    const { success, msg, _ } = Resize(termInst.rows, termInst.cols);
+    if (!success) {
+      console.error(msg)
+    }
   }
 };
 
@@ -514,9 +529,8 @@ const changeHistory = (prev) => {
  */
 const flushTermInput = (flushCmd = false) => {
   const currentLine = getCurrentInput();
-  EventsEmit(`cmd:input:${props.name}`, currentLine);
+  WriteInput(currentLine + "\n");
   inputCursor = 0;
-  // historyIndex = inputHistory.length
   waitForOutput = true;
 };
 
@@ -541,20 +555,8 @@ const receiveTermOutput = (data) => {
   if (termInst == null) {
     return;
   }
-
-  const { content = [], prompt } = data || {};
-  if (!isEmpty(content)) {
-    for (const line of content) {
-      termInst.write("\r\n" + line);
-    }
-  }
-  if (!isEmpty(prompt)) {
-    promptPrefix.value = prompt;
-    termInst.write("\r\n" + prefixContent.value);
-    waitForOutput = false;
-    inputCursor = 0;
-    newInputLine();
-  }
+  console.log("receiveTermOutput: ", data)
+  termInst.write(data);
 };
 </script>
 

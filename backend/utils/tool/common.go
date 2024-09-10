@@ -3,6 +3,8 @@ package tool
 import (
 	"fmt"
 	"time"
+
+	"ktt/backend/utils/log"
 )
 
 func TrackTime(funcName string) func() {
@@ -18,6 +20,6 @@ func TrackTime(funcName string) func() {
 		default:
 			duration = fmt.Sprintf("%.2f s", elapsed.Seconds())
 		}
-		fmt.Printf("exec [%s] elapsed: %s\n", funcName, duration)
+		log.Info("exec [%s] elapsed: %s\n", "funcName", funcName, "duration", duration)
 	}
 }

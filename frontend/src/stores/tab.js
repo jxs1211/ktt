@@ -123,15 +123,16 @@ const useTabStore = defineStore("tab", {
   },
   actions: {
     appendClusterTab(cluster) {
-      if (this.alreadyExists(cluster)) {
-        return;
-      }
       this.clusterTabsQueue.push(cluster);
-      console.log("clusterTabsQueue: ", this.clusterTabsQueue);
+      console.log("pushed cluster to queue: ", cluster, this.clusterTabsQueue);
     },
     removeClusterTab(cluster) {
       remove(this.clusterTabsQueue, (elem) => elem === cluster);
-      console.log("clusterTabsQueue: ", this.clusterTabsQueue);
+      console.log(
+        "remove cluster from queue: ",
+        cluster,
+        this.clusterTabsQueue,
+      );
     },
     alreadyExists(cluster) {
       for (let i = 0; i < this.clusterTabsQueue.length; i++) {
@@ -164,7 +165,7 @@ const useTabStore = defineStore("tab", {
           this.nav = "server";
         }
       }
-      console.log("setActivatedIndex", idx, switchNav, subTab, this.nav);
+      console.log("setActivatedIndex: ", idx, switchNav, subTab, this.nav);
     },
 
     openBlank(server) {
@@ -185,81 +186,21 @@ const useTabStore = defineStore("tab", {
       );
     },
 
-    upsertTab({
-      subTab,
-      server,
-      db,
-      type,
-      ttl,
-      key,
-      keyCode,
-      size,
-      length,
-      matchPattern = "",
-      clearValue,
-      format = "",
-      decode = "",
-    }) {
-      let tabIndex = findIndex(this.tabList, { name: server });
-      if (tabIndex === -1) {
-        const tabItem = new TabItem({
-          name: server,
-          title: server,
-          subTab,
-          server,
-          db,
-          type,
-          ttl,
-          key,
-          keyCode,
-          size,
-          length,
-          matchPattern,
-          value: undefined,
-          format,
-          decode,
-        });
-        this.tabList.push(tabItem);
-        tabIndex = this.tabList.length - 1;
-      } else {
-        const tab = this.tabList[tabIndex];
-        tab.blank = false;
-        tab.subTab = subTab;
-        // tab.title = db !== undefined ? `${server}/db${db}` : `${server}`
-        tab.title = server;
-        tab.server = server;
-        tab.db = db == null ? tab.db : db;
-        tab.type = type;
-        tab.ttl = ttl;
-        tab.key = key;
-        tab.keyCode = keyCode;
-        tab.size = size;
-        tab.length = length;
-        tab.matchPattern = matchPattern;
-        tab.format = format;
-        tab.decode = decode;
-        if (clearValue === true) {
-          tab.value = undefined;
-        }
-      }
-      this._setActivatedIndex(tabIndex, true, subTab);
-    },
-
-    upsertClusterTab({ subTab, server }) {
-      let tabIndex = findIndex(this.tabList, { name: server });
+    upsertClusterTab({ subTab, cluster }) {
+      let tabIndex = findIndex(this.tabList, { name: cluster });
       if (tabIndex === -1) {
         const tabItem = new ClusterTabItem({
-          name: server,
-          title: server,
+          name: cluster,
+          title: cluster,
           subTab,
-          server,
+          cluster,
         });
         this.tabList.push(tabItem);
         tabIndex = this.tabList.length - 1;
       } else {
         const tab = this.tabList[tabIndex];
-        tab.title = server;
-        tab.server = server;
+        tab.title = cluster;
+        tab.cluster = cluster;
       }
       this._setActivatedIndex(tabIndex, true, subTab);
     },
@@ -662,7 +603,6 @@ const useTabStore = defineStore("tab", {
       // }
       // this.activatedIndex = tabIndex
     },
-
     switchSubTab(name) {
       const tab = this.currentTab;
       if (tab == null) {

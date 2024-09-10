@@ -101,6 +101,7 @@
   },
   "interface": {
     "new_conn": "Add Cluster",
+    "choose_one_conn": "Choose one cluster",
     "new_group": "Add Group",
     "disconnect_all": "Disconnect All",
     "status": "Status",
@@ -182,6 +183,7 @@
       "diagnostic": "Diagnostic",
       "cli": "Console",
       "slow_log": "Slow Log",
+      "watch": "Watch",
       "cmd_monitor": "Monitor Commands",
       "pub_message": "Pub/Sub"
     }

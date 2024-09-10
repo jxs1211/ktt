@@ -25,6 +25,7 @@ import {
   shallowRef,
   toRaw,
   watch,
+  watchEffect,
 } from "vue";
 import IconButton from "@/components/common/IconButton.vue";
 import Filter from "@/components/icons/Filter.vue";
@@ -57,7 +58,9 @@ const tabStore = useTabStore();
 const i18n = useI18n();
 const themeVars = useThemeVars();
 const serverInfo = ref({});
-const clusterInfo = ref([]);
+// cluster info
+const clusterInfo = ref({});
+// const clusterVersion = ref("Loading2");
 const pageState = reactive({
   autoRefresh: false,
   refreshInterval: 10,
@@ -84,17 +87,16 @@ const generateData = (origin, labels, datalist) => {
   return cloneDeep(ret);
 };
 
+const resetLoadingState = () => {
+  pageState.loading = false;
+  pageState.autoLoading = false;
+};
 /**
  * refresh server status info
  * @param {boolean} [force] force refresh will show loading indicator
  * @returns {Promise<void>}
  */
 const refreshInfo = async (force) => {
-  if (force) {
-    pageState.loading = true;
-  } else {
-    pageState.autoLoading = true;
-  }
   const currentCluster = tabStore.currentTabName;
   if (isEmpty(currentCluster)) {
     $message.warning(`current cluster is empty string: ${currentCluster}`);
@@ -105,12 +107,12 @@ const refreshInfo = async (force) => {
     console.log("fast return due to already exists: ", currentCluster);
     return;
   }
-  const { success, msg, _ } =
-    await connectionStore.checkConnectivity(currentCluster);
-  if (!success) {
-    $message.error(msg);
-    return;
+  if (force) {
+    pageState.loading = true;
+  } else {
+    pageState.autoLoading = true;
   }
+  // process cluster
   tabStore.appendClusterTab(currentCluster);
   try {
     const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
@@ -119,40 +121,35 @@ const refreshInfo = async (force) => {
       backend.name,
       backend.model,
       backend.baseUrl,
-      [],
-      false,
-      false,
-      false,
+      [], false, false, false,
     );
     if (!success) {
       $message.error(msg);
       tabStore.removeClusterTab(currentCluster);
+      resetLoadingState();
       return;
     }
     if (!isEmpty(data)) {
       if (data.name === currentCluster) {
-        // const foundCluster = find(clusterInfo.value, {
-        //   name: currentCluster,
-        // });
-        const index = clusterInfo.value.findIndex(
-          (cluster) => cluster.name === data.name,
-        );
         const updateTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-        if (index !== -1) {
-          clusterInfo.value[index] = {
-            ...clusterInfo.value[index],
-            ...data,
-            lastUpdated: updateTime,
-          };
-        } else {
-          clusterInfo.value.push({ ...data, lastUpdated: updateTime });
-        }
-        console.log("updated cluster: ", clusterInfo.value);
+        clusterInfo.value = reactive({...data, lastUpdated: updateTime});
+        // Force reactivity update
+        clusterInfo.value = {...clusterInfo.value};
+        console.log("updated clusterInfo: ", clusterInfo.value)
+        // console.log("updated clusterVersion: ", clusterVersion.value)
+        // Remove the existing item if found
+        // if (index !== -1) {
+        //   console.log("Removing existing clusterInfo");
+        //   clusterInfo.value.splice(index, 1);
+        // }
+
+        // Always push the new data
+        // clusterInfo.value.push({ ...data, lastUpdated: updateTime });
+        // clusterInfo.value = [...clusterInfo.value];
       }
     }
   } finally {
-    pageState.loading = false;
-    pageState.autoLoading = false;
+    resetLoadingState();
     tabStore.removeClusterTab(currentCluster);
   }
 };
@@ -289,13 +286,7 @@ const startAutoRefresh = async () => {
       pageState.autoLoading ||
       !expired(lastExec)
     ) {
-      console.log(
-        "skip for refreshing: ",
-        props.pause,
-        pageState.loading,
-        pageState.autoLoading,
-        !expired(lastExec),
-      );
+      // console.log("skip for refreshing");
       continue;
     }
     lastExec = Date.now();
@@ -323,7 +314,7 @@ const onToggleRefresh = (on) => {
 };
 
 onMounted(() => {
-  console.log("onMounted");
+  // console.log("onMounted");
   const { interval = 10 } = connectionStore.getRefreshInterval(props.server);
   if (interval >= 0) {
     pageState.autoRefresh = true;
@@ -341,31 +332,17 @@ onUnmounted(() => {
 });
 
 const clusterVersion = computed(() => {
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return get(cluster, "versionInfo.gitVersion", "");
-    }
-  }
+  const ver = clusterInfo.value?.versionInfo?.gitVersion || '';
+  console.log("clusterInfo in computed:", clusterInfo.value);
+  console.log("version:", ver);
+  return ver;
 });
-
-const errorsCount = computed(() => {
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return get(cluster, "errorsCount", "N/A");
-    }
-  }
-  return "N/A";
-});
-
 const clusterStatus = computed(() => {
-  for (const cluster of clusterInfo.value) {
-    if (cluster.name === tabStore.currentTabName) {
-      return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
-    }
-  }
-  return "Loading";
+  return !isEmpty(clusterVersion.value) ? "Active" : "Loading";
 });
-
+const errorsCount = computed(() => {
+  return get(clusterInfo.value, "errorsCount", "Loading");
+});
 const usedCPU = computed(() => {
   return "fake";
   for (const cluster of clusterInfo.value) {
@@ -447,7 +424,9 @@ const onFilterGroup = (group) => {
     infoFilter.group = group;
   }
 };
-
+watchEffect(() => {
+  console.log("clusterInfo changed:", clusterInfo.value);
+});
 watch(
   () => prefStore.currentLanguage,
   () => {
@@ -465,20 +444,13 @@ watch(
     networkRate.value = generateData(networkRate.value);
   },
 );
-watch(
-  () => tabStore.activatedIndex,
-  (newVal, oldVal) => {
-    for (const cluster of clusterInfo.value) {
-      if (cluster.name === tabStore.currentTabName) {
-        set(cluster, "errorsCount", "Loading");
-        const version = get(cluster, "versionInfo.gitVersion", "Loading");
-        if (version === "Loading") {
-          set(cluster, "versionInfo.gitVersion", "Loading");
-        }
-      }
-    }
-  },
-);
+// watch(
+//   () => tabStore.activatedIndex,
+//   (newVal, oldVal) => {
+//     set(clusterInfo, "errorsCount", "Loading");
+//     set(clusterInfo, "versionInfo.gitVersion", "");
+//   },
+// );
 const chartBGColor = [
   "rgba(255, 99, 132, 0.2)",
   "rgba(255, 159, 64, 0.2)",
