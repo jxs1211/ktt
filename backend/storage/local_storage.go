@@ -1,10 +1,10 @@
 package storage
 
 import (
-	"log"
 	"os"
 	"path"
 
+	logutil "ktt/backend/utils/log"
 	strutil "ktt/backend/utils/string"
 )
 
@@ -41,7 +41,7 @@ func (l *localStorage) Store(data []byte) error {
 	if err := os.WriteFile(l.ConfPath, data, 0777); err != nil {
 		return err
 	}
-	log.Printf("write file: %s\n", l.ConfPath)
+	logutil.Info("write file", "path", l.ConfPath)
 	return nil
 }
 

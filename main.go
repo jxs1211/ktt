@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	"embed"
+	"path/filepath"
 	"runtime"
-
-	"ktt/backend/client"
-	"ktt/backend/consts"
-	"ktt/backend/services"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -17,6 +14,14 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"ktt/backend/cli"
+	"ktt/backend/client"
+	"ktt/backend/consts"
+	"ktt/backend/services"
+	"ktt/backend/utils/log"
+	strutil "ktt/backend/utils/string"
+	"ktt/backend/watch"
 )
 
 //go:embed all:frontend/dist
@@ -29,10 +34,13 @@ var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
 func init() {
+	log.Init(filepath.Join(strutil.RootPath(), "logs"))
 }
 
 func main() {
 	clientSvc := client.NewClientService()
+	watcherManager := watch.NewWatcherManager()
+	terminalSvc := cli.NewTerminalService()
 	// Create an instance of the app structure
 	sysSvc := services.System()
 	connSvc := services.Connection()
@@ -74,6 +82,8 @@ func main() {
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
 			clientSvc.Start(ctx)
+			watcherManager.Start(ctx)
+			terminalSvc.Start(ctx)
 			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			browserSvc.Start(ctx)
@@ -103,6 +113,7 @@ func main() {
 		Bind: []interface{}{
 			clientSvc,
 			sysSvc,
+			terminalSvc,
 			connSvc,
 			browserSvc,
 			cliSvc,
