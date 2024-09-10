@@ -249,8 +249,12 @@ const loadResources = async () => {
   try {
     await nextTick();
     data.loading = true;
-    const list = await connectionStore.getAvailableResources();
-    data.options = list || [];
+    const resp = await connectionStore.getAvailableResources();
+    if (!resp.success) {
+      console.warn("get available filtered resources failed: ", resp.msg)
+      return
+    }
+    data.options = resp.data;
     console.log("data.options: ", data.options);
   } finally {
     data.loading = false;

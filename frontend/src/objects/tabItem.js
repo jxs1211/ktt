@@ -85,10 +85,10 @@ export class TabItem {
   }
 }
 export class ClusterTabItem {
-  constructor({ name, title, subTab, server }) {
+  constructor({ name, title, subTab, cluster }) {
     this.name = name;
     this.title = title;
     this.subTab = subTab;
-    this.server = server;
+    this.cluster = cluster;
   }
 }

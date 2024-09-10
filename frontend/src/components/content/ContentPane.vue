@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch, watchEffect } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
@@ -11,14 +11,11 @@ import { BrowserTabType } from "@/consts/browser_tab_type.js";
 import Terminal from "@/components/icons/Terminal.vue";
 import Log from "@/components/icons/Log.vue";
 import Detail from "@/components/icons/Detail.vue";
-import ContentValueWrapper from "@/components/content_value/ContentValueWrapper.vue";
 import ContentCli from "@/components/content_value/ContentCli.vue";
 import Monitor from "@/components/icons/Monitor.vue";
-import ContentSlog from "@/components/content_value/ContentSlog.vue";
+import ContentWatch from "@/components/content_value/ContentWatch.vue";
 import ContentMonitor from "@/components/content_value/ContentMonitor.vue";
 import { decodeRedisKey } from "@/utils/key_convert.js";
-import ContentPubsub from "@/components/content_value/ContentPubsub.vue";
-import Subscribe from "@/components/icons/Subscribe.vue";
 
 const themeVars = useThemeVars();
 
@@ -37,13 +34,13 @@ const props = defineProps({
 });
 // feat: errorPaneRef support to trigger fetching data from backend using watchEffect
 const errorPaneRef = ref(null);
-// watchEffect(() => {
-//   if (connectionStore.clusters.length > 0) {
-//     errorPaneRef.value?.refresh();
-//   }
-// });
 const connectionStore = useConnectionStore();
 const tabStore = useTabStore();
+watchEffect(() => {
+  if (connectionStore.clusters.length > 0) {
+    errorPaneRef.value?.refresh();
+  }
+});
 const tab = computed(() =>
   map(tabStore.tabs, (item) => ({
     key: item.name,
@@ -99,182 +96,203 @@ watch(
     }
   },
 );
+onMounted(() => {
+  console.log("content pane onMounted");
+});
 </script>
 
 <template>
-  <div class="content-container flex-box-v">
-    <n-tabs
-      ref="tabsRef"
-      :tabs-padding="5"
-      :theme-overrides="{
-        tabFontWeightActive: 'normal',
-        tabGapSmallLine: '10px',
-        tabGapMediumLine: '10px',
-        tabGapLargeLine: '10px',
-      }"
-      :value="selectedSubTab"
-      class="content-sub-tab"
-      pane-class="content-sub-tab-pane"
-      placement="top"
-      tab-style="padding-left: 10px; padding-right: 10px;"
-      type="line"
-      @update:value="(val) => tabStore.switchSubTab(val)"
-    >
-      <!-- server status pane -->
-      <n-tab-pane
-        :name="BrowserTabType.Status.toString()"
-        display-directive="show:lazy"
+  <div class="spin-wrapper">
+    <n-spin v-if="!connectionStore.switchedClusterOK" class="spinner">
+      <!-- Add your custom spinner here -->
+    </n-spin>
+    <div v-else class="content-container flex-box-v">
+      <n-tabs
+        ref="tabsRef"
+        :tabs-padding="5"
+        :theme-overrides="{
+          tabFontWeightActive: 'normal',
+          tabGapSmallLine: '10px',
+          tabGapMediumLine: '10px',
+          tabGapLargeLine: '10px',
+        }"
+        :value="selectedSubTab"
+        class="content-sub-tab"
+        pane-class="content-sub-tab-pane"
+        placement="top"
+        tab-style="padding-left: 10px; padding-right: 10px;"
+        type="line"
+        @update:value="(val) => tabStore.switchSubTab(val)"
       >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <status
-                :inverse="selectedSubTab === BrowserTabType.Status.toString()"
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.status") }}</span>
-          </n-space>
-        </template>
-        <content-cluster-status
-          :pause="selectedSubTab !== BrowserTabType.Status.toString()"
-          :server="props.server"
-        />
-      </n-tab-pane>
+        <!-- server status pane -->
+        <n-tab-pane
+          :name="BrowserTabType.Status.toString()"
+          display-directive="show:lazy"
+        >
+          <template #tab>
+            <n-space
+              :size="5"
+              :wrap-item="false"
+              align="center"
+              inline
+              justify="center"
+            >
+              <n-icon size="16">
+                <status
+                  :inverse="selectedSubTab === BrowserTabType.Status.toString()"
+                  :stroke-color="themeVars.tabColor"
+                  stroke-width="4"
+                />
+              </n-icon>
+              <span>{{ $t("interface.sub_tab.status") }}</span>
+            </n-space>
+          </template>
+          <content-cluster-status
+            :pause="selectedSubTab !== BrowserTabType.Status.toString()"
+            :server="props.server"
+          />
+        </n-tab-pane>
 
-      <!-- diagnostic pane -->
-      <n-tab-pane
-        :name="BrowserTabType.Diagnose.toString()"
-        display-directive="show:lazy"
-      >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <detail
-                :inverse="selectedSubTab === BrowserTabType.Diagnose.toString()"
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.diagnostic") }}</span>
-          </n-space>
-        </template>
-        <!-- <content-value-wrapper :blank="isBlankValue" :content="tabContent" /> -->
-        <content-server-pane
-          v-if="isEmpty(connectionStore.clusters)"
-          class="flex-item-expand"
-        />
-        <content-error-pane
-          v-else
-          ref="errorPaneRef"
-          class="flex-item-expand"
-        />
-      </n-tab-pane>
+        <!-- diagnostic pane -->
+        <n-tab-pane
+          :name="BrowserTabType.Diagnose.toString()"
+          display-directive="show:lazy"
+        >
+          <template #tab>
+            <n-space
+              :size="5"
+              :wrap-item="false"
+              align="center"
+              inline
+              justify="center"
+            >
+              <n-icon size="16">
+                <detail
+                  :inverse="
+                    selectedSubTab === BrowserTabType.Diagnose.toString()
+                  "
+                  :stroke-color="themeVars.tabColor"
+                  stroke-width="4"
+                />
+              </n-icon>
+              <span>{{ $t("interface.sub_tab.diagnostic") }}</span>
+            </n-space>
+          </template>
+          <!-- <content-value-wrapper :blank="isBlankValue" :content="tabContent" /> -->
+          <content-server-pane
+            v-if="isEmpty(connectionStore.clusters)"
+            class="flex-item-expand"
+          />
+          <content-error-pane
+            v-else
+            ref="errorPaneRef"
+            class="flex-item-expand"
+          />
+        </n-tab-pane>
 
-      <!-- cli pane -->
-      <n-tab-pane
-        :name="BrowserTabType.Cli.toString()"
-        display-directive="show:lazy"
-      >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <terminal
-                :inverse="selectedSubTab === BrowserTabType.Cli.toString()"
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.cli") }}</span>
-          </n-space>
-        </template>
-        <content-cli ref="cliRef" :name="props.server" />
-      </n-tab-pane>
+        <!-- cli pane -->
+        <n-tab-pane
+          :name="BrowserTabType.Cli.toString()"
+          display-directive="show:lazy"
+        >
+          <template #tab>
+            <n-space
+              :size="5"
+              :wrap-item="false"
+              align="center"
+              inline
+              justify="center"
+            >
+              <n-icon size="16">
+                <terminal
+                  :inverse="selectedSubTab === BrowserTabType.Cli.toString()"
+                  :stroke-color="themeVars.tabColor"
+                  stroke-width="4"
+                />
+              </n-icon>
+              <span>{{ $t("interface.sub_tab.cli") }}</span>
+            </n-space>
+          </template>
+          <content-cli ref="cliRef" :name="props.server" />
+        </n-tab-pane>
 
-      <!-- slow log pane -->
-      <n-tab-pane
-        :name="BrowserTabType.SlowLog.toString()"
-        display-directive="show:lazy"
-      >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <log
-                :inverse="selectedSubTab === BrowserTabType.SlowLog.toString()"
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.slow_log") }}</span>
-          </n-space>
-        </template>
-        <content-slog :server="props.server" />
-      </n-tab-pane>
+        <!-- watch pane -->
+        <n-tab-pane
+          :name="BrowserTabType.Watch.toString()"
+          display-directive="show:lazy"
+        >
+          <template #tab>
+            <n-space
+              :size="5"
+              :wrap-item="false"
+              align="center"
+              inline
+              justify="center"
+            >
+              <n-icon size="16">
+                <log
+                  :inverse="selectedSubTab === BrowserTabType.Watch.toString()"
+                  :stroke-color="themeVars.tabColor"
+                  stroke-width="4"
+                />
+              </n-icon>
+              <span>{{ $t("interface.sub_tab.watch") }}</span>
+            </n-space>
+          </template>
+          <content-watch :server="props.server" />
+        </n-tab-pane>
 
-      <!-- command monitor pane -->
-      <n-tab-pane
-        :name="BrowserTabType.CmdMonitor.toString()"
-        display-directive="show:lazy"
-      >
-        <template #tab>
-          <n-space
-            :size="5"
-            :wrap-item="false"
-            align="center"
-            inline
-            justify="center"
-          >
-            <n-icon size="16">
-              <monitor
-                :inverse="
-                  selectedSubTab === BrowserTabType.CmdMonitor.toString()
-                "
-                :stroke-color="themeVars.tabColor"
-                stroke-width="4"
-              />
-            </n-icon>
-            <span>{{ $t("interface.sub_tab.cmd_monitor") }}</span>
-          </n-space>
-        </template>
-        <content-monitor :server="props.server" />
-      </n-tab-pane>
-    </n-tabs>
+        <!-- command monitor pane -->
+        <n-tab-pane
+          :name="BrowserTabType.CmdMonitor.toString()"
+          display-directive="show:lazy"
+        >
+          <template #tab>
+            <n-space
+              :size="5"
+              :wrap-item="false"
+              align="center"
+              inline
+              justify="center"
+            >
+              <n-icon size="16">
+                <monitor
+                  :inverse="
+                    selectedSubTab === BrowserTabType.CmdMonitor.toString()
+                  "
+                  :stroke-color="themeVars.tabColor"
+                  stroke-width="4"
+                />
+              </n-icon>
+              <span>{{ $t("interface.sub_tab.cmd_monitor") }}</span>
+            </n-space>
+          </template>
+          <content-monitor :server="props.server" />
+        </n-tab-pane>
+      </n-tabs>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 @import "@/styles/content";
-
+.spin-wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+.spinner {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
 .content-container {
   //padding: 5px 5px 0;
   //padding-top: 0;
   box-sizing: border-box;
   background-color: v-bind("themeVars.tabColor");
+  height: 100%;
+  width: 100%;
 }
 </style>
 

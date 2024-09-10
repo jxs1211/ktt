@@ -64,17 +64,15 @@ const useConnectionStore = defineStore("connections", {
     clusters: [],
     currentCluster: "",
     filteredResources: [],
+    switchedClusterOK: false,
   }),
   getters: {},
   actions: {
     async getAvailableResources() {
-      const resp = await GetAvailableFilteredResources();
-      if (resp.success) {
-        return resp.data;
-      }
+      return await GetAvailableFilteredResources();
     },
-    async checkConnectivity(name) {
-      return await CheckConnectivity(name);
+    checkConnectivity(name) {
+      return CheckConnectivity(name);
     },
     // async getClusterInfo(name) {
     //   const success = await this.checkConnectivity(name);
@@ -96,6 +94,8 @@ const useConnectionStore = defineStore("connections", {
           };
         });
       }
+      console.log("load config from local: ", this.clusters)
+      console.log("load config from local: ", this.currentCluster)
     },
     /**
      * load all store connections struct from local profile
