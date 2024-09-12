@@ -8,6 +8,7 @@ import {
   onUnmounted,
   ref,
   watch,
+  watchEffect,
 } from "vue";
 import "xterm/css/xterm.css";
 import { EventsEmit, EventsOff, EventsOn } from "wailsjs/runtime/runtime.js";
@@ -73,6 +74,10 @@ onMounted(() => {
 
   term.writeln("\r\n" + i18nGlobal.t("interface.cli_welcome"));
   StartTerminal();
+  // if (!success) {
+  //   console.warn(msg);
+  //   return
+  // }
 
   EventsOn("terminal:output", receiveTermOutput);
   fitAddon.fit();
@@ -86,24 +91,20 @@ onUnmounted(() => {
   window.removeEventListener("resize", resizeTerm);
   EventsOff("terminal:output");
   CloseTerminal();
-  termInst.dispose();
-  termInst = null;
-  console.warn("destroy term");
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", resizeTerm);
-  EventsOff("terminal:output");
-  CloseTerminal();
-  termInst.dispose();
-  termInst = null;
+  if (termInst != null) {
+    termInst.dispose();
+    termInst = null;
+  }
   console.warn("destroy term");
 });
 
 const resizeTerm = () => {
   if (fitAddonInst != null) {
     fitAddonInst.fit();
-    Resize(termInst.rows, termInst.cols);
+    const { success, msg, _ } = Resize(termInst.rows, termInst.cols);
+    if (!success) {
+      console.log(msg)
+    }
   }
 };
 
@@ -131,6 +132,7 @@ watch(
     resizeTerm();
   },
 );
+
 
 const prefixContent = computed(() => {
   return "\x1b[33m" + promptPrefix.value + "\x1b[0m";
@@ -167,22 +169,22 @@ const onTermData = (data) => {
       case 127: // backspace
         deleteInput(true);
         return;
-
       case 13: // enter
         // try to process local command first
-        switch (getCurrentInput()) {
+        const cmd = getCurrentInput()
+        console.log("current cmd: ", cmd)
+        switch (cmd) {
           case "clear":
           case "clr":
             termInst.clear();
             replaceTermInput();
             newInputLine();
             return;
-
           default: // send command to server
             flushTermInput();
+            // termInst.writeln("")
             return;
         }
-
       case 27:
         switch (data.substring(1)) {
           case "[A": // arrow up
@@ -203,6 +205,7 @@ const onTermData = (data) => {
         }
 
       case 9: // tab
+        console.log("tab..")
         return;
     }
   }
@@ -526,6 +529,7 @@ const changeHistory = (prev) => {
  */
 const flushTermInput = (flushCmd = false) => {
   const currentLine = getCurrentInput();
+  console.log("flush: ", currentLine)
   WriteInput(currentLine + "\n");
   inputCursor = 0;
   waitForOutput = true;
@@ -552,9 +556,15 @@ const receiveTermOutput = (data) => {
   if (termInst == null) {
     return;
   }
-
+  console.log("receiveTermOutput: ", data)
   termInst.write(data);
 };
+watchEffect(
+  () => {
+    console.log("input::index: ", historyIndex)
+    console.log("input::history: ", inputHistory)
+  }
+)
 </script>
 
 <template>

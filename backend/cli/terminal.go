@@ -9,14 +9,17 @@ import (
 	"runtime"
 
 	"github.com/creack/pty"
-
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"ktt/backend/types"
+	"ktt/backend/utils/log"
 )
 
 type TerminalService struct {
-	ctx context.Context
-	pty *os.File
-	cmd *exec.Cmd
+	ctx       context.Context
+	pty       *os.File
+	cmd       *exec.Cmd
+	tempInput string
 }
 
 func NewTerminalService() *TerminalService {
@@ -27,7 +30,16 @@ func (s *TerminalService) Start(ctx context.Context) {
 	s.ctx = ctx
 }
 
-func (s *TerminalService) StartTerminal() error {
+func (s *TerminalService) StartTerminal() types.JSResp {
+	err := s.startTerminal()
+	if err != nil {
+		log.Error("start terminal failed", "msg", err)
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) startTerminal() error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
@@ -47,9 +59,19 @@ func (s *TerminalService) StartTerminal() error {
 
 	s.pty = ptmx
 	s.cmd = cmd
-
+	log.Info("terminal", "cmd", s.cmd.String())
 	go s.readOutput()
 
+	// runtime2.EventsOn(s.ctx, "terminal:input", func(data ...interface{}){
+	// 	if len(data) > 0 {
+	// 		if str, ok := data[0].(string); ok {
+	// 			_, err := s.pty.Write([]byte(str))
+	// 			if err != nil {
+	// 				log.Info("input:", "err", err)
+	// 			}
+	// 		}
+	// 	}
+	// 	})
 	return nil
 }
 
@@ -61,20 +83,33 @@ func (s *TerminalService) readOutput() {
 			if err == io.EOF {
 				break
 			}
-			runtime2.LogErrorf(s.ctx, "Error reading from pty: %v", err)
+			// runtime2.LogErrorf(s.ctx, "Error reading from pty: %v", err)
+			log.Error("terminal", "Error reading from pty", err)
 			continue
 		}
-		runtime2.EventsEmit(s.ctx, "terminal:output", string(buf[:n]))
+		data := string(buf[:n])
+		if data == s.tempInput {
+			log.Log.Warn("data should be ignored: ", data)
+			continue
+		}
+
+		log.Info("terminal", "data", data)
+		runtime2.EventsEmit(s.ctx, "terminal:output", data)
 	}
 }
 
 func (s *TerminalService) WriteInput(input string) error {
+	s.tempInput = input
 	_, err := s.pty.Write([]byte(input))
 	return err
 }
 
-func (s *TerminalService) Resize(rows, cols uint16) error {
-	return pty.Setsize(s.pty, &pty.Winsize{Rows: rows, Cols: cols})
+func (s *TerminalService) Resize(rows, cols uint16) types.JSResp {
+	err := pty.Setsize(s.pty, &pty.Winsize{Rows: rows, Cols: cols})
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
 }
 
 func (s *TerminalService) CloseTerminal() error {
