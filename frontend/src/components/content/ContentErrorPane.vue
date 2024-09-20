@@ -33,7 +33,9 @@ const data = reactive({
   loading: false,
   server: "",
   options: [],
+  namespaces: [],
   selectedOptions: [],
+  selectedNSOption: "",
   history: [],
   results: [],
 });
@@ -61,6 +63,13 @@ const filterServerOption = computed(() => {
   return options;
 });
 
+const filterNamespaceOptions = computed(() => {
+  const options = map(data.namespaceOptions, (item) => ({
+    label: item,
+    value: item,
+  }));
+  return options;
+});
 const filterOptions = computed(() => {
   // const filters = uniqBy(data.options);
   const options = map(data.options, (item) => ({
@@ -223,6 +232,7 @@ const analyze = async () => {
       backend.model,
       backend.baseUrl,
       data.selectedOptions,
+      data.selectedNSOption,
       preferencesStore.ai.explain,
       preferencesStore.ai.aggregate,
       false,
@@ -256,6 +266,12 @@ const loadResources = async () => {
     }
     data.options = resp.data;
     console.log("data.options: ", data.options);
+    const resp2 = await connectionStore.getNamespaces()
+    if (!resp2.success) {
+      console.warn("get namespaces failed: ", resp2.msg)
+    }
+    data.namespaceOptions = resp2.data;
+    console.log("data.namespaceOptions: ", data.namespaceOptions);
   } finally {
     data.loading = false;
     await nextTick();
@@ -294,6 +310,18 @@ const onSelectedItemUpdate = (keys) => {
   data.selectedOptions = keys;
   console.log("selectedUpdate: ", data.selectedOptions);
 };
+const onSelectedNSItemUpdate = (keys) => {
+  console.log("---->", keys)
+  let ns = ""
+  if (isString(keys)) {
+    ns = keys;
+  } else if (isNumber(keys)) {
+    ns = keys.toString();
+  }
+  data.selectedNSOption = ns;
+  console.log("selectedNSUpdate: ", data.selectedNSOption);
+};
+
 
 defineExpose({
   refresh: loadResources,
@@ -304,6 +332,8 @@ watch(
   () => connectionStore.currentCluster,
   async (newVal, oldVal) => {
     data.results = [];
+    // data.selectedNSOption = "";
+    // data.selectedOptions = [];
   },
 );
 </script>
@@ -324,6 +354,16 @@ watch(
           style="min-width: 200px"
         />
       </n-form-item>
+      <!-- <n-form-item :label="$t('error.filter_namespace')">
+        <n-select
+          :consistent-menu-width="false"
+          :options="filterNamespaceOptions"
+          filterable
+          @update:value="onSelectedNSItemUpdate"
+          style="min-width: 200px"
+        />
+      </n-form-item> -->
+
       <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />
       </n-form-item> -->

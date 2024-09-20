@@ -451,6 +451,7 @@
   "error": {
     "title": "Diagnose Error",
     "filter_resource": "Filter Resource",
+    "filter_namespace": "Filter Namespace",
     "filter_keyword": "Filter Keyword",
     "clean_log": "Clean Error",
     "confirm_clean_log": "Confirm clean diagnose error",

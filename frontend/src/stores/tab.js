@@ -17,80 +17,13 @@ import useBrowserStore from "stores/browser.js";
 import { i18nGlobal } from "@/utils/i18n.js";
 
 const useTabStore = defineStore("tab", {
-  /**
-   * @typedef {Object} ListEntryItem
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} ListReplaceItem
-   * @property {number} index
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} HashEntryItem
-   * @property {string} k field name
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} HashReplaceItem
-   * @property {string|number[]} k field name
-   * @property {string|number[]} nk new field name
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} SetEntryItem
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} ZSetEntryItem
-   * @property {number} s score
-   * @property {string|number[]} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} ZSetReplaceItem
-   * @property {number} s score
-   * @property {string|number[]} v value
-   * @property {string|number[]} nv new value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} StreamEntryItem
-   * @property {string} id
-   * @property {Object.<string, *>} v value
-   * @property {string} [dv] display value
-   */
-
-  /**
-   * @typedef {Object} TabState
-   * @property {string} nav
-   * @property {number} asideWidth
-   * @property {TabItem[]} tabList
-   * @property {number} activatedIndex
-   */
-
-  /**
-   *
-   * @returns {TabState}
-   */
   state: () => ({
     nav: "server",
     asideWidth: 300,
     tabList: [],
     activatedIndex: 0, // current activated tab index
     clusterTabsQueue: [],
+    currentSubTab: "status",
   }),
   getters: {
     /**
@@ -609,6 +542,7 @@ const useTabStore = defineStore("tab", {
         return;
       }
       tab.subTab = name;
+      this.currentSubTab = name;
     },
 
     /**

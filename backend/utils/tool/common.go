@@ -23,3 +23,27 @@ func TrackTime(funcName string) func() {
 		log.Info("exec [%s] elapsed: %s\n", "funcName", funcName, "duration", duration)
 	}
 }
+
+type set map[string]struct{}
+
+var (
+	daysWithoutIssue set
+	daysTotal        set
+)
+
+func InitRunningDays() (int, int) {
+	// Get the current date in a human-readable format
+	currentDate := time.Now().Format("2006-01-02")
+	// Initialize the set if not already done
+	if daysWithoutIssue == nil {
+		daysWithoutIssue = make(set)
+	}
+	if daysTotal == nil {
+		daysTotal = make(set)
+	}
+	// if !checkErrorExists() {
+	// 	daysWithoutIssue[currentDate] = struct{}{}
+	// }
+	daysTotal[currentDate] = struct{}{}
+	return len(daysWithoutIssue), len(daysTotal)
+}
