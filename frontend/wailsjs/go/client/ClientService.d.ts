@@ -3,7 +3,7 @@
 import {types} from '../models';
 import {context} from '../models';
 
-export function Analyze(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Array<string>,arg6:boolean,arg7:boolean,arg8:boolean):Promise<types.JSResp>;
+export function Analyze(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Array<string>,arg6:string,arg7:boolean,arg8:boolean,arg9:boolean):Promise<types.JSResp>;
 
 export function CheckConnectivity(arg1:string):Promise<types.JSResp>;
 
@@ -20,6 +20,8 @@ export function GetContexts():Promise<types.JSResp>;
 export function GetErrorsCount(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Array<string>,arg6:boolean,arg7:boolean,arg8:boolean):Promise<types.JSResp>;
 
 export function GetLocalConfig():Promise<types.JSResp>;
+
+export function GetNamespaces():Promise<types.JSResp>;
 
 export function LoadConfig(arg1:string):Promise<types.JSResp>;
 

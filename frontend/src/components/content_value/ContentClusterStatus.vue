@@ -60,6 +60,8 @@ const themeVars = useThemeVars();
 const serverInfo = ref({});
 // cluster info
 const clusterInfo = ref({});
+const daysWithoutIssue = ref({});
+const daysTotal = ref({});
 // const clusterVersion = ref("Loading2");
 const pageState = reactive({
   autoRefresh: false,
@@ -342,6 +344,26 @@ const clusterStatus = computed(() => {
 });
 const errorsCount = computed(() => {
   return get(clusterInfo.value, "errorsCount", "Loading");
+});
+// Function to initialize running days
+const initRunningDays = computed(() => {
+  const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+  // Assuming you have a way to store daysWithoutIssue and daysTotal, e.g., in a store or local storage
+  if (isEmpty(daysWithoutIssue)) {
+    daysWithoutIssue = new Set();
+  }
+  if (isEmpty(daysTotal)) {
+    daysTotal = new Set();
+  }
+  // Uncomment and implement error checking if needed
+  if (errorsCount == "Loading") {
+    daysWithoutIssue.add(currentDate);
+  }
+  daysTotal.add(currentDate);
+  console.log("Initialized running days:", {
+    daysWithoutIssue: daysWithoutIssue.size,
+    daysTotal: daysTotal.size,
+  });
 });
 const usedCPU = computed(() => {
   return "fake";

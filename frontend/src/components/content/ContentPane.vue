@@ -96,9 +96,20 @@ watch(
     }
   },
 );
+watch(
+  () => connectionStore.currentCluster,
+  (newVal, oldVal) => {
+    errorPaneRef.value?.refresh();
+    console.log("--->", "content-pane refresh error pane", newVal, oldVal)
+  }
+);
 onMounted(() => {
   console.log("content pane onMounted");
 });
+const updateVal = (val) => {
+  tabStore.switchSubTab(val)
+  console.log("update val: ", val)
+};
 </script>
 
 <template>
@@ -122,7 +133,7 @@ onMounted(() => {
         placement="top"
         tab-style="padding-left: 10px; padding-right: 10px;"
         type="line"
-        @update:value="(val) => tabStore.switchSubTab(val)"
+        @update:value="updateVal"
       >
         <!-- server status pane -->
         <n-tab-pane

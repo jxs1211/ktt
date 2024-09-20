@@ -17,6 +17,7 @@ import {
 } from "wailsjs/go/services/connectionService.js";
 import {
   GetAvailableFilteredResources,
+  GetNamespaces,
   CheckConnectivity,
   GetClusterInfo,
 } from "wailsjs/go/client/ClientService.js";
@@ -68,6 +69,9 @@ const useConnectionStore = defineStore("connections", {
   }),
   getters: {},
   actions: {
+    async getNamespaces() {
+      return await GetNamespaces();
+    },
     async getAvailableResources() {
       return await GetAvailableFilteredResources();
     },
