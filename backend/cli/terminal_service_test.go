@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,51 +22,69 @@ func TestMain(m *testing.M) {
 func TestTerminalService_StartTerminal(t *testing.T) {
 	tests := []struct {
 		name     string
-		ctx      context.Context
 		terminal terminal
-		want     types.JSResp
+		resp     types.JSResp
 	}{
 		{
-			name: "base",
-			ctx:  context.Background(),
-			want: types.JSResp{Success: true},
+			name:     "gotty terminal",
+			terminal: NewGottyTerminal(context.Background()),
+			resp:     types.JSResp{Success: true},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewTerminalService()
-			s.Start(tt.ctx)
-			// add testify to assert the result
-			got := s.StartTerminal()
-			assert.Equal(t, tt.want, got)
+			jsResp := s.StartTerminal()
+			assert.True(t, jsResp.Success)
 			err := s.CloseTerminal()
-			assert.Equal(t, nil, err)
+			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestTerminalService_startTerminal(t *testing.T) {
-	type fields struct {
-		ctx      context.Context
-		terminal terminal
-		mutex    sync.Mutex
-	}
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name     string
+		terminal terminal
+		err      error
 	}{
-		// TODO: Add test cases.
+		{
+			name:     "gotty terminal",
+			terminal: NewGottyTerminal(context.Background()),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &TerminalService{
-				ctx:      tt.fields.ctx,
-				terminal: tt.fields.terminal,
+			s := NewTerminalService()
+			err := s.startTerminal()
+			assert.NoError(t, err)
+			err = s.CloseTerminal()
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestGottyTerminal_Start(t *testing.T) {
+	tests := []struct {
+		name    string
+		ctx     context.Context
+		wantErr bool
+	}{
+		{
+			name: "start gotty terminal",
+			ctx:  context.Background(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gottyTerminal := NewGottyTerminal(tt.ctx)
+			err := gottyTerminal.Start()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GottyTerminal.Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err := s.startTerminal(); (err != nil) != tt.wantErr {
-				t.Errorf("TerminalService.startTerminal() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			// Clean up by closing the terminal
+			err = gottyTerminal.Close()
+			assert.NoError(t, err)
 		})
 	}
 }

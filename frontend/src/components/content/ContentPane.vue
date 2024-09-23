@@ -77,8 +77,8 @@ const isBlankValue = computed(() => {
 });
 
 const selectedSubTab = computed(() => {
-  const { subTab = defaultTab } = tabStore.currentTab || {};
-  return subTab;
+  // console.log("-------->", tabStore.currentSubTab)
+  return tabStore.currentSubTab;
 });
 
 // BUG: naive-ui tabs will set the bottom line to '0px' after switch to another page and back again

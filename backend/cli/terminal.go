@@ -13,11 +13,14 @@ import (
 	"syscall"
 
 	"github.com/creack/pty"
+	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type terminal interface {
 	Start() error
 	Close() error
+	// isExited() bool
+	Restart() error
 }
 
 type Terminal struct {
@@ -33,6 +36,14 @@ func NewTerminal(ctx context.Context) *Terminal {
 		done: make(chan struct{}),
 		ctx:  ctx,
 	}
+}
+
+func (t *Terminal) isExited() bool {
+	return true
+}
+
+func (t *Terminal) Restart() error {
+	return nil
 }
 
 func (t *Terminal) Start() error {
@@ -84,15 +95,23 @@ type TtydTerminal struct {
 	mu          sync.Mutex
 	ctx         context.Context
 	cmd         *exec.Cmd
-	readySignal chan struct{} // Add a channel for readiness signal
+	readySignal chan string // Add a channel for readiness signal
 
 }
 
 func NewTtydTerminal(ctx context.Context) *TtydTerminal {
 	return &TtydTerminal{
 		ctx:         ctx,
-		readySignal: make(chan struct{}), // Initialize the channel
+		readySignal: make(chan string), // Initialize the channel
 	}
+}
+
+func (t *TtydTerminal) isExited() bool {
+	return t.cmd.ProcessState.Exited()
+}
+
+func (t *TtydTerminal) Restart() error {
+	return nil
 }
 
 func (t *TtydTerminal) Start() error {
@@ -131,18 +150,14 @@ func (t *TtydTerminal) Start() error {
 	}
 
 	// Wait for ttyd to be ready
-	if err := t.WaitForReady(); err != nil {
-		return fmt.Errorf("ttyd did not become ready: %v", err)
-	}
-
-	url := fmt.Sprintf("http://localhost:%v", port)
+	p := t.WaitForReady()
+	url := fmt.Sprintf("http://localhost:%v", p)
 	log.Info("terminal", "url", url)
 	return nil
 }
 
-func (t *TtydTerminal) WaitForReady() error {
-	<-t.readySignal
-	return nil
+func (t *TtydTerminal) WaitForReady() string {
+	return <-t.readySignal
 }
 
 func (t *TtydTerminal) Close() error {
@@ -171,8 +186,8 @@ func (t *TtydTerminal) waitForBootup(stdout *bufio.Reader, stderr *bufio.Reader)
 				matches := portRegex.FindStringSubmatch(line)
 				if len(matches) > 1 {
 					port := matches[1]
-					log.Info("ttyd started on port", "port", port)
-					close(t.readySignal) // Signal that ttyd is ready
+					log.Info("ttyd started", "port", port)
+					t.readySignal <- port // Signal that ttyd is ready
 				}
 			}
 		}
@@ -186,6 +201,147 @@ func (t *TtydTerminal) waitForBootup(stdout *bufio.Reader, stderr *bufio.Reader)
 				break
 			}
 			log.Error("ttyd stderr", "line", line) // Log stderr output
+		}
+	}()
+
+	return nil
+}
+
+type GottyTerminal struct {
+	mu          sync.Mutex
+	ctx         context.Context
+	cmd         *exec.Cmd
+	readySignal chan string
+}
+
+func NewGottyTerminal(ctx context.Context) *GottyTerminal {
+	return &GottyTerminal{
+		ctx:         ctx,
+		readySignal: make(chan string),
+	}
+}
+func (t *GottyTerminal) Restart() error {
+	err := t.Close()
+	if err != nil {
+		return err
+	}
+	return t.Start()
+}
+
+func (t *GottyTerminal) Start() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	var cmd *exec.Cmd
+	port := "8887" // Default port for GoTTY
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("gotty", "powershell.exe")
+	default:
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			shell = "/bin/bash"
+		}
+		cmd = exec.Command("gotty", "--port", port, "-w", shell)
+	}
+	// Start the command
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to get stdout pipe: %v", err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("failed to get stderr pipe: %v", err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start GoTTY: %v", err)
+	}
+
+	stdoutReader := bufio.NewReader(stdout)
+	stderrReader := bufio.NewReader(stderr)
+	go t.waitForBootup(stdoutReader, stderrReader)
+
+	// Wait for GoTTY to be ready
+	p := t.WaitForReady()
+	url := fmt.Sprintf("http://localhost:%v", p)
+	log.Info("terminal", "url", url)
+	t.cmd = cmd
+	runtime2.EventsEmit(t.ctx, "terminal:url", url)
+	return nil
+}
+
+func (t *GottyTerminal) WaitForReady() string {
+	return <-t.readySignal
+}
+
+func (t *GottyTerminal) isExited() bool {
+	return t.cmd.ProcessState.Exited()
+}
+
+func (t *GottyTerminal) Close() error {
+	if t.cmd != nil {
+		if err := t.cmd.Process.Signal(syscall.SIGHUP); err != nil {
+			return fmt.Errorf("failed to kill GoTTY process: %v", err)
+		}
+	}
+	log.Info("Close done")
+	return nil
+}
+
+func match(pattern, content string) ([]string, bool) {
+	regex := regexp.MustCompile(pattern)
+	if !regex.MatchString(content) {
+		return []string{}, false
+	}
+	return regex.FindStringSubmatch(content), true
+}
+
+func (t *GottyTerminal) waitForBootup(stdout *bufio.Reader, stderr *bufio.Reader) error {
+	pattern := `HTTP server is listening at: http://[^\s]+:(\d+)/`
+	// portRegex := regexp.MustCompile(`HTTP server is listening at: http://[^\s]+:(\d+)/`)
+
+	// Read stdout
+	go func() {
+		for {
+			line, err := stdout.ReadString('\n')
+			if err != nil {
+				break
+			}
+			// log.Info("GoTTY stdout", "line", line)
+			matches, ok := match(pattern, line)
+			if !ok {
+				continue
+			}
+			if len(matches) > 1 {
+				port := matches[1]
+				log.Info("GoTTY started", "port", port)
+				t.readySignal <- port // Signal that GoTTY is ready
+				break
+			}
+		}
+	}()
+
+	// Read stderr
+	go func() {
+		for {
+			line, err := stderr.ReadString('\n')
+			if err != nil {
+				break
+			}
+			// log.Error("GoTTY stderr", "line", line) // Log stderr output
+			matches, ok := match(pattern, line)
+			if !ok {
+				continue
+			}
+			if len(matches) > 1 {
+				port := matches[1]
+				log.Info("GoTTY started", "port", port)
+				t.readySignal <- port // Signal that GoTTY is ready
+				break
+			}
 		}
 	}()
 

@@ -104,9 +104,9 @@ const refreshInfo = async (force) => {
     $message.warning(`current cluster is empty string: ${currentCluster}`);
     return;
   }
-  console.log("current cluster: ", currentCluster);
+  // console.log("current cluster: ", currentCluster);
   if (tabStore.alreadyExists(currentCluster)) {
-    console.log("fast return due to already exists: ", currentCluster);
+    // console.log("fast return due to already exists: ", currentCluster);
     return;
   }
   if (force) {
@@ -137,7 +137,7 @@ const refreshInfo = async (force) => {
         clusterInfo.value = reactive({...data, lastUpdated: updateTime});
         // Force reactivity update
         clusterInfo.value = {...clusterInfo.value};
-        console.log("updated clusterInfo: ", clusterInfo.value)
+        // console.log("updated clusterInfo: ", clusterInfo.value)
         // console.log("updated clusterVersion: ", clusterVersion.value)
         // Remove the existing item if found
         // if (index !== -1) {
@@ -335,8 +335,8 @@ onUnmounted(() => {
 
 const clusterVersion = computed(() => {
   const ver = clusterInfo.value?.versionInfo?.gitVersion || '';
-  console.log("clusterInfo in computed:", clusterInfo.value);
-  console.log("version:", ver);
+  // console.log("clusterInfo in computed:", clusterInfo.value);
+  // console.log("version:", ver);
   return ver;
 });
 const clusterStatus = computed(() => {
@@ -446,9 +446,9 @@ const onFilterGroup = (group) => {
     infoFilter.group = group;
   }
 };
-watchEffect(() => {
-  console.log("clusterInfo changed:", clusterInfo.value);
-});
+// watchEffect(() => {
+//   console.log("clusterInfo changed:", clusterInfo.value);
+// });
 watch(
   () => prefStore.currentLanguage,
   () => {

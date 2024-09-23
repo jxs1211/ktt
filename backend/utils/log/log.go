@@ -40,8 +40,8 @@ func Init(logDir string) {
 		}
 		defer file.Close()
 
-		separator := fmt.Sprintf("\n\n---------- restarted at %s ----------\n\n", time.Now().Format(time.RFC3339))
-		if _, err := file.WriteString(separator); err != nil {
+		separator := fmt.Sprintf(`{"event": "restarted", "timestamp": "%s"}`, time.Now().Format(time.RFC3339))
+		if _, err := file.WriteString(separator + "\n"); err != nil { // Added newline for JSON formatting
 			panic(err)
 		}
 	}

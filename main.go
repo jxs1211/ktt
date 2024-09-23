@@ -105,6 +105,7 @@ func main() {
 			return false
 		},
 		OnShutdown: func(ctx context.Context) {
+			// todo: close all cli process
 			browserSvc.Stop()
 			cliSvc.CloseAll()
 			monitorSvc.StopAll()
