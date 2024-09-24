@@ -37,8 +37,8 @@ const errorPaneRef = ref(null);
 const connectionStore = useConnectionStore();
 const tabStore = useTabStore();
 watchEffect(() => {
-  if (connectionStore.clusters.length > 0) {
-    errorPaneRef.value?.refresh();
+  if (!isEmpty(connectionStore.clusters)) {
+    errorPaneRef.value?.refreshFiltersOptions();
   }
 });
 const tab = computed(() =>
@@ -86,6 +86,16 @@ const selectedSubTab = computed(() => {
 const tabsRef = ref(null);
 const cliRef = ref(null);
 watch(
+  () => selectedSubTab.value,
+  (newTab) => {
+    if (newTab !== BrowserTabType.Diagnose.toString()) {
+      // Clear selected options in ContentErrorPane
+      errorPaneRef.value?.clearSelectedOptions(); // Call a method to clear selections
+      console.log("clear selected options")
+    }
+  }
+);
+watch(
   () => tabContent.value?.name,
   (name) => {
     if (name === props.server) {
@@ -99,7 +109,7 @@ watch(
 watch(
   () => connectionStore.currentCluster,
   (newVal, oldVal) => {
-    errorPaneRef.value?.refresh();
+    errorPaneRef.value?.refreshFiltersOptions;
     console.log("--->", "content-pane refresh error pane", newVal, oldVal)
   }
 );
@@ -109,6 +119,11 @@ onMounted(() => {
 const updateVal = (val) => {
   tabStore.switchSubTab(val)
   console.log("update val: ", val)
+  // fix: the namespaces can't be synced instantly from backend
+  if (val === BrowserTabType.Diagnose.toString()) {
+    errorPaneRef.value?.refreshFiltersOptions();
+    console.log("refreshed")
+  }
 };
 </script>
 
@@ -225,6 +240,10 @@ const updateVal = (val) => {
             </n-space>
           </template>
           <content-cli ref="cliRef" :name="props.server" />
+          <!-- <content-session-pane
+            class="flex-item-expand"
+          /> -->
+          <!-- <SessionManagement /> -->
         </n-tab-pane>
 
         <!-- watch pane -->

@@ -272,9 +272,9 @@ const renderSuffix = ({ option }) => {
   return null;
 };
 
-const onUpdateExpandedKeys = (keys, option) => {
-  expandedKeys.value = keys;
-};
+// const onUpdateExpandedKeys = (keys, option) => {
+//   expandedKeys.value = keys;
+// };
 
 const onUpdateSelectedKeys = (keys, option) => {
   selectedKeys.value = keys;
@@ -288,14 +288,14 @@ const onUpdateSelectedKeys = (keys, option) => {
 };
 
 const switchCluster = async (name) => {
-  const { success, msg, _ } = await connectionStore.checkConnectivity(name);
+  const { success, msg, data } = await connectionStore.checkConnectivity(name);
   if (!success) {
     $message.error(msg);
     return;
   }
   connectionStore.switchedClusterOK = true;
   tabStore.nav = "browser"
-  console.log("selected available cluster:", name);
+  console.log("selected available cluster:", data);
 };
 
 /**

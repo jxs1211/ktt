@@ -3,8 +3,8 @@
 import {context} from '../models';
 import {types} from '../models';
 
-export function CloseTerminal():Promise<void>;
+export function CloseTerminal(arg1:string,arg2:string):Promise<void>;
 
 export function Start(arg1:context.Context):Promise<void>;
 
-export function StartTerminal():Promise<types.JSResp>;
+export function StartTerminal(arg1:string,arg2:string,arg3:Array<string>):Promise<types.JSResp>;
