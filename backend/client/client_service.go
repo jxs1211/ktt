@@ -338,6 +338,7 @@ func (s *ClientService) GetNamespaces() types.JSResp {
 }
 
 func (s *ClientService) getNamespaces() ([]string, error) {
+	// todo use lister instead for performance
 	nsList, err := s.apiClient.client.CoreV1().Namespaces().List(s.ctx, metav1.ListOptions{})
 	if err != nil {
 		return []string{}, err
@@ -407,13 +408,24 @@ func (s *ClientService) CheckConnectivity(name string) types.JSResp {
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
-	err = s.loadConfigFromLocal()
+	cfg, err := NewConfig(s.apiClient.config.flags).RESTConfig()
+	if err != nil {
+		logutil.Error("CheckConn", "err", err)
+		s.apiClient.connOK = false
+		return types.FailedResp(err.Error())
+	}
+	c, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
+	logutil.Info("CheckConn", "name", name, "clusterName", s.apiClient.config.flags.ClusterName)
+	s.apiClient = New(
+		NewConfig(s.apiClient.config.flags),
+	)
+	s.apiClient.setClient(c)
 	return types.JSResp{
 		Success: true,
-		Data:    "connected to cluster",
+		Data:    s.apiClient.config.flags.ClusterName,
 	}
 }
 

@@ -243,7 +243,12 @@ func (t *GottyTerminal) Start() error {
 		if shell == "" {
 			shell = "/bin/bash"
 		}
-		cmd = exec.Command("gotty", "--port", port, "-w", shell)
+		args := []string{
+			"--port", port, "-w",
+			"cdebug", "exec", "--privileged", "-it", "--image=nixery.dev/shell/vim/ps/tshark/kubectl",
+			"pod/cloudtty-operator-controller-manager-77674f78c4-mbt9m/cloudtty-operator-controller-manager",
+		}
+		cmd = exec.Command("gotty", args...)
 	}
 	// Start the command
 	stdout, err := cmd.StdoutPipe()
@@ -318,7 +323,7 @@ func (t *GottyTerminal) waitForBootup(stdout *bufio.Reader, stderr *bufio.Reader
 			if len(matches) > 1 {
 				port := matches[1]
 				log.Info("GoTTY started", "port", port)
-				t.readySignal <- port // Signal that GoTTY is ready
+				t.readySignal <- port
 				break
 			}
 		}

@@ -22,15 +22,18 @@ import usePreferencesStore from "stores/preferences.js";
 import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const themeVars = useThemeVars();
+// const themeVars = useThemeVars();
 
-const browserStore = useBrowserStore();
+// const browserStore = useBrowserStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
 const preferencesStore = usePreferencesStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
+  // fix filter data loading using table's loading reative data for displaying loading process
+  filterResourceLoading: false,
+  filterNamespaceLoading: false,
   server: "",
   options: [],
   namespaces: [],
@@ -39,29 +42,29 @@ const data = reactive({
   history: [],
   results: [],
 });
-const validateFilters = (value) => {
-  if (isEmpty(value)) {
-    $message.error("filter can't be null");
-    return;
-  }
-  if (!includes(AvailableFilters, capitalize(value))) {
-    $message.error("Please select at least one valid filter from []");
-    return;
-  }
-};
+// const validateFilters = (value) => {
+//   if (isEmpty(value)) {
+//     $message.error("filter can't be null");
+//     return;
+//   }
+//   if (!includes(AvailableFilters, capitalize(value))) {
+//     $message.error("Please select at least one valid filter from []");
+//     return;
+//   }
+// };
 
-const filterServerOption = computed(() => {
-  const serverSet = uniqBy(data.history, "server");
-  const options = map(serverSet, ({ server }) => ({
-    label: server,
-    value: server,
-  }));
-  options.splice(0, 0, {
-    label: "common.all",
-    value: "",
-  });
-  return options;
-});
+// const filterServerOption = computed(() => {
+//   const serverSet = uniqBy(data.history, "server");
+//   const options = map(serverSet, ({ server }) => ({
+//     label: server,
+//     value: server,
+//   }));
+//   options.splice(0, 0, {
+//     label: "common.all",
+//     value: "",
+//   });
+//   return options;
+// });
 
 const filterNamespaceOptions = computed(() => {
   const options = map(data.namespaceOptions, (item) => ({
@@ -222,8 +225,8 @@ const analyze = async () => {
   // feat: provide selectable options fetched from backend
   console.log("analyze: ", data.selectedOptions);
   try {
-    await nextTick();
     data.loading = true;
+    await nextTick();
     console.log("analyze ai:", preferencesStore.ai);
     const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
     const resp = await configStore.analyze(
@@ -255,10 +258,11 @@ const analyze = async () => {
   console.log(data.results);
 };
 
-const loadResources = async () => {
+const refreshFiltersOptions = async () => {
   try {
+    data.filterResourceLoading = true;
+    data.filterNamespaceLoading = true;
     await nextTick();
-    data.loading = true;
     const resp = await connectionStore.getAvailableResources();
     if (!resp.success) {
       console.warn("get available filtered resources failed: ", resp.msg)
@@ -273,28 +277,33 @@ const loadResources = async () => {
     data.namespaceOptions = resp2.data;
     console.log("data.namespaceOptions: ", data.namespaceOptions);
   } finally {
-    data.loading = false;
+    data.filterResourceLoading = false
+    data.filterNamespaceLoading = false
     await nextTick();
     // tableRef.value?.scrollTo({ position: "bottom" });
   }
 };
-
-const cleanHistory = async () => {
-  $dialog.warning(i18n.t("error.confirm_clean_log"), async () => {
-    try {
-      data.loading = true;
-      const success = await browserStore.cleanCmdHistory();
-      if (success) {
-        data.history = [];
-        await nextTick();
-        tableRef.value?.scrollTo({ position: "top" });
-        $message.success(i18n.t("dialogue.handle_succ"));
-      }
-    } finally {
-      data.loading = false;
-    }
-  });
+const clearSelectedOptions = () => {
+  data.selectedOptions = []; // Clear selected resource types
+  data.selectedNSOption = ""; // Clear selected namespace
+  data.results = [];
 };
+// const cleanHistory = async () => {
+//   $dialog.warning(i18n.t("error.confirm_clean_log"), async () => {
+//     try {
+//       data.loading = true;
+//       const success = await browserStore.cleanCmdHistory();
+//       if (success) {
+//         data.history = [];
+//         await nextTick();
+//         tableRef.value?.scrollTo({ position: "top" });
+//         $message.success(i18n.t("dialogue.handle_succ"));
+//       }
+//     } finally {
+//       data.loading = false;
+//     }
+//   });
+// };
 
 const onSelectedItemUpdate = (keys) => {
   // fix: be compatiable with other possible types
@@ -310,21 +319,14 @@ const onSelectedItemUpdate = (keys) => {
   data.selectedOptions = keys;
   console.log("selectedUpdate: ", data.selectedOptions);
 };
-const onSelectedNSItemUpdate = (keys) => {
-  console.log("---->", keys)
-  let ns = ""
-  if (isString(keys)) {
-    ns = keys;
-  } else if (isNumber(keys)) {
-    ns = keys.toString();
-  }
-  data.selectedNSOption = ns;
-  console.log("selectedNSUpdate: ", data.selectedNSOption);
+const onSelectedNSItemUpdate = (key) => {
+  console.log("---->", typeof(key), key)
+  data.selectedNSOption = key;
 };
 
-
 defineExpose({
-  refresh: loadResources,
+  refreshFiltersOptions,
+  clearSelectedOptions,
 });
 
 // feat: support to reset error table after cluster changed
@@ -346,23 +348,29 @@ watch(
     <n-form :disabled="data.loading" class="flex-item" inline>
       <n-form-item :label="$t('error.filter_resource')">
         <n-select
+          v-model:value="data.selectedOptions"
           :consistent-menu-width="false"
           :options="filterOptions"
           multiple
           filterable
+          clearable
+          :loading="data.filterResourceLoading"
           @update:value="onSelectedItemUpdate"
           style="min-width: 200px"
         />
       </n-form-item>
-      <!-- <n-form-item :label="$t('error.filter_namespace')">
+      <n-form-item :label="$t('error.filter_namespace')">
         <n-select
+          v-model:value="data.selectedNSOption"
           :consistent-menu-width="false"
           :options="filterNamespaceOptions"
           filterable
+          clearable
+          :loading="data.filterNamespaceLoading"
           @update:value="onSelectedNSItemUpdate"
           style="min-width: 200px"
         />
-      </n-form-item> -->
+      </n-form-item>
 
       <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />
