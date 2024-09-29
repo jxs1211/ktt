@@ -6,17 +6,59 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/sorenisanerd/gotty/backend/localcommand"
 	"github.com/sorenisanerd/gotty/pkg/homedir"
 	"github.com/sorenisanerd/gotty/server"
 	"github.com/sorenisanerd/gotty/utils"
 	cli "github.com/urfave/cli/v2"
+
+	logutil "ktt/backend/utils/log"
 )
+
+type arguments []string
+
+func (a *arguments) Get(n int) string {
+	if len(*a) > n {
+		return (*a)[n]
+	}
+	return ""
+}
+
+func (a *arguments) First() string {
+	return a.Get(0)
+}
+
+func (a *arguments) Tail() []string {
+	if a.Len() >= 2 {
+		tail := []string((*a)[1:])
+		ret := make([]string, len(tail))
+		copy(ret, tail)
+		return ret
+	}
+	return []string{}
+}
+
+func (a *arguments) Len() int {
+	return len(*a)
+}
+
+func (a *arguments) Present() bool {
+	return a.Len() != 0
+}
+
+func (a *arguments) Slice() []string {
+	ret := make([]string, len(*a))
+	copy(ret, *a)
+	return ret
+}
 
 type CliServer struct {
 	app        *cli.App
+	args       []string
 	ctx        context.Context
 	ctxCancel  context.CancelFunc
 	gCtx       context.Context
@@ -24,62 +66,33 @@ type CliServer struct {
 	errs       chan error
 }
 
-// func NewServer() (*CliServer, error) {
-
-// 	appOptions := &server.Options{}
-
-// 	if err := utils.ApplyDefaultValues(appOptions); err != nil {
-// 		return nil, err
-// 	}
-// 	backendOptions := &localcommand.Options{}
-// 	if err := utils.ApplyDefaultValues(backendOptions); err != nil {
-// 		return nil, err
-// 	}
-
-// 	cliFlags, flagMappings, err := utils.GenerateFlags(appOptions, backendOptions)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	args := c.Args()
-// 	factory, err := localcommand.NewFactory(args.First(), args.Tail(), backendOptions)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	hostname, _ := os.Hostname()
-// 	appOptions.TitleVariables = map[string]interface{}{
-// 		"command":  args.First(),
-// 		"argv":     args.Tail(),
-// 		"hostname": hostname,
-// 	}
-
-// 	srv, err := server.New(factory, appOptions)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// }
-
-func NewCliServer() (*CliServer, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	gCtx, gCtxCancel := context.WithCancel(context.Background())
+func NewCliServer(pCtx context.Context, addr, port string, cmds []string) (*CliServer, error) {
+	ctx, cancel := context.WithCancel(pCtx)
+	gCtx, gCtxCancel := context.WithCancel(pCtx)
 	cliServer := &CliServer{
 		ctx:        ctx,
 		ctxCancel:  cancel,
 		gCtx:       gCtx,
 		gCtxCancel: gCtxCancel,
 		errs:       make(chan error, 1),
+		args:       cmds,
 	}
 	app := cli.NewApp()
-	app.Name = "gotty"
+	app.Name = "KT-Console"
 	app.Version = "unknown_version"
-	app.Usage = "Share your terminal as a web application"
+	app.Usage = "Share terminal as a web application"
 	app.HideHelpCommand = true
 	appOptions := &server.Options{}
 
 	if err := utils.ApplyDefaultValues(appOptions); err != nil {
 		return nil, err
 	}
+	appOptions.Address = addr
+	appOptions.Port = port
+	appOptions.EnableReconnect = true
+	appOptions.PermitWrite = true
+	// os.Args = append(os.Args, cmds...)
+	// log.Printf("options: %+v", appOptions)
 	backendOptions := &localcommand.Options{}
 	if err := utils.ApplyDefaultValues(backendOptions); err != nil {
 		return nil, err
@@ -101,8 +114,10 @@ func NewCliServer() (*CliServer, error) {
 	)
 
 	app.Action = func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			msg := "error: No command given."
+		logutil.Info("NewCliServer", "c.NArg", c.NArg())
+		if len(cmds) == 0 {
+			// if c.NArg() == 0 {
+			msg := "error: no command given"
 			cli.ShowAppHelp(c)
 			return errors.New(msg)
 		}
@@ -134,7 +149,7 @@ func NewCliServer() (*CliServer, error) {
 			return err
 		}
 
-		args := c.Args()
+		args := arguments(cmds)
 		factory, err := localcommand.NewFactory(args.First(), args.Tail(), backendOptions)
 		if err != nil {
 			return err
@@ -152,33 +167,39 @@ func NewCliServer() (*CliServer, error) {
 			return err
 		}
 
-		log.Printf("GoTTY is starting with command: %s", strings.Join(args.Slice(), " "))
+		log.Printf("starting with command: %s", strings.Join(args.Slice(), " "))
 
 		go func() {
 			cliServer.errs <- srv.Run(cliServer.ctx, server.WithGracefullContext(cliServer.gCtx))
 		}()
 		// err = waitSignals(cliServer.errs, cliServer.ctxCancel, cliServer.gCtxCancel)
-
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(
+			sigChan,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+		)
 		select {
 		case err := <-cliServer.errs:
 			return err
 		case <-cliServer.gCtx.Done():
-			log.Println("g shutdown")
+			logutil.Info("NewCliServer", "shutdown by ctx", "gCtxCancel")
+		case sig := <-sigChan:
+			logutil.Info("NewCliServer", "shutdown by sig", sig.String())
 		}
 
-		if err != nil && err != context.Canceled {
-			return err
-		}
-
+		// if err != nil && err != context.Canceled {
+		// 	return err
+		// }
 		return nil
 	}
-	return &CliServer{
-		app: app,
-	}, nil
+	cliServer.app = app
+	return cliServer, nil
 }
 
 func (s *CliServer) Start() error {
-	return s.app.Run(os.Args)
+	go s.app.Run(s.args)
+	return nil
 }
 
 func (s *CliServer) Close() error {

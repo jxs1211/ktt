@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -21,48 +22,54 @@ func TestMain(m *testing.M) {
 
 func TestTerminalService_StartTerminal(t *testing.T) {
 	tests := []struct {
-		name     string
-		terminal terminal
-		resp     types.JSResp
+		name    string
+		address string
+		port    string
+		cmds    []string
+		resp    types.JSResp
 	}{
 		{
-			name:     "gotty terminal",
-			terminal: NewGottyTerminal(context.Background()),
-			resp:     types.JSResp{Success: true},
+			name:    "cli server terminal",
+			address: "0.0.0.0",
+			port:    "8888",
+			cmds:    []string{"bash"},
+			resp:    types.JSResp{Success: true},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewTerminalService()
-			jsResp := s.StartTerminal()
+			s.Start(context.Background())
+			jsResp := s.StartTerminal(tt.address, tt.port, tt.cmds)
 			assert.True(t, jsResp.Success)
-			err := s.CloseTerminal()
+			time.Sleep(time.Second * 2)
+			err := s.CloseTerminal(tt.address, tt.port)
 			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestTerminalService_startTerminal(t *testing.T) {
-	tests := []struct {
-		name     string
-		terminal terminal
-		err      error
-	}{
-		{
-			name:     "gotty terminal",
-			terminal: NewGottyTerminal(context.Background()),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := NewTerminalService()
-			err := s.startTerminal()
-			assert.NoError(t, err)
-			err = s.CloseTerminal()
-			assert.NoError(t, err)
-		})
-	}
-}
+// func TestTerminalService_startTerminal(t *testing.T) {
+// 	tests := []struct {
+// 		name     string
+// 		terminal terminal
+// 		err      error
+// 	}{
+// 		{
+// 			name:     "gotty terminal",
+// 			terminal: NewGottyTerminal(context.Background()),
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := NewTerminalService()
+// 			err := s.startTerminal()
+// 			assert.NoError(t, err)
+// 			err = s.CloseTerminal()
+// 			assert.NoError(t, err)
+// 		})
+// 	}
+// }
 
 func TestGottyTerminal_Start(t *testing.T) {
 	tests := []struct {

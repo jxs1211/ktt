@@ -18,6 +18,7 @@ import (
 	"ktt/backend/cli"
 	"ktt/backend/client"
 	"ktt/backend/consts"
+	"ktt/backend/db"
 	"ktt/backend/services"
 	"ktt/backend/utils/log"
 	strutil "ktt/backend/utils/string"
@@ -38,6 +39,9 @@ func init() {
 }
 
 func main() {
+	if err := db.InitStore(); err != nil {
+		log.Fatal("Main", "InitStore failed", err)
+	}
 	clientSvc := client.NewClientService()
 	watcherManager := watch.NewWatcherManager()
 	terminalSvc := cli.NewTerminalService()

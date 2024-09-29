@@ -13,6 +13,7 @@ import {
   isNumber,
   isNull,
   isUndefined,
+  filter,
 } from "lodash";
 import { useThemeVars, NTag } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
@@ -39,6 +40,7 @@ const data = reactive({
   namespaces: [],
   selectedOptions: [],
   selectedNSOption: "",
+  selectedResourceName: "",
   history: [],
   results: [],
 });
@@ -246,6 +248,12 @@ const analyze = async () => {
       $message.error(resp.msg);
     } else {
       data.results = resp.data;
+      if (!isEmpty(data.selectedResourceName)){
+        data.results = filter(data.results, (ele) => {
+          const [ _, name ] = split(ele.name, "/")
+          return name === data.selectedResourceName
+        });
+      }
       if (isEmpty(data.results)) {
         $message.success("No error found");
       }
@@ -286,6 +294,7 @@ const refreshFiltersOptions = async () => {
 const clearSelectedOptions = () => {
   data.selectedOptions = []; // Clear selected resource types
   data.selectedNSOption = ""; // Clear selected namespace
+  data.selectedResourceName = "";
   data.results = [];
 };
 // const cleanHistory = async () => {
@@ -371,7 +380,9 @@ watch(
           style="min-width: 200px"
         />
       </n-form-item>
-
+      <n-form-item :label="$t('error.filter_resource_name')">
+        <n-input v-model:value="data.selectedResourceName" type="text" placeholder="resource name" />
+      </n-form-item>
       <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />
       </n-form-item> -->

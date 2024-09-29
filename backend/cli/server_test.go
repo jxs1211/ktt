@@ -2,8 +2,9 @@ package cli
 
 import (
 	"context"
-	"reflect"
+	"log"
 	"testing"
+	"time"
 
 	cli "github.com/urfave/cli/v2"
 )
@@ -14,53 +15,56 @@ func TestNewCliServer(t *testing.T) {
 		want    *CliServer
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewCliServer()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewCliServer() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewCliServer() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestCliServer_Start(t *testing.T) {
-	tests := []struct {
-		name       string
-		app        *cli.App
-		ctx        context.Context
-		ctxCancel  context.CancelFunc
-		gCtx       context.Context
-		gCtxCancel context.CancelFunc
-		errs       chan error
-		wantErr    bool
-	}{
 		{
 			name: "base",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// s := &CliServer{
-			// 	app:        tt.app,
-			// 	ctx:        tt.ctx,
-			// 	ctxCancel:  tt.ctxCancel,
-			// 	gCtx:       tt.gCtx,
-			// 	gCtxCancel: tt.gCtxCancel,
-			// 	errs:       tt.errs,
+			_, err := NewCliServer(context.Background(), "localhost", "8888", []string{"zsh"})
+			if err != nil {
+				log.Fatal(err)
+			}
+			// if (err != nil) != tt.wantErr {
+			// 	t.Errorf("NewCliServer() error = %v, wantErr %v", err, tt.wantErr)
+			// 	return
 			// }
-			s, err := NewCliServer()
+			// if !reflect.DeepEqual(got, tt.want) {
+			// 	t.Errorf("NewCliServer() = %v, want %v", got, tt.want)
+			// }
+		})
+	}
+}
+
+func TestCliServer_Start(t *testing.T) {
+	tests := []struct {
+		name    string
+		address string
+		port    string
+		cmds    []string
+		wantErr bool
+	}{
+		{
+			name:    "base",
+			address: "0.0.0.0",
+			port:    "8888",
+			cmds:    []string{"bash"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := NewCliServer(context.Background(), tt.address, tt.port, tt.cmds)
+			t.Logf("server: %+v", s)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := s.Start(); (err != nil) != tt.wantErr {
-				t.Errorf("CliServer.Start() error = %v, wantErr %v", err, tt.wantErr)
+			// if err := s.Start(); (err != nil) != tt.wantErr {
+			// 	t.Fatalf("CliServer.Start() error = %v, wantErr %v", err, tt.wantErr)
+			// }
+			s.Start()
+			time.Sleep(5 * time.Second)
+			if err := s.Close(); err != nil {
+				t.Fatal(err)
 			}
 		})
 	}
@@ -79,7 +83,9 @@ func TestCliServer_Close(t *testing.T) {
 		name    string
 		fields  fields
 		wantErr bool
-	}{}
+	}{
+		// TODO: Add test cases.
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &CliServer{

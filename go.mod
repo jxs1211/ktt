@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/k8sgpt-ai/k8sgpt v0.3.39
 	github.com/klauspost/compress v1.17.9
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/rs/zerolog v1.33.0
 	github.com/sorenisanerd/gotty v1.5.0
