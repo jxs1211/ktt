@@ -112,3 +112,23 @@ If this project helpful for you, feel free to buy me a cup of coffee ☕️.
 * Wechat Sponsor
 
 <img src="docs/images/wechat_sponsor.jpg" alt="wechat" width="200" />
+
+Cli Tab
+// Ok, let's change it a bit, I login in the terminal when I switch to the Console tab, like what it did in @ContentCli.vue for now
+// I want to seperate the frontend of gotty from backend, and move it into the @ContentCli.vue, user can operate cmd in the terminal.
+// let's do it step by step
+// - 1 init connnection, @terminal_service.go is responsible for manage all connections, if connecion is build ok, save connection info to sqilte3,include port, address, cmd, start_time
+// - manage connection, every connnection will be alive for 2 hours, there is a job for maintain the all the connections, how to support reconnection
+// - From frontend perspective, every time need to start a new session with info includes: address,port,writable,cmd
+// - Backend start a gotty server with info sent by frontend
+// - Cmd:
+// 	-	if create session from Console tab, cdebug to the default worker pod
+//  - if coming from item of diagnose tab
+//     - pod
+// 			-	running container: connect to it directly
+//      - failed container:	return tlsConfig, nil
+
+<!-- 
+cdebug exec --namespace=test -it --privileged --image=nixery.dev/shell/vim/ps/tshark/kubectl/zsh pod/my-distroless
+
+ -->

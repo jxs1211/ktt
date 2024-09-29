@@ -240,6 +240,10 @@ const updateVal = (val) => {
             </n-space>
           </template>
           <content-cli ref="cliRef" :name="props.server" />
+          <!-- <content-session-pane
+            class="flex-item-expand"
+          /> -->
+          <!-- <SessionManagement /> -->
         </n-tab-pane>
 
         <!-- watch pane -->
