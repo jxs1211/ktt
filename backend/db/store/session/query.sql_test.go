@@ -5,32 +5,11 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
-
-	"ktt/backend/db"
 )
 
 func TestQueries_CreateSession(t *testing.T) {
-	inst, err := db.NewSQLite(&db.SQLiteOptions{
-		MaxIdleConnections:    100,
-		MaxOpenConnections:    100,
-		MaxConnectionLifeTime: 10 * time.Second,
-		LogLevel:              4,
-		WALEnabled:            true,
-		ForeignKeys:           true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		err := inst.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
 	cmds := strings.Join([]string{"zsh"}, ",")
 	tests := []struct {
 		name    string
@@ -42,8 +21,8 @@ func TestQueries_CreateSession(t *testing.T) {
 	}{
 		{
 			name: "base",
-			db:   inst,
-			ctx:  context.Background(),
+			db:   testDB,
+			ctx:  testCtx,
 			arg: CreateSessionParams{
 				ClusterName: "test",
 				Address:     "0.0.0.0",
@@ -82,27 +61,26 @@ func TestQueries_CreateSession(t *testing.T) {
 }
 
 func TestQueries_DeleteSession(t *testing.T) {
-	type fields struct {
-		db DBTX
-	}
-	type args struct {
-		ctx context.Context
-		id  int64
-	}
 	tests := []struct {
 		name    string
-		fields  fields
-		args    args
+		db      DBTX
+		ctx     context.Context
+		id      int64
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "base",
+			ctx:  testCtx,
+			db:   testDB,
+			id:   1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &Queries{
-				db: tt.fields.db,
+				db: tt.db,
 			}
-			if err := q.DeleteSession(tt.args.ctx, tt.args.id); (err != nil) != tt.wantErr {
+			if err := q.DeleteSession(tt.ctx, tt.id); (err != nil) != tt.wantErr {
 				t.Errorf("Queries.DeleteSession() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
