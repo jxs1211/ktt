@@ -22,7 +22,7 @@ type CreateSessionParams struct {
 	ClusterName string
 	Address     string
 	Port        string
-	Cmds        interface{}
+	Cmds        string
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
@@ -63,6 +63,93 @@ WHERE id = ? LIMIT 1
 
 func (q *Queries) GetSession(ctx context.Context, id int64) (Session, error) {
 	row := q.db.QueryRowContext(ctx, getSession, id)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.ClusterName,
+		&i.Address,
+		&i.Port,
+		&i.Cmds,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSessionByAddrAndPort = `-- name: GetSessionByAddrAndPort :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE address = ? AND port = ? LIMIT 1
+`
+
+type GetSessionByAddrAndPortParams struct {
+	Address string
+	Port    string
+}
+
+func (q *Queries) GetSessionByAddrAndPort(ctx context.Context, arg GetSessionByAddrAndPortParams) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByAddrAndPort, arg.Address, arg.Port)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.ClusterName,
+		&i.Address,
+		&i.Port,
+		&i.Cmds,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSessionByClusterAddrPortCmds = `-- name: GetSessionByClusterAddrPortCmds :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE cluster_name = ? AND address = ? AND port = ? AND cmds = ?
+LIMIT 1
+`
+
+type GetSessionByClusterAddrPortCmdsParams struct {
+	ClusterName string
+	Address     string
+	Port        string
+	Cmds        string
+}
+
+func (q *Queries) GetSessionByClusterAddrPortCmds(ctx context.Context, arg GetSessionByClusterAddrPortCmdsParams) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByClusterAddrPortCmds,
+		arg.ClusterName,
+		arg.Address,
+		arg.Port,
+		arg.Cmds,
+	)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.ClusterName,
+		&i.Address,
+		&i.Port,
+		&i.Cmds,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSessionByParams = `-- name: GetSessionByParams :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE address = ? AND port = ? AND cmds = ? LIMIT 1
+`
+
+type GetSessionByParamsParams struct {
+	Address string
+	Port    string
+	Cmds    string
+}
+
+func (q *Queries) GetSessionByParams(ctx context.Context, arg GetSessionByParamsParams) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByParams, arg.Address, arg.Port, arg.Cmds)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -166,7 +253,7 @@ type UpdateSessionParams struct {
 	ClusterName string
 	Address     string
 	Port        string
-	Cmds        interface{}
+	Cmds        string
 	ID          int64
 }
 

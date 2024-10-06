@@ -30,7 +30,6 @@ var assets embed.FS
 
 //go:embed build/appicon.png
 var icon []byte
-
 var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
@@ -39,12 +38,14 @@ func init() {
 }
 
 func main() {
-	if err := db.InitStore(); err != nil {
+	sqlDB, err := db.InitStore()
+	if err != nil {
 		log.Fatal("Main", "InitStore failed", err)
 	}
+	dbSvc := db.NewDBService(sqlDB)
 	clientSvc := client.NewClientService()
 	watcherManager := watch.NewWatcherManager()
-	terminalSvc := cli.NewTerminalService()
+	terminalSvc := cli.NewTerminalService(sqlDB)
 	// Create an instance of the app structure
 	sysSvc := services.System()
 	connSvc := services.Connection()
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	// Create application with options
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:                    "KT",
 		Width:                    windowWidth,
 		Height:                   windowHeight,
@@ -85,6 +86,7 @@ func main() {
 		BackgroundColour: options.NewRGBA(27, 38, 54, 0),
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
+			dbSvc.Start(ctx)
 			clientSvc.Start(ctx)
 			watcherManager.Start(ctx)
 			terminalSvc.Start(ctx)
@@ -116,6 +118,7 @@ func main() {
 			pubsubSvc.StopAll()
 		},
 		Bind: []interface{}{
+			dbSvc,
 			clientSvc,
 			sysSvc,
 			terminalSvc,

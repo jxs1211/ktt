@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
@@ -21,9 +20,19 @@ func TestNewCliServer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewCliServer(context.Background(), "localhost", "8888", []string{"zsh"})
+			srv, err := NewCliServer(context.Background(), "localhost", "8888", []string{"zsh"})
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
+			}
+			err = srv.Start()
+			if err != nil {
+				t.Fatal(err)
+			}
+			time.Sleep(10 * time.Second)
+			t.Log("stop server")
+			err = srv.Close()
+			if err != nil {
+				t.Fatal(err)
 			}
 			// if (err != nil) != tt.wantErr {
 			// 	t.Errorf("NewCliServer() error = %v, wantErr %v", err, tt.wantErr)

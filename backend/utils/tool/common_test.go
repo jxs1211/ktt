@@ -36,3 +36,36 @@ func TestUsingSingleFlight(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 }
+
+func TestIsPortOpen(t *testing.T) {
+	tests := []struct {
+		name    string
+		host    string
+		port    int
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "base",
+			host: "127.0.0.1",
+			port: 12111,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := IsPortOpen(tt.host, tt.port)
+			t.Log(got)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsPortOpen() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsPortOpen() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestXxx(t *testing.T) {
+	t.Log("testest")
+}

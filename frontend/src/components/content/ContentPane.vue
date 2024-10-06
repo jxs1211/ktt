@@ -1,17 +1,17 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch, watchEffect } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
 import ContentClusterStatus from "@/components/content_value/ContentClusterStatus.vue";
 import ContentErrorPane from "@/components/content/ContentErrorPane.vue";
+import ContentCliMgmt from "@/components/content/ContentCliMgmt.vue";
 import Status from "@/components/icons/Status.vue";
 import { useThemeVars } from "naive-ui";
 import { BrowserTabType } from "@/consts/browser_tab_type.js";
 import Terminal from "@/components/icons/Terminal.vue";
 import Log from "@/components/icons/Log.vue";
 import Detail from "@/components/icons/Detail.vue";
-import ContentCli from "@/components/content_value/ContentCli.vue";
 import Monitor from "@/components/icons/Monitor.vue";
 import ContentWatch from "@/components/content_value/ContentWatch.vue";
 import ContentMonitor from "@/components/content_value/ContentMonitor.vue";
@@ -72,9 +72,9 @@ const tabContent = computed(() => {
   };
 });
 
-const isBlankValue = computed(() => {
-  return tabContent.value?.keyPath == null;
-});
+// const isBlankValue = computed(() => {
+//   return tabContent.value?.keyPath == null;
+// });
 
 const selectedSubTab = computed(() => {
   // console.log("-------->", tabStore.currentSubTab)
@@ -116,6 +116,9 @@ watch(
 onMounted(() => {
   console.log("content pane onMounted");
 });
+onUnmounted(() => {
+  console.log("content pane onUnmounted")
+})
 const updateVal = (val) => {
   tabStore.switchSubTab(val)
   console.log("update val: ", val)
@@ -239,11 +242,13 @@ const updateVal = (val) => {
               <span>{{ $t("interface.sub_tab.cli") }}</span>
             </n-space>
           </template>
-          <content-cli ref="cliRef" :name="props.server" />
-          <!-- <content-session-pane
-            class="flex-item-expand"
-          /> -->
-          <!-- <SessionManagement /> -->
+          <!-- <content-cli
+            ref="cliRef"
+            :clusterName="String('test')"
+            :address="String('127.0.0.1')"
+            :port="String(12111)"
+            :cmds="'bash'" /> -->
+          <content-cli-mgmt />
         </n-tab-pane>
 
         <!-- watch pane -->

@@ -6,14 +6,14 @@ export function CloseAllTerminals() {
   return window['go']['cli']['TerminalService']['CloseAllTerminals']();
 }
 
-export function CloseTerminal(arg1, arg2) {
-  return window['go']['cli']['TerminalService']['CloseTerminal'](arg1, arg2);
+export function CloseTerminal(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['cli']['TerminalService']['CloseTerminal'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function Start(arg1) {
   return window['go']['cli']['TerminalService']['Start'](arg1);
 }
 
-export function StartTerminal(arg1, arg2, arg3) {
-  return window['go']['cli']['TerminalService']['StartTerminal'](arg1, arg2, arg3);
+export function StartTerminal(arg1, arg2, arg3, arg4) {
+  return window['go']['cli']['TerminalService']['StartTerminal'](arg1, arg2, arg3, arg4);
 }

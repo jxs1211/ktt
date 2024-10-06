@@ -313,6 +313,13 @@
       "rename": "Rename Group",
       "new": "New Group"
     },
+    "cli": {
+      "new": "New Cli",
+      "cluster_name": "ClusterName",
+      "address": "Address",
+      "port": "Port",
+      "cmds": "Cmds"
+    },
     "key": {
       "new": "New Key",
       "new_name": "New Key Name",
@@ -447,6 +454,13 @@
     "cmd": "Command",
     "cost_time": "Cost",
     "refresh": "Refresh"
+  },
+  "cli_mgmt": {
+    "cluster_name": "ClusterName",
+    "address": "Address",
+    "port": "Port",
+    "cmds": "Cmds",
+    "actions": "Actions"
   },
   "error": {
     "title": "Diagnose Error",

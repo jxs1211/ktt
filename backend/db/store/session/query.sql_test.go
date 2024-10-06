@@ -3,14 +3,12 @@ package session
 import (
 	"context"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestQueries_CreateSession(t *testing.T) {
-	cmds := strings.Join([]string{"zsh"}, ",")
 	tests := []struct {
 		name    string
 		db      DBTX
@@ -27,13 +25,13 @@ func TestQueries_CreateSession(t *testing.T) {
 				ClusterName: "test",
 				Address:     "0.0.0.0",
 				Port:        "1211",
-				Cmds:        cmds,
+				Cmds:        testCmds,
 			},
 			want: Session{
 				ClusterName: "test",
 				Address:     "0.0.0.0",
 				Port:        "1211",
-				Cmds:        cmds,
+				Cmds:        testCmds,
 			},
 		},
 	}
@@ -88,17 +86,11 @@ func TestQueries_DeleteSession(t *testing.T) {
 }
 
 func TestQueries_GetSession(t *testing.T) {
-	type fields struct {
-		db DBTX
-	}
-	type args struct {
-		ctx context.Context
-		id  int64
-	}
 	tests := []struct {
 		name    string
-		fields  fields
-		args    args
+		db      DBTX
+		ctx     context.Context
+		id      int64
 		want    Session
 		wantErr bool
 	}{
@@ -107,9 +99,9 @@ func TestQueries_GetSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &Queries{
-				db: tt.fields.db,
+				db: tt.db,
 			}
-			got, err := q.GetSession(tt.args.ctx, tt.args.id)
+			got, err := q.GetSession(tt.ctx, tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Queries.GetSession() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -218,6 +210,63 @@ func TestQueries_UpdateSession(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Queries.UpdateSession() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestQueries_GetSessionByClusterAddrPortCmds(t *testing.T) {
+	q := Queries{db: testDB}
+	sess, err := q.GetSessionByClusterAddrPortCmds(testCtx, GetSessionByClusterAddrPortCmdsParams{
+		ClusterName: "kind-test", Address: "127.0.0.1", Port: "18031", Cmds: "zsh",
+	})
+	t.Log(sess)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestQueries_GetSessionByParams(t *testing.T) {
+	tests := []struct {
+		name    string
+		db      DBTX
+		ctx     context.Context
+		arg     GetSessionByParamsParams
+		want    Session
+		wantErr bool
+	}{
+		{
+			name: "base",
+			db:   testDB,
+			ctx:  testCtx,
+			arg: GetSessionByParamsParams{
+				Address: "0.0.0.0",
+				Port:    "1211",
+				Cmds:    testCmds,
+			},
+			want: Session{
+				Address: "0.0.0.0",
+				Port:    "1211",
+				Cmds:    testCmds,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := &Queries{
+				db: tt.db,
+			}
+			// create ssession
+			// defer delete session
+			got, err := q.GetSessionByParams(tt.ctx, tt.arg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Queries.GetSessionByParams() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want.ClusterName, got.ClusterName)
+			assert.Equal(t, tt.want.Address, got.Address)
+			assert.Equal(t, tt.want.Port, got.Port)
+			assert.Equal(t, tt.want.Cmds, got.Cmds)
+			assert.NotNil(t, got.ID)
 		})
 	}
 }

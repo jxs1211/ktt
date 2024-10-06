@@ -1,3 +1,19 @@
+-- name: GetSessionByClusterAddrPortCmds :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE cluster_name = ? AND address = ? AND port = ? AND cmds = ?
+LIMIT 1;
+
+-- name: GetSessionByParams :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE address = ? AND port = ? AND cmds = ? LIMIT 1;
+
+-- name: GetSessionByAddrAndPort :one
+SELECT id, cluster_name, address, port, cmds, created_at, updated_at
+FROM sessions
+WHERE address = ? AND port = ? LIMIT 1;
+
 -- name: GetSessionsByClusterName :many
 SELECT id, cluster_name, address, port, cmds, created_at, updated_at
 FROM sessions

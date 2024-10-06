@@ -3,9 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"path/filepath"
+	"ktt/backend/utils/tool"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteOptions struct {
@@ -28,49 +29,8 @@ func (o *SQLiteOptions) DSN(dbPath string) string {
 	return dsn
 }
 
-func dbHomePath() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
-	}
-	dbPath := filepath.Join(homeDir, ".KTT", "db", "sqlite.db")
-	return dbPath, nil
-}
-
-func getDBFilePath() (string, error) {
-	dbPath, err := dbHomePath()
-	if err != nil {
-		return "", err
-	}
-	// Ensure the directory exists
-	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create directory %s: %w", dir, err)
-	}
-	// Check if the file exists and is writable
-	if _, err := os.Stat(dbPath); err == nil {
-		// File exists, check if it's writable
-		file, err := os.OpenFile(dbPath, os.O_WRONLY, 0666)
-		if err != nil {
-			return "", fmt.Errorf("database file exists but is not writable: %w", err)
-		}
-		file.Close()
-	} else if os.IsNotExist(err) {
-		// File doesn't exist, try to create it
-		file, err := os.Create(dbPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to create database file: %w", err)
-		}
-		file.Close()
-	} else {
-		return "", fmt.Errorf("error checking database file: %w", err)
-	}
-
-	return dbPath, nil
-}
-
 func NewSQLite(opts *SQLiteOptions) (*sql.DB, error) {
-	dbPath, err := getDBFilePath()
+	dbPath, err := tool.GetDBFilePath()
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +40,33 @@ func NewSQLite(opts *SQLiteOptions) (*sql.DB, error) {
 	}
 	return db, nil
 }
+
+// type RedkaOptions struct {
+// 	MaxIdleConnections    int
+// 	MaxOpenConnections    int
+// 	MaxConnectionLifeTime time.Duration
+// 	LogLevel              int
+// 	WALEnabled            bool
+// 	ForeignKeys           bool
+// }
+
+// func (o RedkaOptions) DSN(dbPath string) string {
+// 	dsn := fmt.Sprintf("file:%s", dbPath)
+// 	return dsn
+// }
+
+// func NewRedka(o *redka.Options) (*redka.DB, error) {
+// 	// Open or create the data.db file.
+// 	dbPath, err := getDBFilePath()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	db, err := redka.Open(dbPath, o)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return db, nil
+// }
 
 // func NewSQLiteGORMDB(opts *SQLiteOptions) (*gorm.DB, error) {
 // 	dbPath, err := getDBFilePath()

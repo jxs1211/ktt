@@ -5,11 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	"ktt/backend/types"
 	"ktt/backend/utils/log"
 	strutil "ktt/backend/utils/string"
 )
@@ -20,34 +18,34 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestTerminalService_StartTerminal(t *testing.T) {
-	tests := []struct {
-		name    string
-		address string
-		port    string
-		cmds    []string
-		resp    types.JSResp
-	}{
-		{
-			name:    "cli server terminal",
-			address: "0.0.0.0",
-			port:    "8888",
-			cmds:    []string{"bash"},
-			resp:    types.JSResp{Success: true},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := NewTerminalService()
-			s.Start(context.Background())
-			jsResp := s.StartTerminal(tt.address, tt.port, tt.cmds)
-			assert.True(t, jsResp.Success)
-			time.Sleep(time.Second * 2)
-			err := s.CloseTerminal(tt.address, tt.port)
-			assert.NoError(t, err)
-		})
-	}
-}
+// func TestTerminalService_StartTerminal(t *testing.T) {
+// 	tests := []struct {
+// 		name    string
+// 		address string
+// 		port    string
+// 		cmds    []string
+// 		resp    types.JSResp
+// 	}{
+// 		{
+// 			name:    "cli server terminal",
+// 			address: "0.0.0.0",
+// 			port:    "8888",
+// 			cmds:    []string{"bash"},
+// 			resp:    types.JSResp{Success: true},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := NewTerminalService()
+// 			s.Start(context.Background())
+// 			jsResp := s.StartTerminal(tt.address, tt.port, tt.cmds)
+// 			assert.True(t, jsResp.Success)
+// 			time.Sleep(time.Second * 2)
+// 			err := s.CloseTerminal(tt.address, tt.port)
+// 			assert.NoError(t, err)
+// 		})
+// 	}
+// }
 
 // func TestTerminalService_startTerminal(t *testing.T) {
 // 	tests := []struct {

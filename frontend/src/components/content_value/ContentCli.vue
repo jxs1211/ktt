@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { isEmpty } from 'lodash';
-import { EventsOn, EventsOff } from 'wailsjs/runtime/runtime.js';
-import { StartTerminal, CloseTerminal } from 'wailsjs/go/cli/TerminalService.js';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { CloseTerminal, StartTerminal } from 'wailsjs/go/cli/TerminalService.js';
+import { EventsOff, EventsOn } from 'wailsjs/runtime/runtime.js';
 
-import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
+import useTabStore from "stores/tab.js";
 
 const props = defineProps({
   name: String,
@@ -20,7 +20,7 @@ const randomPort = () => { return Math.floor(Math.random() * (13110 - 12110 + 1)
 const serverOptions = {
   address: "127.0.0.1",
   port: String(randomPort()),
-  cmds: ["zsh"],
+  cmds: "zsh",
 };
 
 const isValidUrl = (url) => {
@@ -40,14 +40,14 @@ const split = (url) => {
   return { address, port }; // Return as an object
 };
 
-const doStartTerminal = async (address, port, cmds) => {
-  console.log("doStartTerminal: ", address, port, cmds)
+const doStartTerminal = async (cluster, address, port, cmds) => {
+  console.log("doStartTerminal: ", cluster, address, port, cmds)
   EventsOn('terminal:url', (url) => {
     console.log("url: ", url)
     terminalUrl.value = url;
   });
   try {
-    const resp = await StartTerminal(address, port, cmds);
+    const resp = await StartTerminal(cluster, address, port, cmds);
     if (!resp.success) {
       console.error('failed to start terminal', resp.msg)
       return
@@ -57,16 +57,17 @@ const doStartTerminal = async (address, port, cmds) => {
     console.error('Failed to start terminal:', error);
   }
 }
-const doCloseTerminal = async (address, port) => {
+const doCloseTerminal = async (row) => {
   EventsOff('terminal:url');
-  console.log("start to tear down: ", terminalUrl.value, address, port);
   terminalUrl.value = null;
-  const { success, msg, _ } = await CloseTerminal(address, port);
-  if (!success) {
-    console.error("close terminal failed: ", msg)
-  }else {
-    console.log("finished closing terminal");
-  }
+  console.log("start to tear down: ", terminalUrl.value, row.id, row.cluster_name, row.address, row.port, row.cmds);
+  return await CloseTerminal(
+    row.id, row.cluster_name, row.address, row.port, row.cmds);
+  // if (!success) {
+  //   console.error("close terminal failed: ", msg)
+  //   return
+  // }
+  // console.log("finished closing terminal");
 };
 const refreshTerminal = async (address, port) => {
 
@@ -78,11 +79,10 @@ const getAllTerminals = async () => {
 
 };
 onMounted(() => {
-  console.log("console cli tab onMounted")
-  doStartTerminal(serverOptions.address, serverOptions.port, serverOptions.cmds);
+  console.log("console cli tab onMounted: ", connectionStore.currentCluster)
+  // doStartTerminal(props.clusterName, props.address, props.port, props.cmds);
 });
 onUnmounted(() => {
-  doCloseTerminal(serverOptions.address, serverOptions.port)
   console.log("console cli tab onUnmounted")
 });
 // watch(
@@ -93,36 +93,36 @@ onUnmounted(() => {
 //     // data.selectedOptions = [];
 //   },
 // );
-watch(
-  () => connectionStore.currentCluster,
-  (newVal, oldVal) => {
-    if (isEmpty(oldVal)){
-      console.log("first selected a cluster")
-      return
-    }
-    if (isEmpty(terminalUrl)) {
-      console.log("terminalUrl is empty")
-      return
-    }
-    const { address, port } = split(terminalUrl.value);
-    if (isEmpty(address) || isEmpty(port)) {
-      console.log("address or port is empty: ", address, port)
-      return
-    }
-    doCloseTerminal(address, port);
-    console.log("tear down for current cluster changed")
-  }
-);
-watch(
-  () => tabStore.nav,
-  (newVal, oldVal) => {
-    if (oldVal === "browser" && newVal != "browser") {
-      const { address, port } = split(terminalUrl.value);
-      doCloseTerminal(address, port);
-      console.log("tear down for nav changed")    
-    }
-  }
-);
+// watch(
+//   () => connectionStore.currentCluster,
+//   (newVal, oldVal) => {
+//     if (isEmpty(oldVal)){
+//       console.log("first selected a cluster")
+//       return
+//     }
+//     if (isEmpty(terminalUrl)) {
+//       console.log("terminalUrl is empty")
+//       return
+//     }
+//     const { address, port } = split(terminalUrl.value);
+//     if (isEmpty(address) || isEmpty(port)) {
+//       console.log("address or port is empty: ", address, port)
+//       return
+//     }
+//     doCloseTerminal(connectionStore.currentCluster, address, port, "zsh");
+//     console.log("tear down for current cluster changed")
+//   }
+// );
+// watch(
+//   () => tabStore.nav,
+//   (newVal, oldVal) => {
+//     if (oldVal === "browser" && newVal != "browser") {
+//       const { address, port } = split(terminalUrl.value);
+//       doCloseTerminal(connectionStore.currentCluster, address, port, "zsh");
+//       console.log("tear down for nav changed")    
+//     }
+//   }
+// );
 // watch(
 //   () => tabStore.currentSubTab,
 //   (newVal, oldVal) => {
@@ -134,6 +134,10 @@ watch(
 //     }
 //   }
 // );
+defineExpose({
+  doStartTerminal,
+  doCloseTerminal,
+})
 </script>
 
 <template>

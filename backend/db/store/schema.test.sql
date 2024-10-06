@@ -1,4 +1,4 @@
-CREATE TABLE sessions (
+CREATE TABLE test_sessions (
   id         INTEGER  PRIMARY KEY,
   cluster_name TEXT NOT NULL,
   address     TEXT NOT NULL,

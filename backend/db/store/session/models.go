@@ -9,11 +9,11 @@ import (
 )
 
 type Session struct {
-	ID          int64
-	ClusterName string
-	Address     string
-	Port        string
-	Cmds        interface{}
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
+	ID          int64          `json:"id"`
+	ClusterName string         `json:"cluster_name"`
+	Address     string         `json:"address"`
+	Port        string         `json:"port"`
+	Cmds        string         `json:"cmds"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
