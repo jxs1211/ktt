@@ -1,7 +1,7 @@
 <script setup>
 import ContentPane from "./components/content/ContentPane.vue";
 import BrowserPane from "./components/sidebar/BrowserPane.vue";
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { debounce, isEmpty } from "lodash";
 import { useThemeVars } from "naive-ui";
 import Ribbon from "./components/sidebar/Ribbon.vue";
@@ -147,6 +147,15 @@ const onKeyShortcut = (e) => {
       break;
   }
 };
+watch(
+  () => tabStore.nav,
+  (newVal, oldVal) => {
+    console.log("watch nav: ", tabStore.currentTab, tabStore.currentSubTab)
+    if (newVal === "browser") {
+      tabStore.currentSubTab = "status"
+    }
+  }
+);
 </script>
 
 <template>
@@ -193,9 +202,7 @@ const onKeyShortcut = (e) => {
             <n-gradient-text
               type="success"
               :size="16"
-              v-if="
-                tabStore.nav !== 'log' && !isEmpty(tabStore.currentTabName)
-              "
+              v-if="tabStore.nav !== 'log' && !isEmpty(tabStore.currentTabName)"
             >
               - {{ tabStore.currentTabName }}
             </n-gradient-text>

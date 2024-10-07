@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "backend/db/store/query.sql"
+    schema: "backend/db/store/schema.sql"
+    gen:
+      go:
+        package: "session"
+        out: "backend/db/store/session"

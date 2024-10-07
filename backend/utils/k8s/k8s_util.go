@@ -1,12 +1,15 @@
 package k8sutil
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -20,6 +23,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	"k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 func NewConfig() (*rest.Config, error) {
@@ -256,3 +261,108 @@ func NodeAddresses(nodes []*v1.Node) ([]v1.EndpointAddress, []error) {
 
 	return addresses, errs
 }
+
+type K8sTroubleshooter struct {
+	clientset        *kubernetes.Clientset
+	metricsClientset *versioned.Clientset
+}
+
+func NewK8sTroubleshooter() (*K8sTroubleshooter, error) {
+	config, err := NewConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	metricsClientset, err := versioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &K8sTroubleshooter{
+		clientset:        clientset,
+		metricsClientset: metricsClientset,
+	}, nil
+}
+
+func (kt *K8sTroubleshooter) CheckClusterConnection() error {
+	_, err := kt.clientset.ServerVersion()
+	return err
+}
+
+func (kt *K8sTroubleshooter) GetPodStatus(namespace, podName string) (*v1.PodStatus, error) {
+	pod, err := kt.clientset.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return &pod.Status, nil
+}
+
+func (kt *K8sTroubleshooter) GetPodLogs(namespace, podName string, tailLines int64) (string, error) {
+	podLogOpts := v1.PodLogOptions{TailLines: &tailLines}
+	req := kt.clientset.CoreV1().Pods(namespace).GetLogs(podName, &podLogOpts)
+	podLogs, err := req.Stream(context.TODO())
+	if err != nil {
+		return "", err
+	}
+	defer podLogs.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func (kt *K8sTroubleshooter) GetNodeResourceUsage(nodeName string) (*v1beta1.NodeMetrics, error) {
+	nodeMetrics, err := kt.metricsClientset.MetricsV1beta1().NodeMetricses().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return nodeMetrics, nil
+}
+
+func (kt *K8sTroubleshooter) GetRecentEvents(namespace string) ([]v1.Event, error) {
+	events, err := kt.clientset.CoreV1().Events(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Sort events by last timestamp
+	sort.Slice(events.Items, func(i, j int) bool {
+		return events.Items[i].LastTimestamp.After(events.Items[j].LastTimestamp.Time)
+	})
+
+	// Return the 50 most recent events
+	if len(events.Items) > 50 {
+		return events.Items[:50], nil
+	}
+	return events.Items, nil
+}
+
+// the k8s troubleshooting process for cli guys
+// Kubernetes troubleshooting tools help diagnose and resolve issues within a Kubernetes cluster. Here are some commonly used tools and techniques:
+
+// Here are some commonly used tools and techniques:
+// kubectl: The primary command-line tool for interacting with Kubernetes. Useful commands include:
+// kubectl get pods: List all pods and their statuses.
+// kubectl describe pod <pod-name>: Get detailed information about a specific pod.
+// kubectl logs <pod-name>: View logs for a specific pod.
+// kubectl exec -it <pod-name> -- /bin/sh: Access a shell inside a running pod for debugging.
+// 3. kube-state-metrics: Exposes metrics about the state of Kubernetes objects, which can be useful for monitoring and troubleshooting.
+// Prometheus & Grafana: For monitoring and visualizing metrics. Prometheus collects metrics, while Grafana provides dashboards to visualize them.
+// 4. Helm: A package manager for Kubernetes that can help manage applications and their dependencies, making it easier to troubleshoot deployment issues.
+// 5. K9s: A terminal-based UI for managing Kubernetes clusters, allowing you to view resources and logs interactively.
+// 6. Stern: A tool for tailing logs from multiple pods, making it easier to monitor logs in real-time.
+// 7. kubectl-debug: A tool that allows you to create a debugging container in a running pod, providing a way to troubleshoot issues without modifying the original pod.
+// Network Troubleshooting Tools:
+// 8. kubectl port-forward: Forward a local port to a port on a pod for testing.
+// kube-net-checker: A tool to check network connectivity between pods.
+// 9. Event Logs: Use kubectl get events to view events in the cluster, which can provide insights into issues like failed deployments or scheduling problems.
+// Resource Quotas and Limits: Check if resource limits are causing issues by inspecting the resource usage of pods and nodes.
+// These tools and techniques can help you effectively troubleshoot and resolve issues in a Kubernetes environment.

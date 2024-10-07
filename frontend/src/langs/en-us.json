@@ -313,6 +313,13 @@
       "rename": "Rename Group",
       "new": "New Group"
     },
+    "cli": {
+      "new": "New Cli",
+      "cluster_name": "ClusterName",
+      "address": "Address",
+      "port": "Port",
+      "cmds": "Cmds"
+    },
     "key": {
       "new": "New Key",
       "new_name": "New Key Name",
@@ -448,9 +455,18 @@
     "cost_time": "Cost",
     "refresh": "Refresh"
   },
+  "cli_mgmt": {
+    "cluster_name": "ClusterName",
+    "address": "Address",
+    "port": "Port",
+    "cmds": "Cmds",
+    "actions": "Actions"
+  },
   "error": {
     "title": "Diagnose Error",
     "filter_resource": "Filter Resource",
+    "filter_namespace": "Filter Namespace",
+    "filter_resource_name": "Filter Resource Name",
     "filter_keyword": "Filter Keyword",
     "clean_log": "Clean Error",
     "confirm_clean_log": "Confirm clean diagnose error",

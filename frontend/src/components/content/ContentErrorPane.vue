@@ -13,6 +13,7 @@ import {
   isNumber,
   isNull,
   isUndefined,
+  filter,
 } from "lodash";
 import { useThemeVars, NTag } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
@@ -22,45 +23,58 @@ import usePreferencesStore from "stores/preferences.js";
 import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const themeVars = useThemeVars();
+// const themeVars = useThemeVars();
 
-const browserStore = useBrowserStore();
+// const browserStore = useBrowserStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
 const preferencesStore = usePreferencesStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
+  // fix filter data loading using table's loading reative data for displaying loading process
+  filterResourceLoading: false,
+  filterNamespaceLoading: false,
   server: "",
   options: [],
+  namespaces: [],
   selectedOptions: [],
+  selectedNSOption: "",
+  selectedResourceName: "",
   history: [],
   results: [],
 });
-const validateFilters = (value) => {
-  if (isEmpty(value)) {
-    $message.error("filter can't be null");
-    return;
-  }
-  if (!includes(AvailableFilters, capitalize(value))) {
-    $message.error("Please select at least one valid filter from []");
-    return;
-  }
-};
+// const validateFilters = (value) => {
+//   if (isEmpty(value)) {
+//     $message.error("filter can't be null");
+//     return;
+//   }
+//   if (!includes(AvailableFilters, capitalize(value))) {
+//     $message.error("Please select at least one valid filter from []");
+//     return;
+//   }
+// };
 
-const filterServerOption = computed(() => {
-  const serverSet = uniqBy(data.history, "server");
-  const options = map(serverSet, ({ server }) => ({
-    label: server,
-    value: server,
+// const filterServerOption = computed(() => {
+//   const serverSet = uniqBy(data.history, "server");
+//   const options = map(serverSet, ({ server }) => ({
+//     label: server,
+//     value: server,
+//   }));
+//   options.splice(0, 0, {
+//     label: "common.all",
+//     value: "",
+//   });
+//   return options;
+// });
+
+const filterNamespaceOptions = computed(() => {
+  const options = map(data.namespaceOptions, (item) => ({
+    label: item,
+    value: item,
   }));
-  options.splice(0, 0, {
-    label: "common.all",
-    value: "",
-  });
   return options;
 });
-
 const filterOptions = computed(() => {
   // const filters = uniqBy(data.options);
   const options = map(data.options, (item) => ({
@@ -213,8 +227,8 @@ const analyze = async () => {
   // feat: provide selectable options fetched from backend
   console.log("analyze: ", data.selectedOptions);
   try {
-    await nextTick();
     data.loading = true;
+    await nextTick();
     console.log("analyze ai:", preferencesStore.ai);
     const backend = preferencesStore.getBackend(preferencesStore.ai.backend);
     const resp = await configStore.analyze(
@@ -223,6 +237,7 @@ const analyze = async () => {
       backend.model,
       backend.baseUrl,
       data.selectedOptions,
+      data.selectedNSOption,
       preferencesStore.ai.explain,
       preferencesStore.ai.aggregate,
       false,
@@ -233,6 +248,12 @@ const analyze = async () => {
       $message.error(resp.msg);
     } else {
       data.results = resp.data;
+      if (!isEmpty(data.selectedResourceName)){
+        data.results = filter(data.results, (ele) => {
+          const [ _, name ] = split(ele.name, "/")
+          return name === data.selectedResourceName
+        });
+      }
       if (isEmpty(data.results)) {
         $message.success("No error found");
       }
@@ -245,10 +266,11 @@ const analyze = async () => {
   console.log(data.results);
 };
 
-const loadResources = async () => {
+const refreshFiltersOptions = async () => {
   try {
+    data.filterResourceLoading = true;
+    data.filterNamespaceLoading = true;
     await nextTick();
-    data.loading = true;
     const resp = await connectionStore.getAvailableResources();
     if (!resp.success) {
       console.warn("get available filtered resources failed: ", resp.msg)
@@ -256,29 +278,41 @@ const loadResources = async () => {
     }
     data.options = resp.data;
     console.log("data.options: ", data.options);
+    const resp2 = await connectionStore.getNamespaces()
+    if (!resp2.success) {
+      console.warn("get namespaces failed: ", resp2.msg)
+    }
+    data.namespaceOptions = resp2.data;
+    console.log("data.namespaceOptions: ", data.namespaceOptions);
   } finally {
-    data.loading = false;
+    data.filterResourceLoading = false
+    data.filterNamespaceLoading = false
     await nextTick();
     // tableRef.value?.scrollTo({ position: "bottom" });
   }
 };
-
-const cleanHistory = async () => {
-  $dialog.warning(i18n.t("error.confirm_clean_log"), async () => {
-    try {
-      data.loading = true;
-      const success = await browserStore.cleanCmdHistory();
-      if (success) {
-        data.history = [];
-        await nextTick();
-        tableRef.value?.scrollTo({ position: "top" });
-        $message.success(i18n.t("dialogue.handle_succ"));
-      }
-    } finally {
-      data.loading = false;
-    }
-  });
+const clearSelectedOptions = () => {
+  data.selectedOptions = []; // Clear selected resource types
+  data.selectedNSOption = ""; // Clear selected namespace
+  data.selectedResourceName = "";
+  data.results = [];
 };
+// const cleanHistory = async () => {
+//   $dialog.warning(i18n.t("error.confirm_clean_log"), async () => {
+//     try {
+//       data.loading = true;
+//       const success = await browserStore.cleanCmdHistory();
+//       if (success) {
+//         data.history = [];
+//         await nextTick();
+//         tableRef.value?.scrollTo({ position: "top" });
+//         $message.success(i18n.t("dialogue.handle_succ"));
+//       }
+//     } finally {
+//       data.loading = false;
+//     }
+//   });
+// };
 
 const onSelectedItemUpdate = (keys) => {
   // fix: be compatiable with other possible types
@@ -294,9 +328,14 @@ const onSelectedItemUpdate = (keys) => {
   data.selectedOptions = keys;
   console.log("selectedUpdate: ", data.selectedOptions);
 };
+const onSelectedNSItemUpdate = (key) => {
+  console.log("---->", typeof(key), key)
+  data.selectedNSOption = key;
+};
 
 defineExpose({
-  refresh: loadResources,
+  refreshFiltersOptions,
+  clearSelectedOptions,
 });
 
 // feat: support to reset error table after cluster changed
@@ -304,6 +343,8 @@ watch(
   () => connectionStore.currentCluster,
   async (newVal, oldVal) => {
     data.results = [];
+    // data.selectedNSOption = "";
+    // data.selectedOptions = [];
   },
 );
 </script>
@@ -316,13 +357,31 @@ watch(
     <n-form :disabled="data.loading" class="flex-item" inline>
       <n-form-item :label="$t('error.filter_resource')">
         <n-select
+          v-model:value="data.selectedOptions"
           :consistent-menu-width="false"
           :options="filterOptions"
           multiple
           filterable
+          clearable
+          :loading="data.filterResourceLoading"
           @update:value="onSelectedItemUpdate"
           style="min-width: 200px"
         />
+      </n-form-item>
+      <n-form-item :label="$t('error.filter_namespace')">
+        <n-select
+          v-model:value="data.selectedNSOption"
+          :consistent-menu-width="false"
+          :options="filterNamespaceOptions"
+          filterable
+          clearable
+          :loading="data.filterNamespaceLoading"
+          @update:value="onSelectedNSItemUpdate"
+          style="min-width: 200px"
+        />
+      </n-form-item>
+      <n-form-item :label="$t('error.filter_resource_name')">
+        <n-input v-model:value="data.selectedResourceName" type="text" placeholder="resource name" />
       </n-form-item>
       <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />

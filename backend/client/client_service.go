@@ -12,6 +12,7 @@ import (
 	"github.com/k8sgpt-ai/k8sgpt/pkg/analyzer"
 	"github.com/k8sgpt-ai/k8sgpt/pkg/common"
 	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -66,6 +67,24 @@ func (s *ClientService) validate(config string) (*clientcmdapi.Config, error) {
 	return apiConfig, nil
 }
 
+func (s *ClientService) loadConfig(path string) error {
+	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
+	flags.KubeConfig = &path
+	config, err := clientcmd.BuildConfigFromFlags("", path)
+	if err != nil {
+		return err
+	}
+	c, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	s.apiClient = New(
+		NewConfig(flags),
+	)
+	s.apiClient.setClient(c)
+	return nil
+}
+
 func (s *ClientService) LoadConfig(configContent string) types.JSResp {
 	userConfig, err := s.validate(configContent)
 	if err != nil {
@@ -76,20 +95,10 @@ func (s *ClientService) LoadConfig(configContent string) types.JSResp {
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
-	flags := genericclioptions.NewConfigFlags(UsePersistentConfig)
-	flags.KubeConfig = &kubeconfigPath
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	err = s.loadConfig(kubeconfigPath)
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
-	c, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return types.FailedResp(err.Error())
-	}
-	s.apiClient = New(
-		NewConfig(flags),
-	)
-	s.apiClient.setClient(c)
 	ctxs, err := s.getContexts()
 	if err != nil {
 		return types.FailedResp(err.Error())
@@ -98,6 +107,10 @@ func (s *ClientService) LoadConfig(configContent string) types.JSResp {
 		Success: true,
 		Data:    ctxs,
 	}
+}
+
+func (s *ClientService) loadConfigFromLocal() error {
+	return s.loadConfig(kubeconfigPath)
 }
 
 func (s *ClientService) Start(ctx context.Context) {
@@ -168,11 +181,11 @@ func (s *ClientService) CurrentContext() string {
 // feat: support to analyze with ai
 func (s *ClientService) Analyze(
 	cluster, aiBackend, model, baseURL string,
-	filters []string, explain, aggregate, anonymize bool,
+	filters []string, ns string, explain, aggregate, anonymize bool,
 ) types.JSResp {
 	results, err := s.analyze(
 		cluster, aiBackend, model, baseURL,
-		filters, explain, aggregate, anonymize,
+		filters, ns, explain, aggregate, anonymize,
 	)
 	if err != nil {
 		return types.FailedResp(err.Error())
@@ -206,7 +219,7 @@ func (s *ClientService) getErrorsCount(
 ) (int, error) {
 	results, err := s.analyze(
 		cluster, aiBackend, model, baseURL,
-		filters, explain, aggregate, anonymize,
+		filters, "", explain, aggregate, anonymize,
 	)
 	if err != nil {
 		return 0, err
@@ -217,7 +230,7 @@ func (s *ClientService) getErrorsCount(
 
 func (s *ClientService) analyze(
 	cluster, aiBackend, model, baseURL string,
-	filters []string, explain, aggregate, anonymize bool,
+	filters []string, ns string, explain, aggregate, anonymize bool,
 ) ([]Result, error) {
 	defer func() {
 		tool.TrackTime("clientService.analyze")()
@@ -236,7 +249,7 @@ func (s *ClientService) analyze(
 		viper.Set("ai", ai.AIConfiguration{
 			DefaultProvider: aiBackend,
 			Providers: []ai.AIProvider{
-				ai.AIProvider{
+				{
 					Name:    aiBackend,
 					Model:   model,
 					BaseURL: baseURL,
@@ -246,7 +259,7 @@ func (s *ClientService) analyze(
 	}
 
 	analyzer, err := analysis.NewAnalysis(
-		aiBackend, "english", filters, "", "", false,
+		aiBackend, "english", filters, ns, "", false,
 		explain, defaultMaxConcurrency, false, false, []string{},
 	)
 	if err != nil {
@@ -316,7 +329,27 @@ func parseDetail(results []common.Result) []Result {
 // 	}
 // }
 
-// feat: implement api-resources API
+func (s *ClientService) GetNamespaces() types.JSResp {
+	res, err := s.getNamespaces()
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true, Data: res}
+}
+
+func (s *ClientService) getNamespaces() ([]string, error) {
+	// todo use lister instead for performance
+	nsList, err := s.apiClient.client.CoreV1().Namespaces().List(s.ctx, metav1.ListOptions{})
+	if err != nil {
+		return []string{}, err
+	}
+	res := make([]string, 0, nsList.Size())
+	for _, item := range nsList.Items {
+		res = append(res, item.Name)
+	}
+	return res, nil
+}
+
 func (s *ClientService) getApiResources() ([]string, error) {
 	lists, err := s.apiClient.client.Discovery().ServerPreferredResources()
 	if err != nil {
@@ -375,9 +408,24 @@ func (s *ClientService) CheckConnectivity(name string) types.JSResp {
 	if err != nil {
 		return types.FailedResp(err.Error())
 	}
+	cfg, err := NewConfig(s.apiClient.config.flags).RESTConfig()
+	if err != nil {
+		logutil.Error("CheckConn", "err", err)
+		s.apiClient.connOK = false
+		return types.FailedResp(err.Error())
+	}
+	c, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	logutil.Info("CheckConn", "name", name, "clusterName", s.apiClient.config.flags.ClusterName)
+	s.apiClient = New(
+		NewConfig(s.apiClient.config.flags),
+	)
+	s.apiClient.setClient(c)
 	return types.JSResp{
 		Success: true,
-		Data:    "connected to cluster",
+		Data:    s.apiClient.config.flags.ClusterName,
 	}
 }
 

@@ -1,17 +1,17 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch, watchEffect } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from "vue";
 import { find, map, toUpper, isEmpty } from "lodash";
 import useTabStore from "stores/tab.js";
 import useConnectionStore from "stores/connections.js";
 import ContentClusterStatus from "@/components/content_value/ContentClusterStatus.vue";
 import ContentErrorPane from "@/components/content/ContentErrorPane.vue";
+import ContentCliMgmt from "@/components/content/ContentCliMgmt.vue";
 import Status from "@/components/icons/Status.vue";
 import { useThemeVars } from "naive-ui";
 import { BrowserTabType } from "@/consts/browser_tab_type.js";
 import Terminal from "@/components/icons/Terminal.vue";
 import Log from "@/components/icons/Log.vue";
 import Detail from "@/components/icons/Detail.vue";
-import ContentCli from "@/components/content_value/ContentCli.vue";
 import Monitor from "@/components/icons/Monitor.vue";
 import ContentWatch from "@/components/content_value/ContentWatch.vue";
 import ContentMonitor from "@/components/content_value/ContentMonitor.vue";
@@ -37,8 +37,8 @@ const errorPaneRef = ref(null);
 const connectionStore = useConnectionStore();
 const tabStore = useTabStore();
 watchEffect(() => {
-  if (connectionStore.clusters.length > 0) {
-    errorPaneRef.value?.refresh();
+  if (!isEmpty(connectionStore.clusters)) {
+    errorPaneRef.value?.refreshFiltersOptions();
   }
 });
 const tab = computed(() =>
@@ -72,19 +72,29 @@ const tabContent = computed(() => {
   };
 });
 
-const isBlankValue = computed(() => {
-  return tabContent.value?.keyPath == null;
-});
+// const isBlankValue = computed(() => {
+//   return tabContent.value?.keyPath == null;
+// });
 
 const selectedSubTab = computed(() => {
-  const { subTab = defaultTab } = tabStore.currentTab || {};
-  return subTab;
+  // console.log("-------->", tabStore.currentSubTab)
+  return tabStore.currentSubTab;
 });
 
 // BUG: naive-ui tabs will set the bottom line to '0px' after switch to another page and back again
 // watch parent tabs' changing and call 'syncBarPosition' manually
 const tabsRef = ref(null);
 const cliRef = ref(null);
+watch(
+  () => selectedSubTab.value,
+  (newTab) => {
+    if (newTab !== BrowserTabType.Diagnose.toString()) {
+      // Clear selected options in ContentErrorPane
+      errorPaneRef.value?.clearSelectedOptions(); // Call a method to clear selections
+      console.log("clear selected options")
+    }
+  }
+);
 watch(
   () => tabContent.value?.name,
   (name) => {
@@ -96,9 +106,28 @@ watch(
     }
   },
 );
+watch(
+  () => connectionStore.currentCluster,
+  (newVal, oldVal) => {
+    errorPaneRef.value?.refreshFiltersOptions;
+    console.log("--->", "content-pane refresh error pane", newVal, oldVal)
+  }
+);
 onMounted(() => {
   console.log("content pane onMounted");
 });
+onUnmounted(() => {
+  console.log("content pane onUnmounted")
+})
+const updateVal = (val) => {
+  tabStore.switchSubTab(val)
+  console.log("update val: ", val)
+  // fix: the namespaces can't be synced instantly from backend
+  if (val === BrowserTabType.Diagnose.toString()) {
+    errorPaneRef.value?.refreshFiltersOptions();
+    console.log("refreshed")
+  }
+};
 </script>
 
 <template>
@@ -122,7 +151,7 @@ onMounted(() => {
         placement="top"
         tab-style="padding-left: 10px; padding-right: 10px;"
         type="line"
-        @update:value="(val) => tabStore.switchSubTab(val)"
+        @update:value="updateVal"
       >
         <!-- server status pane -->
         <n-tab-pane
@@ -213,7 +242,13 @@ onMounted(() => {
               <span>{{ $t("interface.sub_tab.cli") }}</span>
             </n-space>
           </template>
-          <content-cli ref="cliRef" :name="props.server" />
+          <!-- <content-cli
+            ref="cliRef"
+            :clusterName="String('test')"
+            :address="String('127.0.0.1')"
+            :port="String(12111)"
+            :cmds="'bash'" /> -->
+          <content-cli-mgmt />
         </n-tab-pane>
 
         <!-- watch pane -->

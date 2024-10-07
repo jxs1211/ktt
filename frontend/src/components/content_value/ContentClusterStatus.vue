@@ -60,6 +60,8 @@ const themeVars = useThemeVars();
 const serverInfo = ref({});
 // cluster info
 const clusterInfo = ref({});
+const daysWithoutIssue = ref({});
+const daysTotal = ref({});
 // const clusterVersion = ref("Loading2");
 const pageState = reactive({
   autoRefresh: false,
@@ -102,9 +104,9 @@ const refreshInfo = async (force) => {
     $message.warning(`current cluster is empty string: ${currentCluster}`);
     return;
   }
-  console.log("current cluster: ", currentCluster);
+  // console.log("current cluster: ", currentCluster);
   if (tabStore.alreadyExists(currentCluster)) {
-    console.log("fast return due to already exists: ", currentCluster);
+    // console.log("fast return due to already exists: ", currentCluster);
     return;
   }
   if (force) {
@@ -135,7 +137,7 @@ const refreshInfo = async (force) => {
         clusterInfo.value = reactive({...data, lastUpdated: updateTime});
         // Force reactivity update
         clusterInfo.value = {...clusterInfo.value};
-        console.log("updated clusterInfo: ", clusterInfo.value)
+        // console.log("updated clusterInfo: ", clusterInfo.value)
         // console.log("updated clusterVersion: ", clusterVersion.value)
         // Remove the existing item if found
         // if (index !== -1) {
@@ -333,8 +335,8 @@ onUnmounted(() => {
 
 const clusterVersion = computed(() => {
   const ver = clusterInfo.value?.versionInfo?.gitVersion || '';
-  console.log("clusterInfo in computed:", clusterInfo.value);
-  console.log("version:", ver);
+  // console.log("clusterInfo in computed:", clusterInfo.value);
+  // console.log("version:", ver);
   return ver;
 });
 const clusterStatus = computed(() => {
@@ -342,6 +344,26 @@ const clusterStatus = computed(() => {
 });
 const errorsCount = computed(() => {
   return get(clusterInfo.value, "errorsCount", "Loading");
+});
+// Function to initialize running days
+const initRunningDays = computed(() => {
+  const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+  // Assuming you have a way to store daysWithoutIssue and daysTotal, e.g., in a store or local storage
+  if (isEmpty(daysWithoutIssue)) {
+    daysWithoutIssue = new Set();
+  }
+  if (isEmpty(daysTotal)) {
+    daysTotal = new Set();
+  }
+  // Uncomment and implement error checking if needed
+  if (errorsCount == "Loading") {
+    daysWithoutIssue.add(currentDate);
+  }
+  daysTotal.add(currentDate);
+  console.log("Initialized running days:", {
+    daysWithoutIssue: daysWithoutIssue.size,
+    daysTotal: daysTotal.size,
+  });
 });
 const usedCPU = computed(() => {
   return "fake";
@@ -424,9 +446,9 @@ const onFilterGroup = (group) => {
     infoFilter.group = group;
   }
 };
-watchEffect(() => {
-  console.log("clusterInfo changed:", clusterInfo.value);
-});
+// watchEffect(() => {
+//   console.log("clusterInfo changed:", clusterInfo.value);
+// });
 watch(
   () => prefStore.currentLanguage,
   () => {

@@ -2,6 +2,7 @@
 import ConnectionDialog from "./components/dialogs/ConnectionDialog.vue";
 import ConfigDialog from "./components/dialogs/ConfigDialog.vue";
 import NewKeyDialog from "./components/dialogs/NewKeyDialog.vue";
+import NewCliDialog from "./components/dialogs/NewCliDialog.vue";
 import PreferencesDialog from "./components/dialogs/PreferencesDialog.vue";
 import RenameKeyDialog from "./components/dialogs/RenameKeyDialog.vue";
 import SetTtlDialog from "./components/dialogs/SetTtlDialog.vue";
@@ -130,7 +131,7 @@ watch(
 
       <!-- top modal dialogs -->
       <config-dialog />
-
+      <new-cli-dialog />
       <connection-dialog />
       <group-dialog />
       <new-key-dialog />

@@ -213,7 +213,7 @@ const exThemeVars = computed(() => {
 
     <!-- wechat official modal -->
     <n-modal
-      v-model:show="showWechat"
+      v-model="showWechat"
       close-on-esc
       mask-closable
       transform-origin="center"

@@ -33,6 +33,11 @@ const useDialogStore = defineStore("dialog", {
     },
     newKeyDialogVisible: false,
 
+    cliFilterParam: {
+      id: 0,
+    },
+    newCliDialogVisible: false,
+    deleteCliDialogVisible: false,
     keyFilterParam: {
       server: "",
       db: 0,
@@ -234,6 +239,13 @@ const useDialogStore = defineStore("dialog", {
       this.deleteKeyDialogVisible = false;
     },
 
+    openDeleteCliDialog(id) {
+      this.deleteKeyParam.id = id
+      this.deleteCliDialogVisible = true;
+    },
+    closeDeleteCliDialog() {
+      this.deleteCliDialogVisible = false;
+    },
     /**
      *
      * @param {string} server
@@ -287,6 +299,13 @@ const useDialogStore = defineStore("dialog", {
     },
     closeNewKeyDialog() {
       this.newKeyDialogVisible = false;
+    },
+
+    openNewCliDialog() {
+      this.newCliDialogVisible = true;
+    },
+    closeNewCliDialog() {
+      this.newCliDialogVisible = false;
     },
 
     /**
