@@ -24,6 +24,7 @@ import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
 import usePreferencesStore from "stores/preferences.js";
 import { useSessionStore } from '@/stores/session.js';
+import { getPlatform } from "@/utils/platform.js";
 import { watch, computed, h, nextTick, reactive, ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -242,8 +243,8 @@ const randomPort = (start, end, excludes = []) => {
 	return port;
 };
 const getShell = () => {
-  return "zsh"
-	const platform = navigator.platform.toLowerCase();
+	const platform = getPlatform().toLowerCase();
+  console.log("platform: ", platform)
 	if (platform.includes('win')) {
 		return 'powershell.exe'; // or 'powershell.exe' for PowerShell
 	} else if (platform.includes('linux')) {
@@ -381,7 +382,7 @@ const refresh = async (cluster) => {
           :icon="Refresh"
           border
           t-tooltip="error.refresh"
-          @click="refresh"
+          @click="() => refresh(connectionStore.currentCluster)"
         />
       </n-form-item>
       <n-form-item label="&nbsp;" v-show="!connectingCliSession">
