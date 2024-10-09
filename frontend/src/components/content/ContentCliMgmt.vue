@@ -244,12 +244,12 @@ const randomPort = (start, end, excludes = []) => {
 };
 const getShell = () => {
 	const platform = getPlatform().toLowerCase();
-  console.log("platform: ", platform)
-	if (platform.includes('win')) {
-		return 'powershell.exe'; // or 'powershell.exe' for PowerShell
-	} else if (platform.includes('linux')) {
+	console.log("platform: ", platform);
+	if (platform === 'win32' || platform === "win") {
+		return 'powershell.exe'; // or 'cmd.exe' for PowerShell
+	} else if (platform === 'linux') {
 		return 'bash'; // Default shell for most Linux distributions
-	} else if (platform.includes('darwin')) {
+	} else if (platform === 'darwin') {
 		return 'zsh'; // Default shell for macOS (as of Catalina)
 	}
 	return 'bash'; // Default to bash if the platform is unknown
