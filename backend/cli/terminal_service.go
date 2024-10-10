@@ -11,6 +11,7 @@ import (
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"ktt/backend/db/store/session"
+	"ktt/backend/kubeconfig"
 	"ktt/backend/types"
 	"ktt/backend/utils/log"
 )
@@ -64,7 +65,12 @@ func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string)
 		log.Error("start terminal failed", "msg", err)
 		return types.FailedResp(err.Error())
 	}
-	return types.JSResp{Success: true}
+	// switch ctx on user's kubeconfig
+	contxt, err := kubeconfig.SwitchContext(clusterName)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true, Data: contxt}
 }
 
 func (s *TerminalService) terminalMapKey(clusterName, address, port, cmds string) string {
