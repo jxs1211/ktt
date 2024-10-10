@@ -11,6 +11,7 @@ import (
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"ktt/backend/db/store/session"
+	"ktt/backend/kubeconfig"
 	"ktt/backend/types"
 	"ktt/backend/utils/log"
 )
@@ -64,7 +65,12 @@ func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string)
 		log.Error("start terminal failed", "msg", err)
 		return types.FailedResp(err.Error())
 	}
-	return types.JSResp{Success: true}
+	// switch ctx on user's kubeconfig
+	contxt, err := kubeconfig.SwitchContext(clusterName)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true, Data: contxt}
 }
 
 func (s *TerminalService) terminalMapKey(clusterName, address, port, cmds string) string {
@@ -134,21 +140,17 @@ func (s *TerminalService) closeTerminal(id int64, clusterName, address, port, cm
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	key := s.terminalMapKey(clusterName, address, port, cmds)
-	ter, ok := s.terminalMap[key]
-	if !ok {
-		return ErrTerminalNotExist
+	if ter, ok := s.terminalMap[key]; ok {
+		if err := ter.Close(); err != nil {
+			return err
+		}
+		delete(s.terminalMap, key)
 	}
-	delete(s.terminalMap, key)
 	err := s.q.DeleteSession(s.ctx, id)
 	if err != nil {
-		// restore cache if delete db data failed
-		s.terminalMap[key] = ter
 		return err
 	}
-	err = ter.Close()
-	if err != nil {
-		return err
-	}
+
 	log.Info("CloseTerminal", "result", "done", "deleted item", key)
 	return nil
 }
