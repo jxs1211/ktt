@@ -9,6 +9,9 @@ on:
         description: 'Version tag'
         required: true
         default: '1.0.0'
+  push:
+    tags:
+      - "v*"
 
 jobs:
   release:
