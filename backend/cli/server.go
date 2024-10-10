@@ -10,12 +10,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sorenisanerd/gotty/backend/localcommand"
-	"github.com/sorenisanerd/gotty/pkg/homedir"
-	"github.com/sorenisanerd/gotty/server"
-	"github.com/sorenisanerd/gotty/utils"
 	cli "github.com/urfave/cli/v2"
 
+	"ktt/backend/cli/gotty/backend/localcommand"
+	"ktt/backend/cli/gotty/pkg/homedir"
+	"ktt/backend/cli/gotty/server"
+	"ktt/backend/cli/gotty/utils"
 	logutil "ktt/backend/utils/log"
 )
 

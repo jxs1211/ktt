@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-distroless
+spec:
+  containers:
+  - name: my-distroless-container
+    image: gcr.io/distroless/nodejs
+    env:
+    - name: NODE_OPTIONS
+      value: "--max-old-space-size=4096" # Optional: Adjust memory settings if needed
+    command: ["node", "-e", "setTimeout(() => console.log('Done'), 99999999)"]
+    restartPolicy: Never

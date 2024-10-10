@@ -243,6 +243,7 @@ const randomPort = (start, end, excludes = []) => {
 	return port;
 };
 const getShell = () => {
+  // kttodo: generate shell cmd by resource type
 	const platform = getPlatform().toLowerCase();
 	console.log("platform: ", platform);
 	if (platform === 'win32' || platform === "win") {
