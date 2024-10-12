@@ -357,11 +357,15 @@ onUnmounted(() => {
 }
 );
 const refresh = async (cluster) => {
+  data.loading = true
+  sessionStore.emptyResults()
   const resp = await GetSessionsByClusterName(cluster)
   if (!resp.success) {
     console.log("get session by cluster name failed: ", resp.msg)
+    data.loading = false
     return
   }
+  data.loading = false
   sessionStore.setResults(resp.data)
   console.log("resp data is ", resp.data)
 };

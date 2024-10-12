@@ -18,5 +18,8 @@ export const useSessionStore = defineStore('session', {
     addResult(newResult) {
       this.results.push(newResult);
     },
+    emptyResults() {
+      this.results = [];
+    }
   },
 });
