@@ -6,6 +6,7 @@ import (
 	"ktt/backend/db/store"
 	"ktt/backend/db/store/session"
 	"ktt/backend/types"
+	"ktt/backend/utils/tool"
 )
 
 type DBService struct {
@@ -24,6 +25,7 @@ func (s *DBService) Start(ctx context.Context) {
 }
 
 func (s *DBService) GetSessionsByClusterName(name string) types.JSResp {
+	defer tool.TrackTime("GetSessionsByClusterName")()
 	sess := s.store.Sessions()
 	items, err := sess.GetSessionsByClusterName(s.ctx, name)
 	if err != nil {

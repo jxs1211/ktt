@@ -23,7 +23,7 @@ func TrackTime(funcName string) func() {
 		default:
 			duration = fmt.Sprintf("%.2f s", elapsed.Seconds())
 		}
-		log.Info("exec [%s] elapsed: %s\n", "funcName", funcName, "duration", duration)
+		log.Info("TrackTime", "funcName", funcName, "duration", duration)
 	}
 }
 

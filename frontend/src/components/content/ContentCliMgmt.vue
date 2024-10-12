@@ -28,17 +28,15 @@ import { getPlatform } from "@/utils/platform.js";
 import { watch, computed, h, nextTick, reactive, ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-  CreateSession,
-  DeleteSession,
   GetSessionsByClusterName,
 } from 'wailsjs/go/db/DBService.js';
 
 // const themeVars = useThemeVars();
 const sessionStore = useSessionStore();
 const dialogStore = useDialogStore();
-const configStore = useConfigStore();
+// const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
-const preferencesStore = usePreferencesStore();
+// const preferencesStore = usePreferencesStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
@@ -185,8 +183,8 @@ const columns = computed(() => [
     // fixed: "right",
     render(row) {
       return h('div', { style: { display: 'flex', gap: '10px' } }, [
-        h(NButton, { type: 'primary', size: 'small', onClick: () => connectToCli(row) }, 'Connect'),
-        h(NButton, { type: 'info', size: 'small', onClick: () => delCli(row) }, 'Delete'),
+        h(NButton, { type: 'primary', size: 'small', onClick: () => connectToCli(row) }, {default: ()=>"Connect"}),
+        h(NButton, { type: 'info', size: 'small', onClick: () => delCli(row) }, {default: ()=>"Delete"}),
       ]);
     },
   },
@@ -350,7 +348,11 @@ watch(
 );
 onMounted(() => {
   console.log("content cli mgmt on mounted")
+  const start = performance.now();
+   // Code to measure
   refresh(connectionStore.currentCluster)
+  const end = performance.now();
+   console.log(`Execution time: ${end - start} milliseconds`);
 });
 onUnmounted(() => {
   console.log("content cli mgmt on unmounted")
