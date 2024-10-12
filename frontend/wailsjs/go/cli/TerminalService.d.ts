@@ -7,6 +7,8 @@ export function CloseAllTerminals():Promise<types.JSResp>;
 
 export function CloseTerminal(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<types.JSResp>;
 
+export function EditTerminal(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<types.JSResp>;
+
 export function Start(arg1:context.Context):Promise<void>;
 
 export function StartTerminal(arg1:string,arg2:string,arg3:string,arg4:string):Promise<types.JSResp>;

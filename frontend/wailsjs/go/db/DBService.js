@@ -10,6 +10,10 @@ export function DeleteSession(arg1) {
   return window['go']['db']['DBService']['DeleteSession'](arg1);
 }
 
+export function EditSession(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['db']['DBService']['EditSession'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function GetSessionsByClusterName(arg1) {
   return window['go']['db']['DBService']['GetSessionsByClusterName'](arg1);
 }

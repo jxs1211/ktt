@@ -2,21 +2,12 @@ package cli
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	"ktt/backend/db/store/session"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	"ktt/backend/utils/log"
-	strutil "ktt/backend/utils/string"
 )
-
-func TestMain(m *testing.M) {
-	log.Init(filepath.Join(strutil.RootPath(), "logs"))
-	code := m.Run()
-	os.Exit(code)
-}
 
 // func TestTerminalService_StartTerminal(t *testing.T) {
 // 	tests := []struct {
@@ -47,27 +38,48 @@ func TestMain(m *testing.M) {
 // 	}
 // }
 
-// func TestTerminalService_startTerminal(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		terminal terminal
-// 		err      error
-// 	}{
-// 		{
-// 			name:     "gotty terminal",
-// 			terminal: NewGottyTerminal(context.Background()),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			s := NewTerminalService()
-// 			err := s.startTerminal()
-// 			assert.NoError(t, err)
-// 			err = s.CloseTerminal()
-// 			assert.NoError(t, err)
-// 		})
-// 	}
-// }
+func TestTerminalService_startTerminal(t *testing.T) {
+	tests := []struct {
+		name        string
+		clusterName string
+		address     string
+		port        string
+		cmds        string
+		eventEmit   bool
+		err         error
+	}{
+		{
+			name:        "gotty terminal",
+			clusterName: "kind-test",
+			address:     "127.0.0.1",
+			port:        "8888",
+			cmds:        "zsh",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewTerminalService(testDB, tt.eventEmit)
+			s.Start(context.Background())
+			session, err := s.q.CreateSession(context.Background(), session.CreateSessionParams{
+				ClusterName: tt.clusterName, Address: tt.address, Port: tt.port, Cmds: tt.cmds,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				err = s.q.DeleteSession(context.Background(), session.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}()
+			err = s.startTerminal(tt.clusterName, tt.address, tt.port, tt.cmds)
+			assert.NoError(t, err)
+			time.Sleep(5 * time.Second)
+			err = s.closeTerminal(session.ID, tt.clusterName, tt.address, tt.port, tt.cmds)
+			assert.NoError(t, err)
+		})
+	}
+}
 
 func TestGottyTerminal_Start(t *testing.T) {
 	tests := []struct {
@@ -93,3 +105,38 @@ func TestGottyTerminal_Start(t *testing.T) {
 		})
 	}
 }
+
+// func TestTerminalService_startCliServer(t *testing.T) {
+// 	tests := []struct {
+// 		name        string
+// 		ctx         context.Context
+// 		terminalMap map[string]terminal
+// 		mutex       sync.Mutex
+// 		q           session.Queries
+// 		address     string
+// 		port        string
+// 		cmds        string
+// 		want        *CliServer
+// 		wantErr     bool
+// 	}{
+// 		{
+// 			name: "base",
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s, err := NewTerminalService(testDB)
+// 			if err != nil {
+// 				t.Fatal(err)
+// 			}
+// 			got, err := s.startCliServer(tt.address, tt.port, tt.cmds)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("TerminalService.startCliServer() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if !reflect.DeepEqual(got, tt.want) {
+// 				t.Errorf("TerminalService.startCliServer() = %v, want %v", got, tt.want)
+// 			}
+// 		})
+// 	}
+// }

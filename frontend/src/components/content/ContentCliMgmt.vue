@@ -4,7 +4,7 @@ import Refresh from "@/components/icons/Refresh.vue";
 import Add from "@/components/icons/Add.vue";
 import ContentCli from "@/components/content_value/ContentCli.vue";
 import Left from "@/components/icons/Left.vue"
-import ErrorExplain from "@/components/content_value/ErrorExplain.vue";
+import EditCliDialog from "@/components/dialogs/EditCliDialog.vue";
 import {
   capitalize,
   includes,
@@ -28,17 +28,17 @@ import { getPlatform } from "@/utils/platform.js";
 import { watch, computed, h, nextTick, reactive, ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-  CreateSession,
-  DeleteSession,
+  // CreateSession,
+  // DeleteSession,
   GetSessionsByClusterName,
 } from 'wailsjs/go/db/DBService.js';
 
 // const themeVars = useThemeVars();
 const sessionStore = useSessionStore();
 const dialogStore = useDialogStore();
-const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
-const preferencesStore = usePreferencesStore();
+// const configStore = useConfigStore();
+// const ferencesStore = usePreferencesStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
@@ -52,7 +52,7 @@ const data = reactive({
   selectedNSOption: "",
   selectedResourceName: "",
   history: [],
-  results: [{"cluster_name": "wave-loadtest-others-us-east-1.us-east-1.eksctl.io", "address":"0.0.0.0", "port": "1211", "cmds": "zsh"}],
+  // results: [{"cluster_name": "wave-loadtest-others-us-east-1.us-east-1.eksctl.io", "address":"0.0.0.0", "port": "1211", "cmds": "zsh"}],
 });
 const filterNamespaceOptions = computed(() => {
   const options = map(data.namespaceOptions, (item) => ({
@@ -187,6 +187,7 @@ const columns = computed(() => [
       return h('div', { style: { display: 'flex', gap: '10px' } }, [
         h(NButton, { type: 'primary', size: 'small', onClick: () => connectToCli(row) }, 'Connect'),
         h(NButton, { type: 'info', size: 'small', onClick: () => delCli(row) }, 'Delete'),
+        h(NButton, { type: 'info', size: 'small', onClick: () => editCli(row) }, 'Edit'),
       ]);
     },
   },
@@ -232,6 +233,7 @@ const pagination = {
 const startPort = 12110;
 const endPort = 22110;
 const cliRef = ref(null);
+const editCliDialogRef = ref(null);
 const randomPort = (start, end, excludes = []) => {
 	if (start < 1 || end > 65535 || start > end) {
 		throw new Error("Invalid port range");
@@ -242,6 +244,7 @@ const randomPort = (start, end, excludes = []) => {
 	} while (excludes.includes(port)); // Keep generating until found a port not in excludes
 	return port;
 };
+// kttodo: generate cmds by resource type
 const getShell = () => {
 	const platform = getPlatform().toLowerCase();
 	console.log("platform: ", platform);
@@ -269,14 +272,14 @@ const delCli = async (row) => {
   const resp = await cliRef.value?.doCloseTerminal(row)
   if (!resp.success) {
     console.error("del cli failed: ", resp.msg)
-    $message.error("del cli failed: ", resp.msg)
+    $message.error("del cli failed: " + resp.msg)
     return
   }
   console.log("do close terminal resp: ", resp)
   const resp2 = await GetSessionsByClusterName(row.cluster_name);
   if (!resp2.success) {
     console.error("refresh sessions by cluster name failed: ", resp2.msg)
-    $message.error("refresh sessions by cluster name failed: ", resp2.msg)
+    $message.error("refresh sessions by cluster name failed: " + resp2.msg)
     return
   }
   console.log("get data after del cli: ", resp2.data)
@@ -284,6 +287,21 @@ const delCli = async (row) => {
   connectingCliSession.value = false
   $message.success("del cli ok")
 };
+const editCli = (row) => {
+  // open edit window
+  // edit form value
+  // save and refresh data
+  console.log("edit cli row: ", row)
+  dialogStore.openEditCliDialog();
+  // sessionStore.formValue.id = row.id
+  // sessionStore.formValue.cluster_name = row.cluster_name;
+  // sessionStore.formValue.address = row.address;
+  // sessionStore.formValue.port = row.port;
+  // sessionStore.formValue.cmds = row.cmds;
+  editCliDialogRef.value?.doUpdateTerminal(row)
+
+  // const resp = await doEditTerminal(row)
+}
 const refreshFiltersOptions = async () => {
   try {
     data.filterResourceLoading = true;
@@ -417,6 +435,7 @@ const refresh = async (cluster) => {
       v-show="connectingCliSession"
       ref="cliRef"
     />
+    <EditCliDialog v-show="false" ref="editCliDialogRef" />
   </div>
 </template>
 

@@ -37,6 +37,7 @@ const useDialogStore = defineStore("dialog", {
       id: 0,
     },
     newCliDialogVisible: false,
+    editCliDialogVisible: false,
     deleteCliDialogVisible: false,
     keyFilterParam: {
       server: "",
@@ -176,7 +177,7 @@ const useDialogStore = defineStore("dialog", {
     closeNewGroupDialog() {
       this.groupDialogVisible = false;
     },
-
+    
     /**
      *
      * @param {string} server
@@ -246,6 +247,9 @@ const useDialogStore = defineStore("dialog", {
     closeDeleteCliDialog() {
       this.deleteCliDialogVisible = false;
     },
+    closeEditCliDialog() {
+      this.editCliDialogVisible = false;
+    },
     /**
      *
      * @param {string} server
@@ -304,10 +308,18 @@ const useDialogStore = defineStore("dialog", {
     openNewCliDialog() {
       this.newCliDialogVisible = true;
     },
+    openEditCliDialog() {
+      this.editCliDialogVisible = true;
+    },
     closeNewCliDialog() {
       this.newCliDialogVisible = false;
     },
+    closeEditCliDialog() {
+      this.editCliDialogVisible = false;
+    },
 
+
+ 
     /**
      *
      * @param {string} server

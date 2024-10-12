@@ -5,6 +5,7 @@ export const useSessionStore = defineStore('session', {
   state: () => ({
     results: [],
     formValue: {
+      id: 0,
       cluster_name: "",
       address: "",
       port: "",

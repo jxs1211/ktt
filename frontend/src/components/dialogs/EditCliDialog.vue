@@ -9,9 +9,11 @@ import useConnectionStore from "stores/connections.js";
 import useBrowserStore from 'stores/browser.js'
 import { useSessionStore } from '@/stores/session.js';
 import {
-  CreateSession,
   GetSessionsByClusterName,
 } from 'wailsjs/go/db/DBService.js';
+import {
+	EditTerminal,
+} from 'wailsjs/go/cli/TerminalService.js'
 
 const props = defineProps({
 	opType: {
@@ -39,13 +41,20 @@ const formRules = computed(() => {
 		cmds: { required: true, message: requiredMsg, trigger: 'input' },
 	}
 })
+const formValue = reactive({
+	id: 0,
+	cluster_name: "",
+	address: "",
+	port: "",
+	cmds: ""
+})
 // const dbOptions = computed(() =>
 // map(keys(browserStore.getDBList(newForm.server)), (key) => ({
 // 	label: key,
 // 	value: parseInt(key),
 // })),
 // )
-const newFormRef = ref(null)
+const editFormRef = ref(null)
 // const subFormRef = ref(null)
 
 const options = computed(() => {
@@ -93,21 +102,30 @@ onUnmounted(()=>{
 // 	return port;
 // };
 
-const onAdd = async () => {
-	console.log("onAdd")
+const doUpdateTerminal = async (row) => {
+	console.log("editCliDialog row: ", row)
+	formValue.id = row.id
+	formValue.cluster_name = row.cluster_name
+	formValue.address = row.address
+	formValue.port = row.port
+	formValue.cmds = row.cmds
+}
+const save = async () => {
+	console.log("save edition")
 	try {
-		const resp = await CreateSession(
-			sessionStore.formValue.cluster_name,
-			sessionStore.formValue.address,
-			String(sessionStore.formValue.port),
-			sessionStore.formValue.cmds);
+		const resp = await EditTerminal(
+			formValue.id,
+			formValue.cluster_name,
+			formValue.address,
+			String(formValue.port),
+			formValue.cmds);
 		if (!resp.success) {
-			console.error("add cli failed: ", resp.msg)
-			$message.error("add cli failed: ", resp.msg)
+			console.error("edit cli failed: ", resp.msg)
+			$message.error("edit cli failed: ", resp.msg)
 			return
 		}
-		console.log("create session: ", resp.data)
-		const resp2 = await GetSessionsByClusterName(sessionStore.formValue.cluster_name);
+		console.log("edited session: ", resp.data)
+		const resp2 = await GetSessionsByClusterName(formValue.cluster_name);
 		if (!resp2.success) {
 			console.error("refresh sessions by cluster name failed: ", resp2.msg)
 			$message.error("get sessions failed: ", resp2.msg)
@@ -115,27 +133,28 @@ const onAdd = async () => {
 		}
 		console.log("get sessions by cluster name: ", resp2.data)
 		sessionStore.setResults(resp2.data);
-		dialogStore.closeNewCliDialog()
-		$message.success("add cli ok")
+		dialogStore.closeEditCliDialog()
+		$message.success("edit cli ok")
 	} catch (e) {
 		$message.error(e)
-		return false;
 	}
-	return true
 }
 
 const onClose = () => {
-	dialogStore.closeNewCliDialog()
+	dialogStore.closeEditCliDialog()
 }
+defineExpose({
+  doUpdateTerminal,
+})
 </script>
 
 <template>
 	<n-modal
-	v-model:show="dialogStore.newCliDialogVisible"
+	v-model:show="dialogStore.editCliDialogVisible"
 	:closable="false"
 	:mask-closable="false"
 	:show-icon="false"
-	:title="$t('dialogue.cli.new')"
+	:title="$t('dialogue.cli.edit')"
 	close-on-esc
 	preset="dialog"
 	style="width: 600px"
@@ -143,30 +162,30 @@ const onClose = () => {
 	@esc="onClose">
 		<n-scrollbar ref="scrollRef" style="max-height: 500px">
 			<n-form
-				ref="newFormRef"
-				:model="sessionStore.formValue"
+				ref="editFormRef"
+				:model="formValue"
 				:rules="formRules"
 				:show-require-mark="false"
 				label-placement="top"
 				style="padding-right: 15px">
 				<n-form-item :label="$t('dialogue.cli.cluster_name')" path="key" required>
-					<n-input v-model:value="sessionStore.formValue.cluster_name" placeholder="" />
+					<n-input v-model:value="formValue.cluster_name" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.address')" path="db" required>
-					<n-input v-model:value="sessionStore.formValue.address" placeholder="" />
+					<n-input v-model:value="formValue.address" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.port')" path="db" required>
-					<n-input v-model:value="sessionStore.formValue.port" placeholder="" />
+					<n-input v-model:value="formValue.port" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.cmds')" path="type" required>
 					<!-- kttodo: change the input to searchable multi-select -->
-					<n-input v-model:value="sessionStore.formValue.cmds" placeholder="" />
+					<n-input v-model:value="formValue.cmds" placeholder="" />
 				</n-form-item>
 				<div class="flex-item n-dialog__action">
 					<n-button :focusable="false" size="medium" @click="onClose">
 						{{ $t('common.cancel') }}
 					</n-button>
-					<n-button :focusable="false" size="medium" type="primary" @click="onAdd">
+					<n-button :focusable="false" size="medium" type="primary" @click="save">
 						{{ $t('common.confirm') }}
 					</n-button>
 				</div>

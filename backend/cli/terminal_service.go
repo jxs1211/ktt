@@ -8,12 +8,12 @@ import (
 	"strings"
 	"sync"
 
-	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
-
 	"ktt/backend/db/store/session"
 	"ktt/backend/kubeconfig"
 	"ktt/backend/types"
 	"ktt/backend/utils/log"
+
+	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type DBEvent string
@@ -30,17 +30,23 @@ var (
 	ErrTerminalNotExist       = errors.New("terminal not exist")
 )
 
+type TerminalServiceOptions struct {
+	EventEmit bool
+}
+
 type TerminalService struct {
 	ctx         context.Context
 	terminalMap map[string]terminal
 	mutex       sync.Mutex
 	q           session.Queries
+	EventEmit   bool
 }
 
-func NewTerminalService(db *sql.DB) *TerminalService {
+func NewTerminalService(db *sql.DB, eventEmit bool) *TerminalService {
 	return &TerminalService{
 		terminalMap: make(map[string]terminal),
 		q:           *session.New(db),
+		EventEmit:   eventEmit,
 	}
 }
 
@@ -77,21 +83,31 @@ func (s *TerminalService) terminalMapKey(clusterName, address, port, cmds string
 	return fmt.Sprintf("%s:%s:%s:%s", clusterName, address, port, cmds)
 }
 
-func (s *TerminalService) startTerminal(clusterName, address, port, cmds string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	runtime2.EventsEmit(s.ctx, "terminal:url", "")
+func (s *TerminalService) cacheStartCliServer(clusterName, address, port, cmds string) error {
 	key := s.terminalMapKey(clusterName, address, port, cmds)
 	_, ok := s.terminalMap[key]
 	if !ok {
 		srv, err := s.startCliServer(address, port, cmds)
+		log.Info("cacheStartCliServer", "created srv", srv)
 		if err != nil {
 			return err
 		}
-
 		s.terminalMap[key] = srv
-		log.Info("startTerminal", "new terminal", key, "reason", "start cli server due to server not found in db")
+		log.Info("cacheStartCliServer", "save item", key, "termMap", s.terminalMap, "reason", "start cli server due to server not found in db")
+	}
+	return nil
+}
+
+func (s *TerminalService) startTerminal(clusterName, address, port, cmds string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.EventEmit {
+		runtime2.EventsEmit(s.ctx, "terminal:url", "")
+	}
+	err := s.cacheStartCliServer(clusterName, address, port, cmds)
+	if err != nil {
+		return err
 	}
 	// p, err := strconv.Atoi(port)
 	// if err != nil {
@@ -111,8 +127,10 @@ func (s *TerminalService) startTerminal(clusterName, address, port, cmds string)
 	// 	log.Info("startTerminal", "new terminal", key, "reason", "server not found in runtime")
 	// }
 	url := fmt.Sprintf("http://%s:%s", address, port)
-	runtime2.EventsEmit(s.ctx, "terminal:url", url)
-	log.Info("startTerminal", "emit url", url, "save item", key)
+	if s.EventEmit {
+		runtime2.EventsEmit(s.ctx, "terminal:url", url)
+	}
+	log.Info("startTerminal", "emit url", url)
 	return nil
 }
 
@@ -121,6 +139,7 @@ func (s *TerminalService) startCliServer(address, port, cmds string) (*CliServer
 	if err != nil {
 		return nil, err
 	}
+	log.Info("startCliServer", "srv", srv)
 	err = srv.Start()
 	if err != nil {
 		return nil, err
@@ -140,18 +159,15 @@ func (s *TerminalService) closeTerminal(id int64, clusterName, address, port, cm
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	key := s.terminalMapKey(clusterName, address, port, cmds)
-	ter, ok := s.terminalMap[key]
-	if !ok {
-		return ErrTerminalNotExist
+	if ter := s.terminalMap[key]; ter != nil {
+		log.Info("closeTerminal", "term", fmt.Sprintf("%+v", ter))
+		if err := ter.Close(); err != nil {
+			log.Info("closeTerminal", "terminal in cache, but close error", key)
+			return err
+		}
 	}
 	delete(s.terminalMap, key)
 	err := s.q.DeleteSession(s.ctx, id)
-	if err != nil {
-		// restore cache if delete db data failed
-		s.terminalMap[key] = ter
-		return err
-	}
-	err = ter.Close()
 	if err != nil {
 		return err
 	}
@@ -182,5 +198,59 @@ func (s *TerminalService) closeAllTerminals() error {
 		return errors.Join(errs...)
 	}
 	s.terminalMap = map[string]terminal{}
+	return nil
+}
+
+func (s *TerminalService) EditTerminal(id int64, clusterName, address, port, cmds string) types.JSResp {
+	err := s.editTerminal(id, clusterName, address, port, cmds)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) editTerminal(id int64, clusterName, address, port, cmds string) error {
+	oldOne, err := s.q.GetSession(s.ctx, id)
+	if err != nil {
+		return err
+	}
+	newOne, err := s.q.UpdateSession(s.ctx, session.UpdateSessionParams{
+		ClusterName: clusterName, Address: address, Port: port, Cmds: cmds, ID: id,
+	})
+	if err != nil {
+		return err
+	}
+	// delete cache if srv's port or cmds updated
+	if oldOne.Cmds != newOne.Cmds || oldOne.Port != newOne.Port {
+		key := s.terminalMapKey(clusterName, address, oldOne.Port, oldOne.Cmds)
+		ter, ok := s.terminalMap[key].(*CliServer)
+		log.Info("editTerminal", "to delete", key, "termMap", s.terminalMap, "parsed obj", ter)
+		if !ok {
+			return fmt.Errorf("get terminal from cache failed: %+v", ter)
+		}
+		if ter != nil {
+			if err := ter.Close(); err != nil {
+				log.Info("closeTerminal", "terminal in cache, but close error", key)
+				return err
+			}
+			log.Info("editTerminal", "delete old key", key)
+			delete(s.terminalMap, key)
+		}
+		// term, ok := s.terminalMap[key]
+		// if ok {
+		// 	delete(s.terminalMap, key)
+		// 	log.Info("editTerminal", "delete key", key)
+		// 	if err := term.Close(); err != nil {
+		// 		log.Info("editTerminal", "err", err)
+		// 		return err
+		// 	}
+		// }
+		// err = s.cacheStartCliServer(clusterName, address, newOne.Port, newOne.Cmds)
+		// if err != nil {
+		// 	return err
+		// }
+		// log.Info("EditTerminal", "start server ok", fmt.Sprintf("%s:%s:%s:%s", clusterName, address, newOne.Port, newOne.Cmds))
+	}
+	log.Info("editTerminal", "msg", "ok")
 	return nil
 }

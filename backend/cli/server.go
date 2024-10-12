@@ -57,31 +57,32 @@ func (a *arguments) Slice() []string {
 }
 
 type CliServer struct {
-	app        *cli.App
-	args       []string
-	ctx        context.Context
-	ctxCancel  context.CancelFunc
-	gCtx       context.Context
-	gCtxCancel context.CancelFunc
-	errs       chan error
+	App        *cli.App
+	Args       []string
+	Ctx        context.Context
+	CtxCancel  context.CancelFunc
+	GCtx       context.Context
+	GCtxCancel context.CancelFunc
+	Errs       chan error
 }
 
 func NewCliServer(pCtx context.Context, addr, port string, cmds []string) (*CliServer, error) {
 	ctx, cancel := context.WithCancel(pCtx)
 	gCtx, gCtxCancel := context.WithCancel(pCtx)
 	cliServer := &CliServer{
-		ctx:        ctx,
-		ctxCancel:  cancel,
-		gCtx:       gCtx,
-		gCtxCancel: gCtxCancel,
-		errs:       make(chan error, 1),
-		args:       cmds,
+		Ctx:        ctx,
+		CtxCancel:  cancel,
+		GCtx:       gCtx,
+		GCtxCancel: gCtxCancel,
+		Errs:       make(chan error, 1),
+		Args:       cmds,
 	}
 	app := cli.NewApp()
 	app.Name = "KT-Console"
 	app.Version = "unknown_version"
 	app.Usage = "Share terminal as a web application"
 	app.HideHelpCommand = true
+	// app.BashComplete = nil
 	appOptions := &server.Options{}
 
 	if err := utils.ApplyDefaultValues(appOptions); err != nil {
@@ -170,7 +171,7 @@ func NewCliServer(pCtx context.Context, addr, port string, cmds []string) (*CliS
 		log.Printf("starting with command: %s", strings.Join(args.Slice(), " "))
 
 		go func() {
-			cliServer.errs <- srv.Run(cliServer.ctx, server.WithGracefullContext(cliServer.gCtx))
+			cliServer.Errs <- srv.Run(cliServer.Ctx, server.WithGracefullContext(cliServer.GCtx))
 		}()
 		// err = waitSignals(cliServer.errs, cliServer.ctxCancel, cliServer.gCtxCancel)
 		sigChan := make(chan os.Signal, 1)
@@ -180,9 +181,9 @@ func NewCliServer(pCtx context.Context, addr, port string, cmds []string) (*CliS
 			syscall.SIGTERM,
 		)
 		select {
-		case err := <-cliServer.errs:
+		case err := <-cliServer.Errs:
 			return err
-		case <-cliServer.gCtx.Done():
+		case <-cliServer.GCtx.Done():
 			logutil.Info("NewCliServer", "shutdown by ctx", "gCtxCancel")
 		case sig := <-sigChan:
 			logutil.Info("NewCliServer", "shutdown by sig", sig.String())
@@ -193,18 +194,18 @@ func NewCliServer(pCtx context.Context, addr, port string, cmds []string) (*CliS
 		// }
 		return nil
 	}
-	cliServer.app = app
+	cliServer.App = app
 	return cliServer, nil
 }
 
 func (s *CliServer) Start() error {
-	go s.app.Run(s.args)
+	go s.App.Run(s.Args)
 	return nil
 }
 
 func (s *CliServer) Close() error {
-	s.gCtxCancel()
-	return <-s.errs
+	s.GCtxCancel()
+	return <-s.Errs
 }
 
 func (s *CliServer) Restart() error {

@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 	"time"
-
-	cli "github.com/urfave/cli/v2"
 )
 
 func TestNewCliServer(t *testing.T) {
@@ -28,10 +26,13 @@ func TestNewCliServer(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
 			t.Log("stop server")
 			err = srv.Close()
 			if err != nil {
+				t.Fatal(err)
+			}
+			if err := <-srv.Errs; err != nil {
 				t.Fatal(err)
 			}
 			// if (err != nil) != tt.wantErr {
@@ -79,68 +80,68 @@ func TestCliServer_Start(t *testing.T) {
 	}
 }
 
-func TestCliServer_Close(t *testing.T) {
-	type fields struct {
-		app        *cli.App
-		ctx        context.Context
-		ctxCancel  context.CancelFunc
-		gCtx       context.Context
-		gCtxCancel context.CancelFunc
-		errs       chan error
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &CliServer{
-				app:        tt.fields.app,
-				ctx:        tt.fields.ctx,
-				ctxCancel:  tt.fields.ctxCancel,
-				gCtx:       tt.fields.gCtx,
-				gCtxCancel: tt.fields.gCtxCancel,
-				errs:       tt.fields.errs,
-			}
-			if err := s.Close(); (err != nil) != tt.wantErr {
-				t.Errorf("CliServer.Close() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+// func TestCliServer_Close(t *testing.T) {
+// 	type fields struct {
+// 		app        *cli.App
+// 		ctx        context.Context
+// 		ctxCancel  context.CancelFunc
+// 		gCtx       context.Context
+// 		gCtxCancel context.CancelFunc
+// 		errs       chan error
+// 	}
+// 	tests := []struct {
+// 		name    string
+// 		fields  fields
+// 		wantErr bool
+// 	}{
+// 		// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := &CliServer{
+// 				app:        tt.fields.app,
+// 				ctx:        tt.fields.ctx,
+// 				ctxCancel:  tt.fields.ctxCancel,
+// 				gCtx:       tt.fields.gCtx,
+// 				gCtxCancel: tt.fields.gCtxCancel,
+// 				errs:       tt.fields.errs,
+// 			}
+// 			if err := s.Close(); (err != nil) != tt.wantErr {
+// 				t.Errorf("CliServer.Close() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
+// 		})
+// 	}
+// }
 
-func TestCliServer_Restart(t *testing.T) {
-	type fields struct {
-		app        *cli.App
-		ctx        context.Context
-		ctxCancel  context.CancelFunc
-		gCtx       context.Context
-		gCtxCancel context.CancelFunc
-		errs       chan error
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &CliServer{
-				app:        tt.fields.app,
-				ctx:        tt.fields.ctx,
-				ctxCancel:  tt.fields.ctxCancel,
-				gCtx:       tt.fields.gCtx,
-				gCtxCancel: tt.fields.gCtxCancel,
-				errs:       tt.fields.errs,
-			}
-			if err := s.Restart(); (err != nil) != tt.wantErr {
-				t.Errorf("CliServer.Restart() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+// func TestCliServer_Restart(t *testing.T) {
+// 	type fields struct {
+// 		app        *cli.App
+// 		ctx        context.Context
+// 		ctxCancel  context.CancelFunc
+// 		gCtx       context.Context
+// 		gCtxCancel context.CancelFunc
+// 		errs       chan error
+// 	}
+// 	tests := []struct {
+// 		name    string
+// 		fields  fields
+// 		wantErr bool
+// 	}{
+// 		// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := &CliServer{
+// 				app:        tt.fields.app,
+// 				ctx:        tt.fields.ctx,
+// 				ctxCancel:  tt.fields.ctxCancel,
+// 				gCtx:       tt.fields.gCtx,
+// 				gCtxCancel: tt.fields.gCtxCancel,
+// 				errs:       tt.fields.errs,
+// 			}
+// 			if err := s.Restart(); (err != nil) != tt.wantErr {
+// 				t.Errorf("CliServer.Restart() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
+// 		})
+// 	}
+// }

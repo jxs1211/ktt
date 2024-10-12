@@ -45,7 +45,7 @@ func main() {
 	dbSvc := db.NewDBService(sqlDB)
 	clientSvc := client.NewClientService()
 	watcherManager := watch.NewWatcherManager()
-	terminalSvc := cli.NewTerminalService(sqlDB)
+	terminalSvc := cli.NewTerminalService(sqlDB, true)
 	// Create an instance of the app structure
 	sysSvc := services.System()
 	connSvc := services.Connection()

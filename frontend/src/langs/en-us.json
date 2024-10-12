@@ -315,6 +315,7 @@
     },
     "cli": {
       "new": "New Cli",
+      "edit": "Edit Cli",
       "cluster_name": "ClusterName",
       "address": "Address",
       "port": "Port",

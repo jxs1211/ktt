@@ -69,15 +69,12 @@ const doCloseTerminal = async (row) => {
   // }
   // console.log("finished closing terminal");
 };
-const refreshTerminal = async (address, port) => {
-
-};
-const getTerminal = async (address, port) => {
-
-};
-const getAllTerminals = async () => {
-
-};
+// const refreshTerminal = async (address, port) => {
+// };
+// const getTerminal = async (address, port) => {
+// };
+// const getAllTerminals = async () => {
+// };
 onMounted(() => {
   console.log("console cli tab onMounted: ", connectionStore.currentCluster)
   // doStartTerminal(props.clusterName, props.address, props.port, props.cmds);

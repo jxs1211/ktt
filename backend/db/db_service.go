@@ -50,6 +50,21 @@ func (s *DBService) CreateSession(clusterName, address, port, cmds string) types
 	return types.JSResp{Success: true, Data: session}
 }
 
+func (s *DBService) EditSession(id int64, clusterName, address, port, cmds string) types.JSResp {
+	sess := s.store.Sessions()
+	// one, err := sess.GetSession(s.ctx, id)
+	// if err != nil {
+	// 	return types.FailedResp(err.Error())
+	// }
+	session, err := sess.UpdateSession(s.ctx, session.UpdateSessionParams{
+		ClusterName: clusterName, Address: address, Port: port, Cmds: cmds, ID: id,
+	})
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true, Data: session}
+}
+
 func (s *DBService) DeleteSession(id int64) types.JSResp {
 	sess := s.store.Sessions()
 	err := sess.DeleteSession(s.ctx, id)
