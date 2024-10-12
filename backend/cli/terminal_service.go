@@ -140,21 +140,17 @@ func (s *TerminalService) closeTerminal(id int64, clusterName, address, port, cm
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	key := s.terminalMapKey(clusterName, address, port, cmds)
-	ter, ok := s.terminalMap[key]
-	if !ok {
-		return ErrTerminalNotExist
+	if ter, ok := s.terminalMap[key]; ok {
+		if err := ter.Close(); err != nil {
+			return err
+		}
+		delete(s.terminalMap, key)
 	}
-	delete(s.terminalMap, key)
 	err := s.q.DeleteSession(s.ctx, id)
 	if err != nil {
-		// restore cache if delete db data failed
-		s.terminalMap[key] = ter
 		return err
 	}
-	err = ter.Close()
-	if err != nil {
-		return err
-	}
+
 	log.Info("CloseTerminal", "result", "done", "deleted item", key)
 	return nil
 }
