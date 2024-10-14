@@ -145,13 +145,13 @@ const onClose = () => {
 				label-placement="top"
 				style="padding-right: 15px">
 				<n-form-item :label="$t('dialogue.cli.cluster_name')" path="key" required>
-					<n-input v-model:value="sessionStore.formValue.cluster_name" placeholder="" />
+					<n-input disabled :value="sessionStore.formValue.cluster_name" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.address')" path="db" required>
-					<n-input v-model:value="sessionStore.formValue.address" placeholder="" />
+					<n-input disabled :value="sessionStore.formValue.address" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.port')" path="db" required>
-					<n-input v-model:value="sessionStore.formValue.port" placeholder="" />
+					<n-input disabled :value="sessionStore.formValue.port" placeholder="" />
 				</n-form-item>
 				<n-form-item :label="$t('dialogue.cli.cmds')" path="type" required>
 					<n-input v-model:value="sessionStore.formValue.cmds" placeholder="" />
@@ -169,4 +169,5 @@ const onClose = () => {
 	</n-modal>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+</style>
