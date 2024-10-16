@@ -15,17 +15,17 @@ import {
   isUndefined,
   filter,
 } from "lodash";
-import { useThemeVars, NTag } from "naive-ui";
+import { useThemeVars, NTag, NButton } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
 import usePreferencesStore from "stores/preferences.js";
 import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import useDialogStore from "../../stores/dialog";
 
 // const themeVars = useThemeVars();
-
-// const browserStore = useBrowserStore();
+const dialogStore = useDialogStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
 const preferencesStore = usePreferencesStore();
@@ -67,7 +67,6 @@ const data = reactive({
 //   });
 //   return options;
 // });
-
 const filterNamespaceOptions = computed(() => {
   const options = map(data.namespaceOptions, (item) => ({
     label: item,
@@ -211,11 +210,21 @@ const columns = computed(() => [
     fixed: "left",
     render(row) {
       console.log("row.details.error: ", row.details.error);
-      return h(ErrorExplain, { data: row.details });
+      // return h(ErrorExplain, { data: row.details });
+      return h(NButton, { type: 'primary', size: 'small', onClick: () => debugWithAI(row) }, {default: ()=>"debug with AI"});
       // return row.details || "N/A";
     },
   },
 ]);
+const debugWithAI = (row) => {
+  if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible) {
+    console.log("start to debug with ai: ", row);
+    return
+  }
+  if (!preferencesStore.ai.enable) {
+    dialogStore.openPreferencesDialog("ai");
+  }
+};
 const pagination = {
   pageSize: 10,
 };
