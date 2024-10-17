@@ -217,17 +217,12 @@ const columns = computed(() => [
   },
 ]);
 const debugWithAI = (row) => {
+  if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible) {
+    console.log("start to debug with ai: ", row);
+    return
+  }
   if (!preferencesStore.ai.enable) {
     dialogStore.openPreferencesDialog("ai");
-  }
-
-  while (true) {
-    // $message.success("ai enabled ok")
-    // Check the conditions
-    if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible && status === 'ok') {
-      console.log("start to debug with ai: ", row);
-      break; // Exit the loop when conditions are met
-    }
   }
 };
 const pagination = {
