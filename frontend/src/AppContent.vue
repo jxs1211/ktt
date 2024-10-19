@@ -240,6 +240,11 @@ watch(
             :server="t.name"
             class="flex-item-expand"
           />
+          <!-- Bottom Bar -->
+          <div class="bottom-bar">
+            <!-- You can add content here, like buttons or text -->
+            <span>Bottom Bar Content</span>
+          </div>
         </div>
 
         <!-- server list page -->
@@ -323,5 +328,13 @@ watch(
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
+}
+.bottom-bar {
+  height: 50px; /* Set a fixed height for the bar */
+  background-color: #f0f0f0; /* Change to your desired color */
+  border-top: 1px solid #ccc; /* Optional: Add a border for separation */
+  display: flex;
+  align-items: center; /* Center content vertically */
+  justify-content: center; /* Center content horizontally */
 }
 </style>

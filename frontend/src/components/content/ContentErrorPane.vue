@@ -254,6 +254,7 @@ const analyze = async () => {
     if (!resp.success) {
       data.results = [];
       // fix: mistake the response.msg to response.message
+      console.log("here")
       $message.error(resp.msg);
     } else {
       data.results = resp.data;

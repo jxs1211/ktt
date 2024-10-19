@@ -6,7 +6,7 @@ import { merge } from 'lodash'
  */
 export const themeOverrides = {
     common: {
-        primaryColor: '#D33A31',
+        primaryColor: '#4CAF50', // '#D33A31',
         primaryColorHover: '#FF6B6B',
         primaryColorPressed: '#D5271C',
         primaryColorSuppl: '#FF6B6B',
