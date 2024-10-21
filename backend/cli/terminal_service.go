@@ -56,6 +56,37 @@ func (s *TerminalService) Start(ctx context.Context) {
 // 	return nil
 // }
 
+func (s *TerminalService) StartTerminal2(address, port, cmds string) types.JSResp {
+	err := s.startTerminal2(address, port, cmds)
+	if err != nil {
+		log.Error("start terminal failed", "msg", err)
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) startTerminal2(address, port, cmds string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	runtime2.EventsEmit(s.ctx, "terminal2:url", "")
+	key := s.terminalMapKey2(address, port, cmds)
+	_, ok := s.terminalMap[key]
+	if !ok {
+		srv, err := s.startCliServer(address, port, cmds)
+		if err != nil {
+			return err
+		}
+
+		s.terminalMap[key] = srv
+		log.Info("startTerminal", "new terminal", key, "reason", "start cli server due to server not found in db")
+	}
+	url := fmt.Sprintf("http://%s:%s", address, port)
+	runtime2.EventsEmit(s.ctx, "terminal2:url", url)
+	log.Info("startTerminal", "emit url", url, "save item", key)
+	return nil
+}
+
 func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string) types.JSResp {
 	if len(clusterName) == 0 && len(address) == 0 && len(port) == 0 && len(cmds) == 0 {
 		return types.FailedResp(fmt.Sprintf("all of them must be not empty: %s,%s,%s,%s", clusterName, address, port, cmds))
@@ -75,6 +106,10 @@ func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string)
 
 func (s *TerminalService) terminalMapKey(clusterName, address, port, cmds string) string {
 	return fmt.Sprintf("%s:%s:%s:%s", clusterName, address, port, cmds)
+}
+
+func (s *TerminalService) terminalMapKey2(address, port, cmds string) string {
+	return fmt.Sprintf("%s:%s:%s", address, port, cmds)
 }
 
 func (s *TerminalService) startTerminal(clusterName, address, port, cmds string) error {

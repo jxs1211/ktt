@@ -10,3 +10,5 @@ export function CloseTerminal(arg1:number,arg2:string,arg3:string,arg4:string,ar
 export function Start(arg1:context.Context):Promise<void>;
 
 export function StartTerminal(arg1:string,arg2:string,arg3:string,arg4:string):Promise<types.JSResp>;
+
+export function StartTerminal2(arg1:string,arg2:string,arg3:string):Promise<types.JSResp>;

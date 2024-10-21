@@ -1,7 +1,7 @@
 // ktt/frontend/src/stores/session.js
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
-export const useSessionStore = defineStore('session', {
+export const useSessionStore = defineStore("session", {
   state: () => ({
     results: [],
     formValue: {
@@ -9,9 +9,21 @@ export const useSessionStore = defineStore('session', {
       address: "",
       port: "",
       cmds: "",
-    }
+    },
+    data: [],
   }),
   actions: {
+    // filter from data by address, port, cmds
+    filterData(address, port, cmds) {
+      return data.filter(item => {
+        const addressMatch = item.address === address;
+        const portMatch = item.port === port;
+        const cmdsMatch = cmds.every(cmd => item.cmds.includes(cmd));
+        return addressMatch && portMatch && cmdsMatch;
+    })},
+    saveData(address, port, cmds) {
+
+    },
     setResults(newResults) {
       this.results = newResults;
     },
@@ -20,6 +32,6 @@ export const useSessionStore = defineStore('session', {
     },
     emptyResults() {
       this.results = [];
-    }
+    },
   },
 });
