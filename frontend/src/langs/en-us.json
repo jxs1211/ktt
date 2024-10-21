@@ -191,6 +191,7 @@
   "ribbon": {
     "server": "Server",
     "browser": "Data Browser",
+    "cli": "Cli",
     "log": "Log",
     "wechat_official": "WeChat Official Account",
     "follow_x": "Follow \uD835\uDD4F",

@@ -4,6 +4,7 @@ import { isEmpty } from "lodash";
 import { NIcon, useThemeVars } from "naive-ui";
 import Database from "@/components/icons/Database.vue";
 import Server from "@/components/icons/Server.vue";
+import Cli from "@/components/icons/Cli.vue";
 import IconButton from "@/components/common/IconButton.vue";
 import Config from "@/components/icons/Config.vue";
 import useDialogStore from "stores/dialog.js";
@@ -48,12 +49,19 @@ const menuOptions = computed(() => {
       label: "ribbon.browser",
       key: "browser",
       icon: Database,
-      show: !isEmpty(connectionStore.currentCluster) && connectionStore.switchedClusterOK,
+      show:
+        !isEmpty(connectionStore.currentCluster) &&
+        connectionStore.switchedClusterOK,
     },
     {
       label: "ribbon.server",
       key: "server",
       icon: Server,
+    },
+    {
+      label: "ribbon.cli",
+      key: "cli",
+      icon: Cli,
     },
     // {
     //   label: "ribbon.log",
