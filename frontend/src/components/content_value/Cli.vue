@@ -2,7 +2,7 @@
 import { isEmpty } from "lodash";
 import { onMounted, onUnmounted, ref } from "vue";
 import {
-  CloseTerminal,
+  CloseTerminal2,
   StartTerminal2,
 } from "wailsjs/go/cli/TerminalService.js";
 import { EventsOff, EventsOn } from "wailsjs/runtime/runtime.js";
@@ -60,7 +60,7 @@ const split = (url) => {
 };
 
 const doStartTerminal = async (address, port, cmds) => {
-  console.log("doStartTerminal: ", address, port, cmds);
+  console.log("doStartTerminal2: ", address, port, cmds);
   EventsOn("terminal2:url", (url) => {
     console.log("url: ", url);
     terminalUrl.value = url;
@@ -76,35 +76,27 @@ const doStartTerminal = async (address, port, cmds) => {
     console.error("Failed to start terminal:", error);
   }
 };
-const doCloseTerminal = async (row) => {
-  EventsOff("terminal:url");
+const doCloseTerminal = async (session) => {
+  EventsOff("terminal2:url");
   terminalUrl.value = null;
   console.log(
     "start to tear down: ",
-    terminalUrl.value,
-    row.id,
-    row.address,
-    row.port,
-    row.cmds,
+    session.address,
+    session.port,
+    session.cmds,
   );
-  return await CloseTerminal(
-    row.id,
-    row.cluster_name,
-    row.address,
-    row.port,
-    row.cmds,
-  );
-  // if (!success) {
-  //   console.error("close terminal failed: ", msg)
-  //   return
-  // }
-  // console.log("finished closing terminal");
+  return await CloseTerminal2(session.address, session.port, session.cmds);
 };
 const refreshTerminal = async (address, port) => {};
 const getTerminal = async (address, port) => {};
 const getAllTerminals = async () => {};
 onMounted(() => {
-  console.log("console cli tab onMounted: ", connectionStore.currentCluster);
+  console.log(
+    "cli bar's cli onMounted: ",
+    props.address,
+    props.port,
+    props.cmds,
+  );
   doStartTerminal(props.address, props.port, props.cmds);
 });
 onUnmounted(() => {
