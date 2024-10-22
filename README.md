@@ -15,6 +15,7 @@
 [![X](https://img.shields.io/badge/Twitter-black?logo=x&logoColor=white)](https://twitter.com/Lykin53448)
 
 <strong>A lightweight, user-friendly and cross-platform k8s diagnosing tool.</strong>
+
 </div>
 
 <picture>
@@ -31,33 +32,34 @@
 
 ## Feature
 
-* Super lightweight, built on Webview2, without embedded browsers (Thanks
+- Super lightweight, built on Webview2, without embedded browsers (Thanks
   to [Wails](https://github.com/wailsapp/wails)).
-* Provides visually and user-friendly UI, light and dark themes (Thanks to [Naive UI](https://github.com/tusen-ai/naive-ui)
+- Provides visually and user-friendly UI, light and dark themes (Thanks to [Naive UI](https://github.com/tusen-ai/naive-ui)
   and [IconPark](https://iconpark.oceanengine.com)).
-* Multi-language support ([Need more languages ? Click here to contribute](.github/CONTRIBUTING.md)).
-* Better connection management: supports SSH Tunnel/SSL/Sentinel Mode/Cluster Mode/HTTP proxy/SOCKS5 proxy.
-* Visualize key value operations, CRUD support for Lists, Hashes, Strings, Sets, Sorted Sets, and Streams.
-* Support multiple data viewing format and decode/decompression methods.
-* Use SCAN for segmented loading, making it easy to list millions of keys.
-* Logs list for command operation history.
-* Provides command-line mode.
-* Provides slow logs list.
-* Segmented loading and querying for List/Hash/Set/Sorted Set.
-* Provide value decode/decompression for List/Hash/Set/Sorted Set.
-* Integrate with Monaco Editor
-* Support real-time commands monitoring.
-* Support import/export data.
-* Support publish/subscribe.
-* Support import/export connection profile.
-* Custom data encoder and decoder for value display ([Here are the instructions](https://redis.tinycraft.cc/guide/custom-decoder/)).
+- Multi-language support ([Need more languages ? Click here to contribute](.github/CONTRIBUTING.md)).
+- Better connection management: supports SSH Tunnel/SSL/Sentinel Mode/Cluster Mode/HTTP proxy/SOCKS5 proxy.
+- Visualize key value operations, CRUD support for Lists, Hashes, Strings, Sets, Sorted Sets, and Streams.
+- Support multiple data viewing format and decode/decompression methods.
+- Use SCAN for segmented loading, making it easy to list millions of keys.
+- Logs list for command operation history.
+- Provides command-line mode.
+- Provides slow logs list.
+- Segmented loading and querying for List/Hash/Set/Sorted Set.
+- Provide value decode/decompression for List/Hash/Set/Sorted Set.
+- Integrate with Monaco Editor
+- Support real-time commands monitoring.
+- Support import/export data.
+- Support publish/subscribe.
+- Support import/export connection profile.
+- Custom data encoder and decoder for value display ([Here are the instructions](https://redis.tinycraft.cc/guide/custom-decoder/)).
 
 ## Installation
 
 Available to download for free from [here](https://github.com/tiny-craft/tiny-rdm/releases).
 
 > If you can't open it after installation on macOS, exec the following command then reopen:
-> ``` shell
+>
+> ```shell
 >  sudo xattr -d com.apple.quarantine /Applications/Tiny\ RDM.app
 > ```
 
@@ -65,9 +67,9 @@ Available to download for free from [here](https://github.com/tiny-craft/tiny-rd
 
 ### Prerequisites
 
-* Go (latest version)
-* Node.js >= 16
-* NPM >= 9
+- Go (latest version)
+- Node.js >= 16
+- NPM >= 9
 
 ### Install Wails
 
@@ -99,6 +101,7 @@ npm install
 ```bash
 wails dev
 ```
+
 ## About
 
 ### Wechat Official Account
@@ -109,7 +112,7 @@ wails dev
 
 If this project helpful for you, feel free to buy me a cup of coffee ☕️.
 
-* Wechat Sponsor
+- Wechat Sponsor
 
 <img src="docs/images/wechat_sponsor.jpg" alt="wechat" width="200" />
 
@@ -122,13 +125,20 @@ Cli Tab
 // - From frontend perspective, every time need to start a new session with info includes: address,port,writable,cmd
 // - Backend start a gotty server with info sent by frontend
 // - Cmd:
-// 	-	if create session from Console tab, cdebug to the default worker pod
-//  - if coming from item of diagnose tab
-//     - pod
-// 			-	running container: connect to it directly
-//      - failed container:	return tlsConfig, nil
+// - if create session from Console tab, cdebug to the default worker pod
+// - if coming from item of diagnose tab
+// - pod
+// - running container: connect to it directly
+// - failed container: return tlsConfig, nil
 
+// ai client
+// In preference ai options, check user ai condfiguration using like `func (c *OllamaClient) Configure(config IAIConfig) error {}`
+// the available models in the chat is original from configured models in Preference ai options
+
+- is there is not configured model, pop up preferences dialog to enable one
+// save the configuration to preference.yaml, reload it to map of ai/client_service.go when KT reboot, map goes like `map[string]ai.IAI`, key goes like `provider-model`
+//
 <!-- 
 cdebug exec --namespace=test -it --privileged --image=nixery.dev/shell/vim/ps/tshark/kubectl/zsh pod/my-distroless
 
- -->
+-->

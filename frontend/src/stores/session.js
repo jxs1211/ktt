@@ -14,7 +14,15 @@ export const useSessionStore = defineStore("session", {
   }),
   actions: {
     // filter from data by address, port, cmds
-
+    filterData(address, port, cmds) {
+      return data.filter((item) => {
+        const addressMatch = item.address === address;
+        const portMatch = item.port === port;
+        const cmdsMatch = cmds.every((cmd) => item.cmds.includes(cmd));
+        return addressMatch && portMatch && cmdsMatch;
+      });
+    },
+    saveData(address, port, cmds) {},
     setResults(newResults) {
       this.results = newResults;
     },

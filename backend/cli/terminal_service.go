@@ -163,6 +163,28 @@ func (s *TerminalService) startCliServer(address, port, cmds string) (*CliServer
 	return srv, nil
 }
 
+func (s *TerminalService) CloseTerminal2(address, port, cmds string) types.JSResp {
+	err := s.closeTerminal2(address, port, cmds)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) closeTerminal2(address, port, cmds string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	key := s.terminalMapKey2(address, port, cmds)
+	if ter, ok := s.terminalMap[key]; ok {
+		if err := ter.Close(); err != nil {
+			return err
+		}
+		delete(s.terminalMap, key)
+	}
+	log.Info("CloseTerminal", "result", "done", "deleted item", key)
+	return nil
+}
+
 func (s *TerminalService) CloseTerminal(id int64, clusterName, address, port, cmds string) types.JSResp {
 	err := s.closeTerminal(id, clusterName, address, port, cmds)
 	if err != nil {

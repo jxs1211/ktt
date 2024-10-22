@@ -10,6 +10,10 @@ export function CloseTerminal(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['cli']['TerminalService']['CloseTerminal'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function CloseTerminal2(arg1, arg2, arg3) {
+  return window['go']['cli']['TerminalService']['CloseTerminal2'](arg1, arg2, arg3);
+}
+
 export function Start(arg1) {
   return window['go']['cli']['TerminalService']['Start'](arg1);
 }
