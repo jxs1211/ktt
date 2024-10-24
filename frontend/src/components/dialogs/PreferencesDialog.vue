@@ -13,7 +13,11 @@ import useDialog from "stores/dialog.js";
 import usePreferencesStore from "stores/preferences.js";
 import { computed, h, ref, watchEffect, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { BrowserOpenURL } from "wailsjs/runtime/runtime.js";
+// import { BrowserOpenURL } from "wailsjs/runtime/runtime.js";
+// import AIProvider from "@/objects/aiProvider.js";
+// import { AIProvider } from "wailsjs/go/models";
+import { ai } from "wailsjs/go/models";
+import { Configure } from "wailsjs/go/ai/ClientService.js";
 
 const prefStore = usePreferencesStore();
 const modelPlaceholder = ref("Please select a model");
@@ -243,7 +247,28 @@ const openDecodeHelp = () => {
   BrowserOpenURL(helpUrl);
 };
 
+function buildAIProvider() {
+  const provider = new ai.AIProvider();
+  if (aiProviderTab.value === "localai") {
+    provider.name = "localai";
+    provider.model = localaiModel.value;
+    provider.baseURL = localaiBaseUrl.value;
+  } else if (aiProviderTab.value === "openai") {
+    provider.name = "openai";
+    provider.model = openaiModel.value;
+    provider.password = openaiApiKey.value;
+  }
+  return provider;
+}
+
 const onSavePreferences = async () => {
+  const provider = buildAIProvider();
+  const resp = await Configure(provider);
+  console.log(resp);
+  if (!resp.success) {
+    $message.error(resp.msg);
+    return;
+  }
   const success = await prefStore.savePreferences();
   if (success) {
     if (prefStore.ai.enable) {

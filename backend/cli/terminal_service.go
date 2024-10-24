@@ -212,7 +212,7 @@ func (s *TerminalService) closeTerminal(id int64, clusterName, address, port, cm
 	return nil
 }
 
-func (s *TerminalService) CloseAllTerminals() types.JSResp {
+func (s *TerminalService) StopAll() types.JSResp {
 	err := s.closeAllTerminals()
 	if err != nil {
 		return types.FailedResp(err.Error())
@@ -234,6 +234,6 @@ func (s *TerminalService) closeAllTerminals() error {
 	if len(errs) != 0 {
 		return errors.Join(errs...)
 	}
-	s.terminalMap = map[string]terminal{}
+	s.terminalMap = nil
 	return nil
 }

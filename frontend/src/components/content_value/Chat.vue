@@ -32,29 +32,31 @@
         />
       </div>
     </div>
-    <div class="chat-input" ref="chatInputRef">
-      <div class="input-wrapper">
-        <n-input
-          ref="inputRef"
-          v-model:value="inputMessage"
-          type="textarea"
-          placeholder="Add context"
-          @keydown.enter.prevent="handleEnterKey"
-          @input="adjustTextareaHeight"
-        />
-      </div>
-      <div class="command-panel">
-        <div class="left-controls">
-          <n-select
-            v-model:value="selectedModel"
-            :options="modelOptions"
-            size="tiny"
-            filterable
-            clearable
-            :render-label="renderModelLabel"
-            class="model-select"
+    <div class="chat-input-wrapper">
+      <div class="chat-input" ref="chatInputRef">
+        <div class="input-wrapper">
+          <n-input
+            ref="inputRef"
+            v-model:value="inputMessage"
+            type="textarea"
+            placeholder="Add context"
+            @keydown.enter.prevent="handleEnterKey"
+            @input="adjustTextareaHeight"
           />
         </div>
+      </div>
+      <div class="command-panel">
+        <!-- <div class="left-controls"> -->
+        <n-select
+          v-model:value="selectedModel"
+          :options="modelOptions"
+          size="tiny"
+          filterable
+          clearable
+          :render-label="renderModelLabel"
+          class="model-select"
+        />
+        <!-- </div> -->
       </div>
     </div>
   </div>
@@ -199,6 +201,9 @@ onMounted(() => {
   border-left: 1px solid var(--n-border-color);
   box-sizing: border-box;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Added this line */
 }
 
 .chat-header {
@@ -212,53 +217,37 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.chat-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--n-text-color);
-  line-height: 40px;
-}
-
-.header-controls {
-  display: flex;
-  gap: 4px;
-  line-height: 40px;
-}
-
 .message-display {
-  padding: 16px;
-  overflow-y: auto;
   flex: 1;
+  overflow-y: auto;
+  padding: 16px;
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: 96px; /* Added this line */
 }
 
-.message {
-  margin-bottom: 12px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  background-color: rgba(255, 255, 255, 0.1); /* Light grey with transparency */
-  padding: 12px;
-  border-radius: 8px;
-}
-
-.text-message {
-  color: #ffffff;
-  line-height: 1.6;
-  word-break: break-word;
+.chat-input-wrapper {
+  position: absolute; /* Changed from relative to absolute */
+  bottom: 0; /* Added this line */
+  left: 0; /* Added this line */
+  right: 0; /* Added this line */
+  min-height: 96px;
+  max-height: 440px;
+  border-top: 1px solid var(--n-border-color);
+  display: flex;
+  flex-direction: column;
+  background-color: #0000; /* Added this line */
+  z-index: 2; /* Added this line */
 }
 
 .chat-input {
-  padding: 12px;
-  border-top: 1px solid var(--n-border-color);
+  padding: 12px 12px 40px 12px; /* Modified bottom padding */
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  position: relative;
-  min-height: 96px; /* Changed from fixed height to min-height */
-  max-height: 440px; /* Max height of textarea (400px) + command panel (40px) */
-  overflow-y: auto; /* Add scroll if content exceeds max-height */
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .input-wrapper {
@@ -284,14 +273,14 @@ onMounted(() => {
 
 .command-panel {
   position: absolute;
-  bottom: 12px;
+  bottom: 8px; /* Changed from 12px to 8px */
   left: 12px;
   right: 12px;
-  height: 28px; /* Adjust based on your n-select height */
+  height: 28px;
   display: flex;
-  align-items: center; /* Center vertically */
+  align-items: center;
   justify-content: space-between;
-  z-index: 1;
+  z-index: 3; /* Added this line */
 }
 
 .left-controls {
@@ -306,25 +295,23 @@ onMounted(() => {
   min-width: 100px;
 }
 
-/* Ensure the select fits within the command panel */
 .model-select :deep(.n-base-selection) {
   height: var(--select-height);
   line-height: var(--select-height);
   font-size: 12px;
   padding: 0 4px;
+  background-color: var(--n-color); /* Added this line */
+  border-color: var(--n-border-color); /* Added this line */
 }
 
-/* Remove padding from the inner content */
 .model-select :deep(.n-base-selection-label) {
   padding: 0;
 }
 
-/* Adjust the icon color */
 .model-select :deep(.n-icon) {
   color: var(--n-text-color-2);
 }
 
-/* Make the dropdown arrow smaller */
 .model-select :deep(.n-base-suffix) {
   font-size: 12px;
 }

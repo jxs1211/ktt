@@ -15,6 +15,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	runtime2 "github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"ktt/backend/ai"
 	"ktt/backend/cli"
 	"ktt/backend/client"
 	"ktt/backend/consts"
@@ -46,6 +47,7 @@ func main() {
 	clientSvc := client.NewClientService()
 	watcherManager := watch.NewWatcherManager()
 	terminalSvc := cli.NewTerminalService(sqlDB)
+	aiClientSvc := ai.NewClientService()
 	// Create an instance of the app structure
 	sysSvc := services.System()
 	connSvc := services.Connection()
@@ -86,6 +88,7 @@ func main() {
 		BackgroundColour: options.NewRGBA(27, 38, 54, 0),
 		StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
+			aiClientSvc.SetContext(ctx)
 			dbSvc.Start(ctx)
 			clientSvc.Start(ctx)
 			watcherManager.Start(ctx)
@@ -116,8 +119,10 @@ func main() {
 			cliSvc.CloseAll()
 			monitorSvc.StopAll()
 			pubsubSvc.StopAll()
+			terminalSvc.StopAll()
 		},
 		Bind: []interface{}{
+			aiClientSvc,
 			dbSvc,
 			clientSvc,
 			sysSvc,
