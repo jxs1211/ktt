@@ -15,17 +15,17 @@ import {
   isUndefined,
   filter,
 } from "lodash";
-import { useThemeVars, NTag } from "naive-ui";
+import { useThemeVars, NTag, NButton } from "naive-ui";
 import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
 import usePreferencesStore from "stores/preferences.js";
 import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import useDialogStore from "../../stores/dialog";
 
 // const themeVars = useThemeVars();
-
-// const browserStore = useBrowserStore();
+const dialogStore = useDialogStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
 const preferencesStore = usePreferencesStore();
@@ -67,7 +67,6 @@ const data = reactive({
 //   });
 //   return options;
 // });
-
 const filterNamespaceOptions = computed(() => {
   const options = map(data.namespaceOptions, (item) => ({
     label: item,
@@ -211,11 +210,25 @@ const columns = computed(() => [
     fixed: "left",
     render(row) {
       console.log("row.details.error: ", row.details.error);
-      return h(ErrorExplain, { data: row.details });
+      // return h(ErrorExplain, { data: row.details });
+      return h(
+        NButton,
+        { type: "primary", size: "small", onClick: () => debugWithAI(row) },
+        { default: () => "debug with AI" },
+      );
       // return row.details || "N/A";
     },
   },
 ]);
+const debugWithAI = (row) => {
+  if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible) {
+    console.log("start to debug with ai: ", row);
+    return;
+  }
+  if (!preferencesStore.ai.enable) {
+    dialogStore.openPreferencesDialog("ai");
+  }
+};
 const pagination = {
   pageSize: 10,
 };
@@ -245,13 +258,14 @@ const analyze = async () => {
     if (!resp.success) {
       data.results = [];
       // fix: mistake the response.msg to response.message
+      console.log("here");
       $message.error(resp.msg);
     } else {
       data.results = resp.data;
-      if (!isEmpty(data.selectedResourceName)){
+      if (!isEmpty(data.selectedResourceName)) {
         data.results = filter(data.results, (ele) => {
-          const [ _, name ] = split(ele.name, "/")
-          return name === data.selectedResourceName
+          const [_, name] = split(ele.name, "/");
+          return name === data.selectedResourceName;
         });
       }
       if (isEmpty(data.results)) {
@@ -273,20 +287,20 @@ const refreshFiltersOptions = async () => {
     await nextTick();
     const resp = await connectionStore.getAvailableResources();
     if (!resp.success) {
-      console.warn("get available filtered resources failed: ", resp.msg)
-      return
+      console.warn("get available filtered resources failed: ", resp.msg);
+      return;
     }
     data.options = resp.data;
     console.log("data.options: ", data.options);
-    const resp2 = await connectionStore.getNamespaces()
+    const resp2 = await connectionStore.getNamespaces();
     if (!resp2.success) {
-      console.warn("get namespaces failed: ", resp2.msg)
+      console.warn("get namespaces failed: ", resp2.msg);
     }
     data.namespaceOptions = resp2.data;
     console.log("data.namespaceOptions: ", data.namespaceOptions);
   } finally {
-    data.filterResourceLoading = false
-    data.filterNamespaceLoading = false
+    data.filterResourceLoading = false;
+    data.filterNamespaceLoading = false;
     await nextTick();
     // tableRef.value?.scrollTo({ position: "bottom" });
   }
@@ -329,7 +343,7 @@ const onSelectedItemUpdate = (keys) => {
   console.log("selectedUpdate: ", data.selectedOptions);
 };
 const onSelectedNSItemUpdate = (key) => {
-  console.log("---->", typeof(key), key)
+  console.log("---->", typeof key, key);
   data.selectedNSOption = key;
 };
 
@@ -381,7 +395,11 @@ watch(
         />
       </n-form-item>
       <n-form-item :label="$t('error.filter_resource_name')">
-        <n-input v-model:value="data.selectedResourceName" type="text" placeholder="resource name" />
+        <n-input
+          v-model:value="data.selectedResourceName"
+          type="text"
+          placeholder="resource name"
+        />
       </n-form-item>
       <!-- <n-form-item :label="$t('error.filter_keyword')">
         <n-input v-model:value="data.filters" clearable placeholder="" />

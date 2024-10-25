@@ -11,7 +11,7 @@ import { find, map, sortBy, get } from "lodash";
 import { NButton, NEllipsis, NIcon, NSpace, NTooltip } from "naive-ui";
 import useDialog from "stores/dialog.js";
 import usePreferencesStore from "stores/preferences.js";
-import { computed, h, ref, watchEffect, watch } from "vue";
+import { computed, h, ref, watchEffect, watch, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 // import { BrowserOpenURL } from "wailsjs/runtime/runtime.js";
 // import AIProvider from "@/objects/aiProvider.js";
@@ -98,7 +98,11 @@ const keyOptions = computed(() => {
   }));
   return sortBy(opts, (o) => o.value);
 });
-
+const validateUrl = () => {
+  // Regular expression for URL validation
+  const urlPattern = /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(:\d+)?(\/.*)?$/i;
+  urlValid = urlPattern.test(localaiBaseUrl);
+};
 const decoderList = computed(() => {
   const decoder = prefStore.decoder || [];
   const list = [];
@@ -294,6 +298,7 @@ const localaiModel = computed({
     }
   },
 });
+const urlValid = reactive(false);
 const localaiBaseUrl = computed({
   get: () => prefStore.getBackend("localai")?.baseUrl || "",
   set: (value) => {
@@ -521,7 +526,7 @@ const openaiApiKey = computed({
                   <n-form-item-gi
                     :label="$t('preferences.ai.providers.localai.base_url')"
                   >
-                    <n-input v-model:value="localaiBaseUrl" type="text" />
+                    <n-input v-model:value="localaiBaseUrl" type="text"/>
                   </n-form-item-gi>
                 </n-grid>
               </n-tab-pane>

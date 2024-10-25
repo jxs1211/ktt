@@ -241,7 +241,7 @@ func (s *ClientService) analyze(
 	}
 	viper.Set("kubecontext", cluster)
 	viper.Set("kubeconfig", kubeconfigPath)
-	logutil.Info("explain: ", "value", explain)
+	logutil.Info("analyze", "explain", explain)
 	if explain {
 		if len(baseURL) <= 0 && aiBackend == "localai" {
 			return nil, errors.New("baseURL is required for localai")
@@ -280,6 +280,7 @@ func (s *ClientService) analyze(
 	}
 	if explain {
 		if err := analyzer.GetAIResults("json", anonymize); err != nil {
+			logutil.Info("analyze", "getAIResults err: ", err)
 			return nil, err
 		}
 	}
@@ -314,6 +315,7 @@ func parseDetail(results []common.Result) []Result {
 			ParentObject: result.ParentObject,
 		})
 	}
+	logutil.Info("parseDetail: ", res)
 	return res
 }
 
