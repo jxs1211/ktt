@@ -24,7 +24,7 @@
           }
         "
         :enableChat="true"
-        :initPrompt="'init-prompt'"
+        :initPrompt="initPrompt"
         :address="session.address"
         :port="session.port"
         :cmds="session.cmds"
@@ -50,6 +50,7 @@ import useConnectionStore from "stores/connections.js";
 import { useSessionStore } from "@/stores/session.js";
 import { getPlatform } from "@/utils/platform.js";
 
+const initPrompt = ref("Why is the sky blue?")
 const chatWidth = ref(300); // Initial width of the chat component
 const sessionStore = useSessionStore();
 const dialogStore = useDialogStore();

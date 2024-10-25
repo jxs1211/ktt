@@ -138,6 +138,10 @@ Cli Tab
 - is there is not configured model, pop up preferences dialog to enable one
 // save the configuration to preference.yaml, reload it to map of ai/client_service.go when KT reboot, map goes like `map[string]ai.IAI`, key goes like `provider-model`
 //
+todo:
+- load and configure saved ai models when bootup app for ai client(async loadPreference)
+- validate and cache all supported ai model providers when saving prefernece at PreferenceDialog
+- sync validated ai model providers to chat input's model options
 <!-- 
 cdebug exec --namespace=test -it --privileged --image=nixery.dev/shell/vim/ps/tshark/kubectl/zsh pod/my-distroless
 

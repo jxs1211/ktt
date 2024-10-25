@@ -21,8 +21,8 @@
       </div>
     </div>
     <div class="message-display flex-item">
-      <div v-for="message in messages" :key="message.id" class="message">
-        <div v-if="message.type === 'text'" class="text-message">
+      <div v-for="message in chatMessages" :key="message.id" class="message">
+        <div v-if="message.type === 'text' || message.type === 'user' || message.type === 'ai'" class="text-message">
           {{ message.content }}
         </div>
         <code-block
@@ -30,6 +30,9 @@
           :code="message.content"
           :language="message.language"
         />
+        <div v-else-if="message.type === 'system'" class="system-message">
+          {{ message.content }}
+        </div>
       </div>
     </div>
     <div class="chat-input-wrapper">
@@ -63,11 +66,14 @@
 </template>
 
 <script setup>
-import { ref, h, nextTick, onMounted } from "vue";
+import { EventsOff, EventsOn } from 'wailsjs/runtime/runtime.js';
+import { ref, h, nextTick, onMounted, onUnmounted, computed } from "vue";
 import { NButton, NIcon, NInput, NSelect } from "naive-ui";
 import { CaretUp, Add, Time, Close, ChevronDown } from "@vicons/ionicons5";
 import CodeBlock from "./CodeBlock.vue";
 import { useThemeVars } from "naive-ui";
+import { GetCompletion2 } from "wailsjs/go/ai/ClientService.js";
+import usePreferencesStore from '../../stores/preferences';
 
 /**
  * Resizeable component wrapper
@@ -75,8 +81,19 @@ import { useThemeVars } from "naive-ui";
 const themeVars = useThemeVars();
 const messages = ref([]);
 const inputMessage = ref("");
+const chatMessages = ref([])  // New ref to hold all chat messages
+const isWaiting = ref(false);  // New ref to track waiting state
+const props = defineProps({
+  session: {
+    type: String,
+    required: true,
+  }
+});
 // Model selection
-const selectedModel = ref("cursor-small");
+const selectedModel = ref("llama3.2");
+const supportedModelsOptions = computed(() => {
+
+})
 const modelOptions = [
   {
     label: "cursor-small",
@@ -162,20 +179,47 @@ const handleEnterKey = (e) => {
   }
 };
 
-// Modify the sendMessage function to reset the textarea height
-const sendMessage = () => {
-  console.log("Sending message:", inputMessage.value);
-  if (inputMessage.value.trim()) {
-    messages.value.push({
-      id: Date.now(),
-      type: "text",
-      content: inputMessage.value.trim(),
+const sendMessage = async () => {
+  if (inputMessage.value.trim() === "") return;
+  // Add user message to chat
+  chatMessages.value.push({
+    id: Date.now(),
+    type: 'user',
+    content: inputMessage.value.trim()
+  });
+
+  const userMessage = inputMessage.value.trim();
+  inputMessage.value = "";
+
+  // Show waiting message
+  isWaiting.value = true;
+  chatMessages.value.push({
+    id: Date.now() + 1,
+    type: 'system',
+    content: 'Waiting for response...'
+  });
+  try {
+    // Send message to backend
+    await GetCompletion2(props.session, selectedModel.value, userMessage);
+    // Note: We don't handle the response here anymore
+    // The response will be handled by the event listener
+  } catch (error) {
+    console.error("Get completion failed: ", error);
+    // Remove waiting message
+    chatMessages.value = chatMessages.value.filter(msg => msg.type !== 'system');
+    // Add error message to chat
+    chatMessages.value.push({
+      id: Date.now() + 2,
+      type: 'system',
+      content: 'Error: Unable to get response'
     });
-    inputMessage.value = "";
-    nextTick(() => {
-      adjustTextareaHeight();
-    });
+  } finally {
+    isWaiting.value = false;
   }
+
+  nextTick(() => {
+    adjustTextareaHeight();
+  });
 };
 const startNewChat = () => {
   messages.value = [];
@@ -188,8 +232,34 @@ const showHistory = () => {
 const closeChat = () => {
   // Implement close logic
 };
+const eventName = `ai:chat:${props.session}`;
 onMounted(() => {
   adjustTextareaHeight();
+  EventsOn(eventName, (data) => {
+    console.log("on " + eventName + " : ", data);
+    // Remove waiting message
+    chatMessages.value = chatMessages.value.filter(msg => msg.type !== 'system');
+
+    if (typeof data === 'string' && data.startsWith('Error:')) {
+      // Handle error case
+      chatMessages.value.push({
+        id: Date.now(),
+        type: 'system',
+        content: data
+      });
+    } else {
+      // Handle success case
+      chatMessages.value.push({
+        id: Date.now(),
+        type: 'ai',
+        content: data
+      });
+    }
+    isWaiting.value = false;
+  });
+});
+onUnmounted(() => {
+  EventsOff(eventName);
 });
 </script>
 
@@ -319,5 +389,26 @@ onMounted(() => {
 .model-label {
   font-size: 12px;
   color: var(--n-text-color-2);
+}
+
+.system-message {
+  font-style: italic;
+  color: var(--n-text-color-3);
+}
+
+.user-message {
+  text-align: right;
+  background-color: var(--n-color-info-light);
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-message {
+  text-align: left;
+  background-color: var(--n-color-success-light);
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 </style>

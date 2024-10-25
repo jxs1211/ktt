@@ -14,6 +14,10 @@ export function GetCompletion(arg1, arg2) {
   return window['go']['ai']['ClientService']['GetCompletion'](arg1, arg2);
 }
 
+export function GetCompletion2(arg1, arg2, arg3) {
+  return window['go']['ai']['ClientService']['GetCompletion2'](arg1, arg2, arg3);
+}
+
 export function SetContext(arg1) {
   return window['go']['ai']['ClientService']['SetContext'](arg1);
 }

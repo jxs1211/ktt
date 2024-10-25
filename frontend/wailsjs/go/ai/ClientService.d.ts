@@ -10,4 +10,6 @@ export function GetAIProviders():Promise<types.JSResp>;
 
 export function GetCompletion(arg1:string,arg2:string):Promise<types.JSResp>;
 
+export function GetCompletion2(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function SetContext(arg1:context.Context):Promise<void>;

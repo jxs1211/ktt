@@ -2,6 +2,7 @@
 import IconButton from "@/components/common/IconButton.vue";
 import Refresh from "@/components/icons/Refresh.vue";
 import ErrorExplain from "@/components/content_value/ErrorExplain.vue";
+import Terminal from "@/components/content/Terminal.vue";
 import {
   capitalize,
   includes,
@@ -223,6 +224,9 @@ const columns = computed(() => [
 const debugWithAI = (row) => {
   if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible) {
     console.log("start to debug with ai: ", row);
+    // popup a component called terminalDialog from buttom to half height of the ContentErrorPane with embeded Terminal.vue,
+    // and the component can be displayed over the xxx, the part is not cover by the com can be operated
+    // like before, and the component can be fullscreen over ContentErrorPane, and can be mi
     return;
   }
   if (!preferencesStore.ai.enable) {
@@ -251,7 +255,10 @@ const analyze = async () => {
       backend.baseUrl,
       data.selectedOptions,
       data.selectedNSOption,
-      preferencesStore.ai.explain,
+      // set to false, by far the design is to debug issue 
+      // by fetching AI sepeartely using backend GetCompletion API
+      // preferencesStore.ai.explain,
+      false,
       preferencesStore.ai.aggregate,
       false,
     );

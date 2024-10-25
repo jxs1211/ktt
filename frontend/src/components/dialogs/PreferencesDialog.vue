@@ -25,13 +25,17 @@ const prevPreferences = ref({});
 
 const localaiModelOptions = computed(() => [
   {
-    value: "llama2",
-    label: "llama2",
+    value: "llama3.2",
+    label: "llama3.2",
   },
-  {
-    value: "llama3",
-    label: "llama3",
-  },
+  // {
+  //   value: "llama3",
+  //   label: "llama3",
+  // },
+  // {
+  //   value: "llama3.2:latest",
+  //   label: "llama3.2:latest"
+  // }
 ]);
 const openaiModelOptions = computed(() => [
   {
@@ -290,7 +294,7 @@ const onClose = () => {
   dialogStore.closePreferencesDialog();
 };
 const localaiModel = computed({
-  get: () => prefStore.getBackend("localai")?.model || "",
+  get: () => prefStore.getBackend("localai")?.model,
   set: (value) => {
     const backend = prefStore.getBackend("localai");
     if (backend) {

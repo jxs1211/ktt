@@ -7,7 +7,7 @@
       :max-size="800"
       class="flex-item"
     >
-      <Chat class="chat-component" />
+      <Chat :session="sessionString" class="chat-component" />
     </resizeable-wrapper>
     <Cli
       ref="cliRef"
@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Cli from "@/components/content_value/Cli.vue";
 import Chat from "@/components/content_value/Chat.vue";
 import ResizeableWrapper from "@/components/common/ResizeableWrapper.vue";
@@ -50,7 +50,9 @@ const props = defineProps({
 
 const chatWidth = ref(300);
 const cliRef = ref(null);
-
+const sessionString = computed(() => {
+  return `${props.address}:${props.port}:${props.cmds}`;
+});
 const doCloseTerminal = async () => {
   return await cliRef.value?.doCloseTerminal({
     address: props.address,
