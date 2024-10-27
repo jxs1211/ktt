@@ -142,7 +142,18 @@ todo:
 - load and configure saved ai models when bootup app for ai client(async loadPreference)
 - validate and cache all supported ai model providers when saving prefernece at PreferenceDialog
 - sync validated ai model providers to chat input's model options
-<!-- 
+
+
+Let's combine the two components @ContentErrorPane.vue and @CliBar.vue together, here is the thing:
+- when I click btn debugWithAI, the @CliBar.vue will popup from bottom to the half height of the tab pane
+- The clicked item's info will sent as  init prompt to the chat box
+- After the response msg is received, there are 2 options(Copy and Apply) can be shown up at the top right of the msg box when the mouse is hoved on any place on the response msg box, I can copy it and paste to the right terminal to be executed. And I can also click Apply btn to execute the command in the response box in the right terminal
+- The popuped CliBar is draggable, and can be closed by clicking the close button on the top right of the CliBar, and when it's displayed, the data-table in @ContentErrorPane.vue is also visible(include the pagination on the bottom right), I can opreate it normally
+
+Let's continue to implement @CliBar.vue 's functionality:
+- I want the content of the chat box and the terminal can be keeped, when I swith back from others tab to current tab, so that I can continue to operate in the chat and terminal with previous context
+
+!-- 
 cdebug exec --namespace=test -it --privileged --image=nixery.dev/shell/vim/ps/tshark/kubectl/zsh pod/my-distroless
 
 -->
