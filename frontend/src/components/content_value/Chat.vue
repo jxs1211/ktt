@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-container flex-box-v">
+  <div class="chat-container">
     <div class="chat-header">
       <div class="chat-title">CHAT</div>
       <div class="header-controls">
@@ -20,36 +20,31 @@
         </n-button>
       </div>
     </div>
-    <div class="message-display flex-item">
-      <div v-for="message in chatMessages" :key="message.id" class="message">
-        <div v-if="message.type === 'text' || message.type === 'user' || message.type === 'ai'" class="text-message">
+    <div class="message-display flex-item" ref="messageDisplayRef">
+      <div v-for="message in chatMessages" :key="message.id" :class="['message', message.type]">
+        <!-- <div class="message-content" v-if="message.content.trim()">
           {{ message.content }}
-        </div>
-        <code-block
-          v-else-if="message.type === 'code'"
-          :code="message.content"
-          :language="message.language"
-        />
-        <div v-else-if="message.type === 'system'" class="system-message">
+        </div> -->
+        <template v-if="message.content.trim()">
           {{ message.content }}
-        </div>
+        </template>
+        <n-button text size="tiny" @click="copyMessage(message.content)" class="copy-button">
+          Copy
+        </n-button>
       </div>
     </div>
-    <div class="chat-input-wrapper">
-      <div class="chat-input" ref="chatInputRef">
-        <div class="input-wrapper">
-          <n-input
-            ref="inputRef"
-            v-model:value="inputMessage"
-            type="textarea"
-            placeholder="Add context"
-            @keydown.enter.prevent="handleEnterKey"
-            @input="adjustTextareaHeight"
-          />
-        </div>
-      </div>
+    <div class="chat-input-container">
+      <n-input
+        ref="inputRef"
+        v-model:value="inputMessage"
+        type="textarea"
+        placeholder="Add context"
+        :disabled="isWaiting"
+        @keydown.enter.prevent="handleEnterKey"
+        @input="adjustTextareaHeight"
+        class="chat-input"
+      />
       <div class="command-panel">
-        <!-- <div class="left-controls"> -->
         <n-select
           v-model:value="selectedModel"
           :options="modelOptions"
@@ -59,7 +54,6 @@
           :render-label="renderModelLabel"
           class="model-select"
         />
-        <!-- </div> -->
       </div>
     </div>
   </div>
@@ -67,13 +61,18 @@
 
 <script setup>
 import { EventsOff, EventsOn } from 'wailsjs/runtime/runtime.js';
-import { ref, h, nextTick, onMounted, onUnmounted, computed } from "vue";
+import { watch, ref, h, nextTick, onMounted, onUnmounted, computed } from "vue";
 import { NButton, NIcon, NInput, NSelect } from "naive-ui";
 import { CaretUp, Add, Time, Close, ChevronDown } from "@vicons/ionicons5";
 import CodeBlock from "./CodeBlock.vue";
 import { useThemeVars } from "naive-ui";
 import { GetCompletion2 } from "wailsjs/go/ai/ClientService.js";
 import usePreferencesStore from '../../stores/preferences';
+// import hljs from 'highlight.js';
+
+// hljs.configure({
+//   languages: ['go', 'javascript', 'python', 'bash', 'json'], // add the languages you need
+// });
 
 /**
  * Resizeable component wrapper
@@ -96,15 +95,15 @@ const supportedModelsOptions = computed(() => {
 })
 const modelOptions = [
   {
-    label: "cursor-small",
-    value: "cursor-small",
+    label: "llama3.2",
+    value: "llama3.2",
     icon: "cursor-icon", // You might want to replace this with actual icon
   },
-  {
-    label: "cursor-medium",
-    value: "cursor-medium",
-    icon: "cursor-icon",
-  },
+  // {
+  //   label: "cursor-medium",
+  //   value: "cursor-medium",
+  //   icon: "cursor-icon",
+  // },
 ];
 
 // Mention selection
@@ -139,23 +138,10 @@ const chatInputRef = ref(null);
 const inputRef = ref(null);
 
 const adjustTextareaHeight = () => {
-  if (inputRef.value && chatInputRef.value) {
+  if (inputRef.value) {
     const textarea = inputRef.value.$el.querySelector("textarea");
-    const chatInput = chatInputRef.value;
-
-    // Reset heights
-    textarea.style.height = "auto";
-
-    // Calculate new heights
-    const newTextareaHeight = Math.min(
-      Math.max(textarea.scrollHeight, 60),
-      400,
-    ); // Increased max height to 400px
-    const newChatInputHeight = newTextareaHeight + 40; // 40px for command panel
-
-    // Apply new heights
-    textarea.style.height = `${newTextareaHeight}px`;
-    chatInput.style.height = `${newChatInputHeight}px`;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 60), 200)}px`;
   }
 };
 
@@ -180,7 +166,10 @@ const handleEnterKey = (e) => {
 };
 
 const sendMessage = async () => {
-  if (inputMessage.value.trim() === "") return;
+  if (inputMessage.value.trim() === "") {
+    console.log("input msg is empty")
+    return;
+  }
   // Add user message to chat
   chatMessages.value.push({
     id: Date.now(),
@@ -193,11 +182,7 @@ const sendMessage = async () => {
 
   // Show waiting message
   isWaiting.value = true;
-  chatMessages.value.push({
-    id: Date.now() + 1,
-    type: 'system',
-    content: 'Waiting for response...'
-  });
+
   try {
     // Send message to backend
     await GetCompletion2(props.session, selectedModel.value, userMessage);
@@ -233,6 +218,19 @@ const closeChat = () => {
   // Implement close logic
 };
 const eventName = `ai:chat:${props.session}`;
+const messageDisplayRef = ref(null);
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messageDisplayRef.value) {
+      messageDisplayRef.value.scrollTop = messageDisplayRef.value.scrollHeight;
+    }
+  });
+};
+
+// Watch for changes in chatMessages and scroll to bottom
+watch(() => chatMessages.value.length, scrollToBottom);
+
 onMounted(() => {
   adjustTextareaHeight();
   EventsOn(eventName, (data) => {
@@ -240,7 +238,7 @@ onMounted(() => {
     // Remove waiting message
     chatMessages.value = chatMessages.value.filter(msg => msg.type !== 'system');
 
-    if (typeof data === 'string' && data.startsWith('Error:')) {
+    if (typeof data === 'string' && data.startsWith('systemError:')) {
       // Handle error case
       chatMessages.value.push({
         id: Date.now(),
@@ -256,27 +254,45 @@ onMounted(() => {
       });
     }
     isWaiting.value = false;
+    scrollToBottom();
   });
 });
 onUnmounted(() => {
   EventsOff(eventName);
 });
+// Watch isWaiting for changes
+watch(isWaiting, (newValue) => {
+  console.log('isWaiting changed:', newValue);
+});
+
+const copyMessage = (content) => {
+  navigator.clipboard.writeText(content).then(() => {
+    // You can use a toast notification here if you have one
+    console.log('Message copied to clipboard');
+  }).catch(err => {
+    console.error('Failed to copy message: ', err);
+  });
+};
+
 </script>
 
 <style scoped>
 .chat-container {
+  --chat-background-color: #c3baba00; /* Define the variable here */
   height: 100%;
   width: 100%;
-  background-color: #0000;
-  border-left: 1px solid var(--n-border-color);
-  box-sizing: border-box;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  position: relative; /* Added this line */
+  background-color: var(--chat-background-color); /* Use the variable */
+  border-left: 1px solid var(--n-border-color);
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  user-select: text; /* Explicitly allow text selection */
 }
 
 .chat-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -288,81 +304,46 @@ onUnmounted(() => {
 }
 
 .message-display {
-  flex: 1;
+  flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
+  padding-bottom: 120px; /* Increased to give more space for the input */
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 96px; /* Added this line */
+  cursor: text; /* Show text cursor to indicate selectability */
 }
 
-.chat-input-wrapper {
-  position: absolute; /* Changed from relative to absolute */
-  bottom: 0; /* Added this line */
-  left: 0; /* Added this line */
-  right: 0; /* Added this line */
-  min-height: 96px;
-  max-height: 440px;
+.chat-input-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background-color: var(--chat-background-color);
   border-top: 1px solid var(--n-border-color);
   display: flex;
   flex-direction: column;
-  background-color: #0000; /* Added this line */
-  z-index: 2; /* Added this line */
 }
 
 .chat-input {
-  padding: 12px 12px 40px 12px; /* Modified bottom padding */
   width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  flex-grow: 1;
+  margin-bottom: 8px;
 }
 
-.input-wrapper {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 40px; /* Space for command panel */
-}
-
-.input-wrapper :deep(.n-input) {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.input-wrapper :deep(.n-input__textarea-el) {
-  flex-grow: 1;
+.chat-input :deep(.n-input__textarea-el) {
   min-height: 60px;
-  max-height: none;
+  max-height: 200px;
   resize: none;
-  overflow-y: auto;
 }
 
 .command-panel {
-  position: absolute;
-  bottom: 8px; /* Changed from 12px to 8px */
-  left: 12px;
-  right: 12px;
-  height: 28px;
   display: flex;
+  justify-content: flex-start;
   align-items: center;
-  justify-content: space-between;
-  z-index: 3; /* Added this line */
-}
-
-.left-controls {
-  display: flex;
-  gap: 8px;
 }
 
 .model-select {
-  --select-height: 24px;
-  height: var(--select-height);
-  width: auto;
-  min-width: 100px;
+  width: 200px;
 }
 
 .model-select :deep(.n-base-selection) {
@@ -391,24 +372,94 @@ onUnmounted(() => {
   color: var(--n-text-color-2);
 }
 
-.system-message {
+.system {
   font-style: italic;
-  color: var(--n-text-color-3);
+  color: #888;
 }
 
-.user-message {
-  text-align: right;
-  background-color: var(--n-color-info-light);
-  padding: 8px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.ai-message {
+.user {
   text-align: left;
-  background-color: var(--n-color-success-light);
+  background-color: rgba(0, 0, 0, 0.05);
   padding: 8px;
-  border-radius: 8px;
   margin-bottom: 8px;
+}
+
+.ai {
+  text-align: left;
+  background-color: rgba(0, 0, 255, 0.05);
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+/* Ensure the textarea doesn't overflow */
+.input-wrapper :deep(.n-input__textarea-el) {
+  max-height: 300px; /* Adjust this value as needed */
+  overflow-y: auto;
+}
+
+.message-display :deep(pre) {
+  background-color: #f4f4f4;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.message-display :deep(code) {
+  background-color: #f4f4f4;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+.message-display :deep(table) {
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.message-display :deep(th), .message-display :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.message-display :deep(blockquote) {
+  border-left: 4px solid #ddd;
+  padding-left: 1em;
+  color: #666;
+}
+
+.message-display > div:empty {
+  display: none;
+}
+
+.message {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.message-content {
+  white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+  word-break: break-word; /* Break long words to prevent overflow */
+}
+
+/* Style for selected text */
+::selection {
+  background-color: rgba(0, 123, 255, 0.3); /* Light blue background for selected text */
+  color: inherit; /* Keep the text color */
+}
+
+.message {
+  position: relative;
+}
+
+.copy-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0.3; /* Partially visible by default */
+  transition: opacity 0.2s;
+}
+
+.message:hover .copy-button {
+  opacity: 1; /* Fully visible on hover */
 }
 </style>
