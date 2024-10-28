@@ -27,7 +27,6 @@ import { enUS, NButton, NSpace, useOsTheme, zhCN } from "naive-ui";
 import { h, nextTick } from "vue";
 import { compareVersion } from "@/utils/version.js";
 import { typesIconStyle } from "@/consts/support_redis_type.js";
-import AIProvider from "@/objects/aiProvider.js";
 import { Configure } from "wailsjs/go/ai/ClientService.js";
 import { ai } from "wailsjs/go/models";
 
@@ -76,11 +75,6 @@ const usePreferencesStore = defineStore("preferences", {
       explain: false,
       aggregate: true,
       backend: "noopai", // default ai
-      providerMap: {
-        localai: new AIProvider("localai", "ollama", "http://localhost:8080"),
-        openai: new AIProvider("openai", "gpt-3.5-turbo", ""),
-        // "azure": new AIProvider("azure", "", "")
-      },
       backends: [
         {
           name: "noopai",

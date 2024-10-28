@@ -14,8 +14,6 @@ import usePreferencesStore from "stores/preferences.js";
 import { computed, h, ref, watchEffect, watch, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 // import { BrowserOpenURL } from "wailsjs/runtime/runtime.js";
-// import AIProvider from "@/objects/aiProvider.js";
-// import { AIProvider } from "wailsjs/go/models";
 import { ai } from "wailsjs/go/models";
 import { Configure } from "wailsjs/go/ai/ClientService.js";
 
