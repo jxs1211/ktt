@@ -1,6 +1,5 @@
 <script setup>
 import ContentPane from "./components/content/ContentPane.vue";
-import BrowserPane from "./components/sidebar/BrowserPane.vue";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { debounce, isEmpty } from "lodash";
 import { useThemeVars } from "naive-ui";
@@ -11,7 +10,7 @@ import useTabStore from "./stores/tab.js";
 import usePreferencesStore from "./stores/preferences.js";
 import ContentLogPane from "./components/content/ContentLogPane.vue";
 import ContentErrorPane from "./components/content/ContentErrorPane.vue";
-import ContentValueTab from "@/components/content/ContentValueTab.vue";
+import CliBar from "@/components/content_value/CliBar.vue";
 import ToolbarControlWidget from "@/components/common/ToolbarControlWidget.vue";
 import {
   EventsOn,
@@ -150,11 +149,11 @@ const onKeyShortcut = (e) => {
 watch(
   () => tabStore.nav,
   (newVal, oldVal) => {
-    console.log("watch nav: ", tabStore.currentTab, tabStore.currentSubTab)
+    console.log("watch nav: ", tabStore.currentTab, tabStore.currentSubTab);
     if (newVal === "browser") {
-      tabStore.currentSubTab = "status"
+      tabStore.currentSubTab = "status";
     }
-  }
+  },
 );
 </script>
 
@@ -263,7 +262,22 @@ watch(
           <content-server-pane class="flex-item-expand" />
         </div>
 
-        <!-- log page -->
+        <!-- cli -->
+        <div
+          v-show="tabStore.nav === 'cli'"
+          class="content-area flex-box-h flex-item-expand"
+        >
+          <CliBar :min-height="'50px'" />
+          <!-- <resizeable-wrapper
+            v-model:size="prefStore.behavior.asideWidth"
+            :min-size="250"
+            :offset="data.navMenuWidth"
+            class="flex-item"
+          >
+          </resizeable-wrapper> -->
+        </div>
+
+        <!-- log -->
         <!-- <div
           v-show="tabStore.nav === 'log'"
           class="content-area flex-box-h flex-item-expand"
@@ -330,7 +344,7 @@ watch(
   transition: opacity 0.3s ease;
 }
 .bottom-bar {
-  height: 50px; /* Set a fixed height for the bar */
+  height: 20px; /* Set a fixed height for the bar */
   background-color: #f0f0f0; /* Change to your desired color */
   border-top: 1px solid #ccc; /* Optional: Add a border for separation */
   display: flex;

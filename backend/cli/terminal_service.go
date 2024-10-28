@@ -56,6 +56,37 @@ func (s *TerminalService) Start(ctx context.Context) {
 // 	return nil
 // }
 
+func (s *TerminalService) StartTerminal2(address, port, cmds string) types.JSResp {
+	err := s.startTerminal2(address, port, cmds)
+	if err != nil {
+		log.Error("start terminal failed", "msg", err)
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) startTerminal2(address, port, cmds string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	runtime2.EventsEmit(s.ctx, "terminal2:url", "")
+	key := s.terminalMapKey2(address, port, cmds)
+	_, ok := s.terminalMap[key]
+	if !ok {
+		srv, err := s.startCliServer(address, port, cmds)
+		if err != nil {
+			return err
+		}
+
+		s.terminalMap[key] = srv
+		log.Info("startTerminal", "new terminal", key, "reason", "start cli server due to server not found in db")
+	}
+	url := fmt.Sprintf("http://%s:%s", address, port)
+	runtime2.EventsEmit(s.ctx, "terminal2:url", url)
+	log.Info("startTerminal", "emit url", url, "save item", key)
+	return nil
+}
+
 func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string) types.JSResp {
 	if len(clusterName) == 0 && len(address) == 0 && len(port) == 0 && len(cmds) == 0 {
 		return types.FailedResp(fmt.Sprintf("all of them must be not empty: %s,%s,%s,%s", clusterName, address, port, cmds))
@@ -75,6 +106,10 @@ func (s *TerminalService) StartTerminal(clusterName, address, port, cmds string)
 
 func (s *TerminalService) terminalMapKey(clusterName, address, port, cmds string) string {
 	return fmt.Sprintf("%s:%s:%s:%s", clusterName, address, port, cmds)
+}
+
+func (s *TerminalService) terminalMapKey2(address, port, cmds string) string {
+	return fmt.Sprintf("%s:%s:%s", address, port, cmds)
 }
 
 func (s *TerminalService) startTerminal(clusterName, address, port, cmds string) error {
@@ -128,6 +163,28 @@ func (s *TerminalService) startCliServer(address, port, cmds string) (*CliServer
 	return srv, nil
 }
 
+func (s *TerminalService) CloseTerminal2(address, port, cmds string) types.JSResp {
+	err := s.closeTerminal2(address, port, cmds)
+	if err != nil {
+		return types.FailedResp(err.Error())
+	}
+	return types.JSResp{Success: true}
+}
+
+func (s *TerminalService) closeTerminal2(address, port, cmds string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	key := s.terminalMapKey2(address, port, cmds)
+	if ter, ok := s.terminalMap[key]; ok {
+		if err := ter.Close(); err != nil {
+			return err
+		}
+		delete(s.terminalMap, key)
+	}
+	log.Info("CloseTerminal", "result", "done", "deleted item", key)
+	return nil
+}
+
 func (s *TerminalService) CloseTerminal(id int64, clusterName, address, port, cmds string) types.JSResp {
 	err := s.closeTerminal(id, clusterName, address, port, cmds)
 	if err != nil {
@@ -155,7 +212,7 @@ func (s *TerminalService) closeTerminal(id int64, clusterName, address, port, cm
 	return nil
 }
 
-func (s *TerminalService) CloseAllTerminals() types.JSResp {
+func (s *TerminalService) StopAll() types.JSResp {
 	err := s.closeAllTerminals()
 	if err != nil {
 		return types.FailedResp(err.Error())
@@ -177,6 +234,6 @@ func (s *TerminalService) closeAllTerminals() error {
 	if len(errs) != 0 {
 		return errors.Join(errs...)
 	}
-	s.terminalMap = map[string]terminal{}
+	s.terminalMap = nil
 	return nil
 }

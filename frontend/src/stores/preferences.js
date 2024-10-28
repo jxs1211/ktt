@@ -27,6 +27,8 @@ import { enUS, NButton, NSpace, useOsTheme, zhCN } from "naive-ui";
 import { h, nextTick } from "vue";
 import { compareVersion } from "@/utils/version.js";
 import { typesIconStyle } from "@/consts/support_redis_type.js";
+import { Configure } from "wailsjs/go/ai/ClientService.js";
+import { ai } from "wailsjs/go/models";
 
 const osTheme = useOsTheme();
 const usePreferencesStore = defineStore("preferences", {
@@ -72,7 +74,7 @@ const usePreferencesStore = defineStore("preferences", {
       enable: false,
       explain: false,
       aggregate: true,
-      backend: "noopai",
+      backend: "noopai", // default ai
       backends: [
         {
           name: "noopai",
@@ -308,6 +310,9 @@ const usePreferencesStore = defineStore("preferences", {
     },
   },
   actions: {
+    getBackends() {
+      
+    },
     getBackend(name) {
       const backends = this.ai.backends;
       for (const index in this.ai.backends) {
@@ -320,10 +325,11 @@ const usePreferencesStore = defineStore("preferences", {
     },
     onSelectedTab(label) {
       this.ai.backend = label;
-      this.ai.explain = true;
+      // this.ai.explain = true;
     },
     onSwitch(enable) {
-      this.ai.explain = enable;
+      // this.ai.explain = enable;
+      this.ai.explain = false;
     },
     _applyPreferences(data) {
       for (const key in data) {
@@ -360,6 +366,24 @@ const usePreferencesStore = defineStore("preferences", {
           set(data, "editor.links", true);
         }
         i18nGlobal.locale.value = this.currentLanguage;
+      }
+      // load ai provider config if saved any related configuration
+      const backends = get(data, "ai.backends")
+      for (const index in this.ai.backends) {
+        const backend = backends[index]
+        const provider = new ai.AIProvider();
+        if (backend.name === "localai") {
+          provider.name = "localai";
+          provider.model = backend.model;
+          provider.baseURL = backend.baseUrl
+        } else if (backend.name === "openai") {
+        }
+        const resp = await Configure(provider);
+        if (!resp.success) {
+          console.log("configure ai model failed", provider.model)
+        }else {
+          console.log("configure ai model ok", provider.model)
+        }
       }
     },
 
