@@ -6,14 +6,6 @@
 简体中文</a></h4>
 <div align="center">
 
-[![License](https://img.shields.io/github/license/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/releases)
-![GitHub All Releases](https://img.shields.io/github/downloads/tiny-craft/tiny-rdm/total)
-[![GitHub stars](https://img.shields.io/github/stars/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/fork)
-[![Discord](https://img.shields.io/discord/1170373259133456434?label=Discord&color=5865F2)](https://discord.gg/VTFbBMGjWh)
-[![X](https://img.shields.io/badge/Twitter-black?logo=x&logoColor=white)](https://twitter.com/Lykin53448)
-
 <strong>A lightweight, user-friendly and cross-platform k8s diagnosing tool.</strong>
 
 </div>
@@ -40,18 +32,6 @@
 - Better connection management: supports SSH Tunnel/SSL/Sentinel Mode/Cluster Mode/HTTP proxy/SOCKS5 proxy.
 - Visualize key value operations, CRUD support for Lists, Hashes, Strings, Sets, Sorted Sets, and Streams.
 - Support multiple data viewing format and decode/decompression methods.
-- Use SCAN for segmented loading, making it easy to list millions of keys.
-- Logs list for command operation history.
-- Provides command-line mode.
-- Provides slow logs list.
-- Segmented loading and querying for List/Hash/Set/Sorted Set.
-- Provide value decode/decompression for List/Hash/Set/Sorted Set.
-- Integrate with Monaco Editor
-- Support real-time commands monitoring.
-- Support import/export data.
-- Support publish/subscribe.
-- Support import/export connection profile.
-- Custom data encoder and decoder for value display ([Here are the instructions](https://redis.tinycraft.cc/guide/custom-decoder/)).
 
 ## Installation
 
@@ -144,9 +124,10 @@ todo:
 - sync validated ai model providers to chat input's model options
 
 
-Let's combine the two components @ContentErrorPane.vue and @CliBar.vue together, here is the thing:
-- when I click btn debugWithAI, the @CliBar.vue will popup from bottom to the half height of the tab pane
-- The clicked item's info will sent as  init prompt to the chat box
+Let's combine the two components @ContentErrorPane.vue and @CliBar.vue together, and implement an amazing functionality step by step here is the thing:
+- when I click btn debugWithAI, the @CliBar.vue will popup from bottom to the half height of the tab pane, the data-table on it's top will shrink to half height
+- the session name is composed of `resource kind: resource name:session.address : session.port : session.cmds`
+- The clicked item's info will sent as init prompt to the chat box
 - After the response msg is received, there are 2 options(Copy and Apply) can be shown up at the top right of the msg box when the mouse is hoved on any place on the response msg box, I can copy it and paste to the right terminal to be executed. And I can also click Apply btn to execute the command in the response box in the right terminal
 - The popuped CliBar is draggable, and can be closed by clicking the close button on the top right of the CliBar, and when it's displayed, the data-table in @ContentErrorPane.vue is also visible(include the pagination on the bottom right), I can opreate it normally
 
