@@ -153,7 +153,23 @@ Let's combine the two components @ContentErrorPane.vue and @CliBar.vue together,
 Let's continue to implement @CliBar.vue 's functionality:
 - I want the content of the chat box and the terminal can be keeped, when I swith back from others tab to current tab, so that I can continue to operate in the chat and terminal with previous context
 
+
+- Chat.vue
+
+Based on the  current implementation, add a Run btn on the right side of Copy btn, and define it's btn click listener without implementation first
+
+Now, implement the runMessage
+- copy the msg content to clipboard
+- switch cursor to the right terminal, type enter to a newline to avoid execution failed, paste the copied the content and execute it
+
 !-- 
 cdebug exec --namespace=test -it --privileged --image=nixery.dev/shell/vim/ps/tshark/kubectl/zsh pod/my-distroless
 
 -->
+
+#### commonly used questions:
+```
+How can I get pod info using kubectl
+Explain what is kubernetes in 100 words
+
+```

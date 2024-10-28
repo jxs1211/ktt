@@ -22,15 +22,17 @@
     </div>
     <div class="message-display flex-item" ref="messageDisplayRef">
       <div v-for="message in chatMessages" :key="message.id" :class="['message', message.type]">
-        <!-- <div class="message-content" v-if="message.content.trim()">
+        <div class="message-content" v-if="message.content?.trim()">
           {{ message.content }}
-        </div> -->
-        <template v-if="message.content.trim()">
-          {{ message.content }}
-        </template>
-        <n-button text size="tiny" @click="copyMessage(message.content)" class="copy-button">
-          Copy
-        </n-button>
+        </div>
+        <div class="message-actions">
+          <n-button text size="tiny" @click="copyMessage(message.content)" class="action-button">
+            Copy
+          </n-button>
+          <n-button text size="tiny" @click="runMessage(message.content)" class="action-button">
+            Run
+          </n-button>
+        </div>
       </div>
     </div>
     <div class="chat-input-container">
@@ -274,6 +276,26 @@ const copyMessage = (content) => {
   });
 };
 
+const emit = defineEmits(['runInTerminal']);
+
+const runMessage = async (content) => {
+  try {
+    // Copy content to clipboard
+    await navigator.clipboard.writeText(content);
+    
+    // Emit event to parent to handle terminal execution
+    emit('runInTerminal', {
+      commands: [
+        '', // Empty string for new line
+        content // The actual command
+      ]
+    });
+    
+  } catch (err) {
+    console.error('Failed to copy message for execution:', err);
+  }
+};
+
 </script>
 
 <style scoped>
@@ -283,11 +305,12 @@ const copyMessage = (content) => {
   width: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+  /* position: absolute; */
   background-color: var(--chat-background-color); /* Use the variable */
   border-left: 1px solid var(--n-border-color);
   box-sizing: border-box;
   overflow: hidden;
-  position: relative;
   user-select: text; /* Explicitly allow text selection */
 }
 
@@ -304,6 +327,7 @@ const copyMessage = (content) => {
 }
 
 .message-display {
+  /* position: absolute; */
   flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
@@ -462,4 +486,33 @@ const copyMessage = (content) => {
 .message:hover .copy-button {
   opacity: 1; /* Fully visible on hover */
 }
+
+.message-actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 4px;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.action-button {
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  min-width: auto;
+  height: auto;
+  line-height: 1;
+}
+
+.action-button:not(:disabled):focus,
+.action-button:not(:disabled):hover {
+  background-color: transparent;
+}
 </style>
+
+

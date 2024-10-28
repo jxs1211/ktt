@@ -28,6 +28,7 @@
         :address="session.address"
         :port="session.port"
         :cmds="session.cmds"
+        @runInTerminal="handleRunInTerminal"
       />
     </n-tab-pane>
   </n-tabs>
@@ -165,6 +166,29 @@ onMounted(() => {
 onUnmounted(() => {
   // Any cleanup if needed
 });
+
+const handleRunInTerminal = async ({ commands }) => {
+  // Get the current active terminal reference
+  const activeIndex = sessions.value.findIndex(
+    session => sessionKey(session) === activeTab.value
+  );
+  
+  if (activeIndex === -1 || !cliRefs.value[activeIndex]) {
+    console.error('No active terminal found');
+    return;
+  }
+
+  const terminal = cliRefs.value[activeIndex];
+  
+  // Execute each command in sequence
+  for (const cmd of commands) {
+    // Send command to terminal
+    await terminal.sendCommand(cmd);
+    
+    // Small delay between commands to ensure proper execution
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+};
 </script>
 <style scoped>
 .cli-bar {

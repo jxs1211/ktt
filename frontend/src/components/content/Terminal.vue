@@ -61,8 +61,16 @@ const doCloseTerminal = async () => {
   });
 };
 
+const sendCommand = async (command) => {
+  if (!terminal.value) return;
+  
+  // Send the command to the terminal
+  terminal.value.write(command + '\n');
+};
+
 defineExpose({
   doCloseTerminal,
+  sendCommand,
 });
 </script>
 
