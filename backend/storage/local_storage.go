@@ -28,7 +28,7 @@ func (l *localStorage) Load() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return d, err
+	return d, nil
 }
 
 // Store writes data to the user's configuration directory at the given
