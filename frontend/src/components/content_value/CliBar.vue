@@ -24,7 +24,6 @@
           }
         "
         :enableChat="true"
-        :initPrompt="initPrompt"
         :address="session.address"
         :port="session.port"
         :cmds="session.cmds"
@@ -49,8 +48,9 @@ import usePreferencesStore from "stores/preferences.js";
 import useConnectionStore from "stores/connections.js";
 import { useSessionStore } from "@/stores/session.js";
 import { getPlatform } from "@/utils/platform.js";
+import emitter from '@/utils/eventBus'
 
-const initPrompt = ref("Why is the sky blue?")
+const initPrompt = ref("")
 const chatWidth = ref(300); // Initial width of the chat component
 const sessionStore = useSessionStore();
 const dialogStore = useDialogStore();
@@ -160,11 +160,18 @@ onMounted(() => {
   };
   sessions.value = [initialSession];
   activeTab.value = sessionKey(initialSession);
+  emitter.on('start-debug-session', ({ sessionName, initialPrompt, row }) => {
+    // Handle the debug session start
+    // Initialize chat with the provided data
+    console.log("on start-debug-session: ", sessionName, initialPrompt, row);
+    initPrompt.value = initialPrompt
+  })
 });
 
 onUnmounted(() => {
-  // Any cleanup if needed
-});
+  // Clean up listeners when component is destroyed
+  emitter.off('off start-debug-session')
+})
 </script>
 <style scoped>
 .cli-bar {
