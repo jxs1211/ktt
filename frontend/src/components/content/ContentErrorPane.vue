@@ -21,15 +21,22 @@ import useBrowserStore from "stores/browser.js";
 import useConfigStore from "stores/config.js";
 import useConnectionStore from "stores/connections.js";
 import usePreferencesStore from "stores/preferences.js";
+import { useSessionStore } from "stores/session.js";
 import { watch, computed, h, nextTick, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import useDialogStore from "../../stores/dialog";
+import CliBar from "@/components/content_value/CliBar.vue";
+import emitter from '@/utils/eventBus';
 
+const cliBarVisible = ref(false);
+const cliBarHeight = ref("50%");
+const selectedRow = ref(null);
 // const themeVars = useThemeVars();
 const dialogStore = useDialogStore();
 const configStore = useConfigStore();
 const connectionStore = useConnectionStore();
 const preferencesStore = usePreferencesStore();
+const sessionStore = useSessionStore();
 const i18n = useI18n();
 const data = reactive({
   loading: false,
@@ -223,16 +230,71 @@ const columns = computed(() => [
 ]);
 const debugWithAI = (row) => {
   if (preferencesStore.ai.enable && !dialogStore.preferencesDialogVisible) {
-    console.log("start to debug with ai: ", row);
-    // popup a component called terminalDialog from buttom to half height of the ContentErrorPane with embeded Terminal.vue,
-    // and the component can be displayed over the xxx, the part is not cover by the com can be operated
-    // like before, and the component can be fullscreen over ContentErrorPane, and can be mi
-    return;
-  }
-  if (!preferencesStore.ai.enable) {
+    selectedRow.value = row;
+    // Generate session name
+    const sessionName = `${row.kind}: ${row.name}`;
+    
+    // Prepare initial prompt from row data
+    const initialPrompt = `Analyze and suggest fixes for the following Kubernetes issue:
+    Resource Kind: ${row.kind}
+    Resource Name: ${row.name}
+    Parent Object: ${row.parentObject}
+    Errors: ${row.error.map(e => e.Text).join('\n')}`;
+
+    // Show CliBar
+    cliBarVisible.value = true;
+    sessionStore.debugRowMsg = initialPrompt;
+
+    // Pass data to CliBar component
+    nextTick(() => {
+      // Trigger chat with initial prompt
+      emitter.emit('start-debug-session', {
+        sessionName,
+        initialPrompt,
+        row
+      });
+      console.log("sending to start debug: ", initialPrompt)
+
+    });
+  } else if (!preferencesStore.ai.enable) {
     dialogStore.openPreferencesDialog("ai");
   }
 };
+// Add drag handling
+const isDragging = ref(false);
+const startY = ref(0);
+const startHeight = ref(0);
+
+const startDragging = (e) => {
+  isDragging.value = true;
+  startY.value = e.clientY;
+  startHeight.value = parseInt(cliBarHeight.value);
+  
+  // Add event listeners
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDragging);
+};
+
+const onDrag = (e) => {
+  if (!isDragging.value) return;
+  
+  const deltaY = startY.value - e.clientY;
+  const containerHeight = document.querySelector('.debug-container').clientHeight;
+  const newHeight = Math.min(Math.max(100, startHeight.value + deltaY), containerHeight - 100);
+  
+  cliBarHeight.value = `${newHeight}px`;
+};
+
+const stopDragging = () => {
+  isDragging.value = false;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDragging);
+};
+// Add style computation for data table
+const tableStyle = computed(() => ({
+  height: cliBarVisible.value ? `calc(100% - ${cliBarHeight.value})` : '100%',
+  transition: 'height 0.3s ease'
+}));
 const pagination = {
   pageSize: 10,
 };
@@ -428,21 +490,107 @@ watch(
         />
       </n-form-item> -->
     </n-form>
-    <n-data-table
-      ref="tableRef"
-      :columns="columns"
-      :pagination="pagination"
-      :data="data.results"
-      :loading="data.loading"
-      class="flex-item-expand"
-      flex-height
-      virtual-scroll
-      striped
-      :scroll-x="1800"
+    <div class="table-container" :style="tableStyle">
+      <n-data-table
+        ref="tableRef"
+        :columns="columns"
+        :pagination="pagination"
+        :data="data.results"
+        :loading="data.loading"
+        class="flex-item-expand"
+        flex-height
+        virtual-scroll
+        striped
+        :scroll-x="1800"
+      />
+    </div>
+        <!-- Add CliBar component -->
+    <!-- Draggable splitter -->
+    <div 
+      v-if="cliBarVisible"
+      class="splitter"
+      @mousedown="startDragging"
+    ></div>
+
+    <div 
+      v-if="cliBarVisible"
+      class="cli-bar-container"
+      :style="{ height: cliBarHeight }"
+    >
+      <cli-bar
+        v-model:visible="cliBarVisible"
+        v-model:height="cliBarHeight"
+      />
+    </div>
     />
   </div>
 </template>
 
 <style lang="scss" scoped>
 @import "@/styles/content";
+
+.content-log {
+  position: relative;
+  overflow: hidden;
+}
+
+.debug-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.table-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.splitter {
+  height: 6px;
+  background: var(--n-border-color);
+  cursor: row-resize;
+  position: relative;
+  
+  &:hover {
+    background: var(--n-primary-color);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+}
+
+.cli-bar-container {
+  position: relative;
+  min-height: 100px;
+  transition: height 0.3s ease;
+  
+  :deep(.cli-bar) {
+    height: 100%;
+  }
+}
+
+:deep(.n-data-table) {
+  height: 100%;
+  flex: 1;
+}
+
+// Disable text selection while dragging
+body.dragging {
+  user-select: none;
+}
 </style>

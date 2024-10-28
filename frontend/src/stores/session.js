@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 export const useSessionStore = defineStore("session", {
   state: () => ({
     results: [],
+    debugRowMsg: "",
     formValue: {
       cluster_name: "",
       address: "",
