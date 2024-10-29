@@ -240,10 +240,7 @@ watch(
             class="flex-item-expand"
           />
           <!-- Bottom Bar -->
-          <div class="bottom-bar">
-            <!-- You can add content here, like buttons or text -->
-            <span>Bottom Bar Content</span>
-          </div>
+
         </div>
 
         <!-- server list page -->
