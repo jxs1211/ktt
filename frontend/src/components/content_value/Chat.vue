@@ -62,12 +62,14 @@
 <script setup>
 import { EventsOff, EventsOn } from 'wailsjs/runtime/runtime.js';
 import { watch, ref, h, nextTick, onMounted, onUnmounted, computed } from "vue";
-import { NButton, NIcon, NInput, NSelect } from "naive-ui";
+import { isEmpty } from 'lodash'
+import { infiniteScrollProps, NButton, NIcon, NInput, NSelect } from "naive-ui";
 import { CaretUp, Add, Time, Close, ChevronDown } from "@vicons/ionicons5";
 import CodeBlock from "./CodeBlock.vue";
 import { useThemeVars } from "naive-ui";
 import { GetCompletion2 } from "wailsjs/go/ai/ClientService.js";
 import usePreferencesStore from '../../stores/preferences';
+import { useSessionStore } from '../../stores/session';
 // import hljs from 'highlight.js';
 
 // hljs.configure({
@@ -82,10 +84,15 @@ const messages = ref([]);
 const inputMessage = ref("");
 const chatMessages = ref([])  // New ref to hold all chat messages
 const isWaiting = ref(false);  // New ref to track waiting state
+const sessionStore = useSessionStore();
 const props = defineProps({
   session: {
     type: String,
     required: true,
+  },
+  initPrompt: {
+    type: String,
+    default: "",
   }
 });
 // Model selection
@@ -179,6 +186,8 @@ const sendMessage = async () => {
 
   const userMessage = inputMessage.value.trim();
   inputMessage.value = "";
+  // Clear the sessionStore message to avoid duplicate sends
+  sessionStore.debugRowMsg = "";
 
   // Show waiting message
   isWaiting.value = true;
@@ -230,7 +239,20 @@ const scrollToBottom = () => {
 
 // Watch for changes in chatMessages and scroll to bottom
 watch(() => chatMessages.value.length, scrollToBottom);
-
+// Update the watch function to automatically send the message
+watch(
+  () => sessionStore.debugRowMsg,
+  (newMsg) => {
+    if (newMsg && newMsg.trim()) {
+      inputMessage.value = newMsg;
+      // Wait for the next tick to ensure inputMessage is updated
+      nextTick(() => {
+        sendMessage();
+      });
+    }
+  },
+  { immediate: true } // This will trigger the watcher immediately when component is mounted
+);
 onMounted(() => {
   adjustTextareaHeight();
   EventsOn(eventName, (data) => {
@@ -256,6 +278,10 @@ onMounted(() => {
     isWaiting.value = false;
     scrollToBottom();
   });
+
+  if (!isEmpty(props.initPrompt)) {
+    inputMessage.value = props.initPrompt
+  }
 });
 onUnmounted(() => {
   EventsOff(eventName);
